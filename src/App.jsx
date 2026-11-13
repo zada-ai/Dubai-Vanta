@@ -18,6 +18,7 @@ const Orders = lazy(() => import('./pages/Orders'));
 const Contact = lazy(() => import('./pages/Contact'));
 const About = lazy(() => import('./pages/About'));
 const FAQ = lazy(() => import('./pages/FAQ'));
+const Admin = lazy(() => import('./pages/Admin'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
             <Route path="contact" element={<Contact />} />
             <Route path="about" element={<About />} />
             <Route path="faq" element={<FAQ />} />
+            <Route path="admin" element={<Admin />} />
             
             {/* 404 Fallback page */}
             <Route path="*" element={<NotFound />} />

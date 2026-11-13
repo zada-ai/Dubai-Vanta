@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { products } from '../data/mockData';
+import { useApp } from '../context/AppContext';
+import { products as initialProducts } from '../data/mockData';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../components/FilterSidebar';
 import Pagination from '../components/Pagination';
@@ -9,6 +10,8 @@ import Breadcrumb from '../components/Breadcrumb';
 import { RiSearchLine, RiFilterLine, RiCloseLine } from 'react-icons/ri';
 
 const Shop = () => {
+  const { productsList } = useApp();
+  const products = productsList || initialProducts;
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category') || 'all';
   const searchParam = searchParams.get('search') || '';

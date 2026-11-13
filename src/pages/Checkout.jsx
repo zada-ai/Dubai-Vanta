@@ -267,7 +267,7 @@ const Checkout = () => {
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Standard Delivery</span>
                   <span className="text-xs text-slate-400 mt-0.5">3-5 Business Days</span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-250 mt-2">
-                    {getShippingCost() === 0 ? 'Free' : `$${getShippingCost().toFixed(2)}`}
+                    {getShippingCost() === 0 ? 'Free' : `AED ${getShippingCost().toFixed(2)}`}
                   </span>
                 </div>
               </button>
@@ -293,7 +293,7 @@ const Checkout = () => {
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Express Delivery</span>
                   <span className="text-xs text-slate-400 mt-0.5">1-2 Business Days</span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-250 mt-2">
-                    + $25.00
+                    + AED 25.00
                   </span>
                 </div>
               </button>
@@ -392,7 +392,7 @@ const Checkout = () => {
                     <p className="text-[10px] text-slate-400">Qty: {item.quantity} • {item.color}</p>
                   </div>
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    ${((item.discountPrice || item.price) * item.quantity).toFixed(2)}
+                    AED {((item.discountPrice || item.price) * item.quantity).toFixed(2)}
                   </span>
                 </div>
               ))}
@@ -402,13 +402,13 @@ const Checkout = () => {
             <div className="flex flex-col gap-4 border-b border-slate-100 dark:border-slate-800 pb-5 mb-5 text-sm font-semibold text-slate-650 dark:text-slate-400">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span className="text-slate-900 dark:text-white">${getCartSubtotal().toFixed(2)}</span>
+                <span className="text-slate-900 dark:text-white">AED {getCartSubtotal().toFixed(2)}</span>
               </div>
 
               {getCartDiscount() > 0 && (
                 <div className="flex justify-between text-emerald-600 dark:text-emerald-500">
                   <span>Coupon Discount</span>
-                  <span>-${getCartDiscount().toFixed(2)}</span>
+                  <span>-AED {getCartDiscount().toFixed(2)}</span>
                 </div>
               )}
 
@@ -418,14 +418,14 @@ const Checkout = () => {
                   {calculateFinalShipping() === 0 ? (
                     <span className="text-emerald-600 dark:text-emerald-500 font-bold uppercase text-xs">Free</span>
                   ) : (
-                    `$${calculateFinalShipping().toFixed(2)}`
+                    `AED ${calculateFinalShipping().toFixed(2)}`
                   )}
                 </span>
               </div>
 
               <div className="flex justify-between">
                 <span>Tax (8%)</span>
-                <span className="text-slate-900 dark:text-white">${getTaxAmount().toFixed(2)}</span>
+                <span className="text-slate-900 dark:text-white">AED {getTaxAmount().toFixed(2)}</span>
               </div>
             </div>
 
@@ -433,7 +433,7 @@ const Checkout = () => {
             <div className="flex justify-between items-baseline mb-6">
               <span className="font-bold text-slate-800 dark:text-slate-200">Final Total</span>
               <span className="text-xl md:text-2xl font-black text-slate-950 dark:text-white">
-                ${calculateFinalTotal().toFixed(2)}
+                AED {calculateFinalTotal().toFixed(2)}
               </span>
             </div>
 

@@ -19,8 +19,8 @@ const CategoryCard = ({ category }) => {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
         {/* Content overlaid on image */}
-        <div className="absolute bottom-0 inset-x-0 p-4 text-white">
-          <h3 className="text-base font-bold tracking-tight mb-1 group-hover:text-primary-300 transition-colors">
+        <div className="absolute bottom-0 inset-x-0 p-3 sm:p-4 text-white">
+          <h3 className="text-sm sm:text-base font-bold tracking-tight mb-1 group-hover:text-primary-300 transition-colors">
             {category.name}
           </h3>
           <p className="text-xs text-slate-300 line-clamp-1 font-medium">

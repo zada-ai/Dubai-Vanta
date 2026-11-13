@@ -125,7 +125,7 @@ const FilterSidebar = ({ filters, setFilters, onClose }) => {
 
       {/* Price range filter */}
       <div className="flex flex-col gap-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Price Range ($)</label>
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Price Range (AED)</label>
         <div className="flex items-center gap-3 mt-1">
           <div className="flex-1">
             <span className="text-[10px] text-slate-400">Min Price</span>

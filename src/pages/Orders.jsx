@@ -71,7 +71,7 @@ const Orders = () => {
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Amount</span>
-                    <span className="text-sm font-extrabold text-slate-900 dark:text-white">${order.totals.total.toFixed(2)}</span>
+                    <span className="text-sm font-extrabold text-slate-900 dark:text-white">AED {order.totals.total.toFixed(2)}</span>
                   </div>
                   <div className="flex flex-col gap-1 items-start">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Status</span>
@@ -124,7 +124,7 @@ const Orders = () => {
                               </p>
                             </div>
                             <span className="text-sm font-bold text-slate-850 dark:text-slate-200 shrink-0">
-                              ${((item.discountPrice || item.price) * item.quantity).toFixed(2)}
+                              AED {((item.discountPrice || item.price) * item.quantity).toFixed(2)}
                             </span>
                           </div>
                         ))}
@@ -163,27 +163,27 @@ const Orders = () => {
                       <div className="flex flex-col gap-2 pt-2 border-t border-slate-200/50 dark:border-slate-800/80">
                         <div className="flex justify-between text-xs text-slate-450 font-medium">
                           <span>Subtotal</span>
-                          <span className="font-bold text-slate-700 dark:text-slate-300">${order.totals.subtotal.toFixed(2)}</span>
+                          <span className="font-bold text-slate-700 dark:text-slate-300">AED {order.totals.subtotal.toFixed(2)}</span>
                         </div>
                         {order.totals.discount > 0 && (
                           <div className="flex justify-between text-xs text-emerald-600 font-medium">
                             <span>Coupon Discount</span>
-                            <span className="font-bold">-${order.totals.discount.toFixed(2)}</span>
+                            <span className="font-bold">-AED {order.totals.discount.toFixed(2)}</span>
                           </div>
                         )}
                         <div className="flex justify-between text-xs text-slate-455 font-medium">
                           <span>Shipping</span>
                           <span className="font-bold text-slate-700 dark:text-slate-300">
-                            {order.totals.shipping === 0 ? 'Free' : `$${order.totals.shipping.toFixed(2)}`}
+                            {order.totals.shipping === 0 ? 'Free' : `AED ${order.totals.shipping.toFixed(2)}`}
                           </span>
                         </div>
                         <div className="flex justify-between text-xs text-slate-455 font-medium">
                           <span>Tax (8%)</span>
-                          <span className="font-bold text-slate-700 dark:text-slate-300">${order.totals.tax.toFixed(2)}</span>
+                          <span className="font-bold text-slate-700 dark:text-slate-300">AED {order.totals.tax.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm font-extrabold text-slate-900 dark:text-white pt-2 border-t border-dashed border-slate-200 dark:border-slate-800">
                           <span>Grand Total</span>
-                          <span>${order.totals.total.toFixed(2)}</span>
+                          <span>AED {order.totals.total.toFixed(2)}</span>
                         </div>
                       </div>
 

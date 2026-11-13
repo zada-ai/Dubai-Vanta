@@ -1,78 +1,56 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
 import Hero from '../components/Hero';
+import FeatureIcon from '../components/FeatureIcon';
 import CategoryCard from '../components/CategoryCard';
 import ProductCard from '../components/ProductCard';
 import RatingComponent from '../components/RatingComponent';
-import { categories, products, testimonials } from '../data/mockData';
-import { 
-  RiTruckLine, 
-  RiShieldCheckLine, 
-  RiExchangeLine, 
-  RiCustomerService2Line,
-  RiArrowRightLine
-} from 'react-icons/ri';
+import { categories, products as initialProducts, testimonials } from '../data/mockData';
+import { RiArrowRightLine } from 'react-icons/ri';
 
 const Home = () => {
+  const { productsList, features } = useApp();
+  const products = productsList || initialProducts;
+
   // Filter products for various sections
   const featuredProducts = products.filter(p => p.isFeatured).slice(0, 4);
   const bestSellers = products.filter(p => p.isBestSeller).slice(0, 4);
   const newArrivals = products.filter(p => p.isNewArrival).slice(0, 4);
 
   return (
-    <div className="flex flex-col gap-12 md:gap-16 py-4">
+    <div className="flex flex-col gap-10 md:gap-16 py-2 md:py-4">
       {/* Hero Banner Carousel */}
       <Hero />
 
       {/* Brand Value Grid */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-6 p-6 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl shadow-xs">
-        <div className="flex items-center gap-4 text-left">
-          <div className="p-3 bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400 rounded-2xl">
-            <RiTruckLine className="w-6 h-6" />
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-5 sm:gap-6 p-4 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl sm:rounded-3xl shadow-xs">
+        {(features && features.length > 0 ? features : []).map((feat) => (
+          <div key={feat.id} className="flex items-center gap-2.5 sm:gap-4 text-left min-w-0">
+            <div className="shrink-0 p-2 sm:p-3 bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400 rounded-xl sm:rounded-2xl flex items-center justify-center">
+              <FeatureIcon feature={feat} className="w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
+                {feat.title}
+              </h4>
+              <p className="text-[11px] sm:text-xs leading-snug text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                {feat.description}
+              </p>
+            </div>
           </div>
-          <div>
-            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Free Shipping</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">On all orders over $150</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 text-left">
-          <div className="p-3 bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400 rounded-2xl">
-            <RiShieldCheckLine className="w-6 h-6" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Secure Payment</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">100% encrypted checkout</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 text-left">
-          <div className="p-3 bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400 rounded-2xl">
-            <RiExchangeLine className="w-6 h-6" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">30-Day Returns</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Hassle-free return policy</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 text-left">
-          <div className="p-3 bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400 rounded-2xl">
-            <RiCustomerService2Line className="w-6 h-6" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">24/7 Support</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Dedicated client assistance</p>
-          </div>
-        </div>
+        ))}
       </section>
 
       {/* Featured Categories */}
-      <section className="flex flex-col gap-6">
-        <div className="flex items-end justify-between">
+      <section className="flex flex-col gap-4 sm:gap-6">
+        <div className="flex items-end justify-between gap-3">
           <div className="text-left">
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Shop by Category</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Explore our premium catalog collections</p>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Shop by Category</h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Explore our premium catalog collections</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
           {categories.map((category) => (
             <CategoryCard key={category.id} category={category} />
           ))}
@@ -80,7 +58,7 @@ const Home = () => {
       </section>
 
       {/* Promotional Banner */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 to-indigo-850 p-8 md:p-12 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-8">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 to-indigo-850 p-6 md:p-12 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
         <div className="absolute inset-0 bg-black/10 pointer-events-none" />
         <div className="w-full md:w-3/5 text-left relative z-10 flex flex-col items-start">
           <span className="text-[10px] font-extrabold tracking-widest text-white bg-white/15 px-3 py-1 rounded-full uppercase mb-4">
@@ -105,23 +83,23 @@ const Home = () => {
           <img
             src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80"
             alt="Nike red shoe discount promotional graphic"
-            className="max-h-[200px] object-contain rounded-2xl drop-shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-500 z-10"
+            className="max-h-[160px] md:max-h-[200px] max-w-full object-contain rounded-2xl drop-shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-500 z-10"
           />
         </div>
       </section>
 
       {/* Featured Products */}
-      <section className="flex flex-col gap-6">
-        <div className="flex items-end justify-between">
+      <section className="flex flex-col gap-4 sm:gap-6">
+        <div className="flex items-end justify-between gap-3">
           <div className="text-left">
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Featured Products</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Our handpicked design highlights of the season</p>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Featured Products</h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Our handpicked design highlights of the season</p>
           </div>
-          <Link to="/shop" className="text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
+          <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
             View All <RiArrowRightLine />
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
           {featuredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -129,17 +107,17 @@ const Home = () => {
       </section>
 
       {/* Best Sellers */}
-      <section className="flex flex-col gap-6">
-        <div className="flex items-end justify-between">
+      <section className="flex flex-col gap-4 sm:gap-6">
+        <div className="flex items-end justify-between gap-3">
           <div className="text-left">
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Best Selling Products</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Top-voted favorites by our community</p>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Best Selling Products</h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Top-voted favorites by our community</p>
           </div>
-          <Link to="/shop" className="text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
+          <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
             View All <RiArrowRightLine />
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
           {bestSellers.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -147,17 +125,17 @@ const Home = () => {
       </section>
 
       {/* New Arrivals */}
-      <section className="flex flex-col gap-6">
-        <div className="flex items-end justify-between">
+      <section className="flex flex-col gap-4 sm:gap-6">
+        <div className="flex items-end justify-between gap-3">
           <div className="text-left">
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white">New Arrivals</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Fresh drop additions to upgrade your space</p>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">New Arrivals</h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Fresh drop additions to upgrade your space</p>
           </div>
-          <Link to="/shop" className="text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
+          <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
             View All <RiArrowRightLine />
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
           {newArrivals.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -165,16 +143,16 @@ const Home = () => {
       </section>
 
       {/* Customer Testimonials */}
-      <section className="flex flex-col gap-6">
+      <section className="flex flex-col gap-4 sm:gap-6">
         <div className="text-center">
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white">What Our Customers Say</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Real reviews from verified buyers</p>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">What Our Customers Say</h2>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Real reviews from verified buyers</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mt-2 sm:mt-4">
           {testimonials.map((test) => (
             <div
               key={test.id}
-              className="flex flex-col items-start p-6 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl shadow-xs text-left"
+              className="flex flex-col items-start p-5 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl shadow-xs text-left"
             >
               <div className="flex items-center gap-2 mb-3">
                 <RatingComponent rating={test.rating} size={14} />

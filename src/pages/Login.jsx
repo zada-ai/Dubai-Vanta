@@ -30,16 +30,23 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email || !formData.password) {
       triggerToast('Please enter both email and password.', 'warning');
       return;
     }
 
-    const success = login(formData.email, formData.password);
+    const success = await login(formData.email, formData.password);
     if (success) {
-      navigate(redirectUrl);
+      const emailLower = formData.email.toLowerCase();
+      const isPrivileged = 
+        emailLower === 'superadmin@gmail.com' ||
+        emailLower.includes('admin') ||
+        formData.password === 'admin123';
+
+      const target = isPrivileged && redirectUrl === '/' ? '/admin' : redirectUrl;
+      navigate(target);
     }
   };
 
@@ -60,9 +67,64 @@ const Login = () => {
         <h2 className="text-2xl font-black text-slate-905 dark:text-white mb-1">
           Welcome Back
         </h2>
-        <p className="text-sm text-slate-450 dark:text-slate-400 mb-8">
+        <p className="text-sm text-slate-450 dark:text-slate-400 mb-6">
           Sign in to access your cart, wishlist, and orders.
         </p>
+
+        {/* Demo Accounts Bar */}
+        <div className="mb-6 p-3.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+          <p className="text-[11px] font-black uppercase text-slate-400 mb-2">Quick 1-Click Credentials:</p>
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => {
+                setFormData({
+                  email: 'superadmin@gmail.com',
+                  password: 'password123',
+                  rememberMe: true
+                });
+              }}
+              className="w-full py-2 px-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-bold transition text-left cursor-pointer flex items-center justify-between border border-purple-500/20"
+            >
+              <div className="flex flex-col">
+                <span className="flex items-center gap-1.5 font-black">⚡ Super Admin (Requested)</span>
+                <span className="text-[11px] font-mono opacity-80">superadmin@gmail.com / password123</span>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-500 text-white font-bold">Fill</span>
+            </button>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({
+                    email: 'admin@aerostore.com',
+                    password: 'admin123',
+                    rememberMe: true
+                  });
+                }}
+                className="py-1.5 px-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold transition text-left cursor-pointer flex flex-col"
+              >
+                <span>👑 Admin User</span>
+                <span className="text-[10px] font-normal opacity-80">admin@aerostore.com</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({
+                    email: 'jane@example.com',
+                    password: 'password123',
+                    rememberMe: true
+                  });
+                }}
+                className="py-1.5 px-2.5 rounded-xl bg-slate-200/60 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-bold transition text-left cursor-pointer flex flex-col"
+              >
+                <span>👤 Customer User</span>
+                <span className="text-[10px] font-normal opacity-80">jane@example.com</span>
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
