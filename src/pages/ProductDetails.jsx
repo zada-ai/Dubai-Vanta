@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { products } from '../data/mockData';
+import { products as initialProducts } from '../data/mockData';
 import RatingComponent from '../components/RatingComponent';
 import Breadcrumb from '../components/Breadcrumb';
 import ProductCard from '../components/ProductCard';
@@ -20,7 +20,8 @@ import {
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, wishlist, toggleWishlist, triggerToast } = useApp();
+  const { addToCart, wishlist, toggleWishlist, triggerToast, productsList } = useApp();
+  const products = productsList || initialProducts;
 
   // Find current product
   const product = products.find((p) => p.id === Number(id));
@@ -186,10 +187,10 @@ const ProductDetails = () => {
             {isDiscounted ? (
               <>
                 <span className="text-2xl md:text-3xl font-black text-slate-950 dark:text-white">
-                  ${discountPrice.toFixed(2)}
+                  AED {discountPrice.toFixed(2)}
                 </span>
                 <span className="text-sm font-semibold text-slate-400 line-through">
-                  ${product.price.toFixed(2)}
+                  AED {product.price.toFixed(2)}
                 </span>
                 <span className="text-xs font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/20 px-2.5 py-1 rounded-full">
                   Save {product.discountPercentage}%
@@ -197,7 +198,7 @@ const ProductDetails = () => {
               </>
             ) : (
               <span className="text-2xl md:text-3xl font-black text-slate-950 dark:text-white">
-                ${product.price.toFixed(2)}
+                AED {product.price.toFixed(2)}
               </span>
             )}
           </div>

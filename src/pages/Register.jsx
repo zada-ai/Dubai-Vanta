@@ -29,7 +29,7 @@ const Register = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validations
@@ -48,7 +48,7 @@ const Register = () => {
       return;
     }
 
-    const success = register(formData.fullName, formData.email, formData.phone, formData.password);
+    const success = await register(formData.fullName, formData.email, formData.phone, formData.password);
     if (success) {
       navigate(redirectUrl);
     }

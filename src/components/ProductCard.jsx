@@ -26,7 +26,7 @@ const ProductCard = ({ product }) => {
 
         {/* Discount Badge */}
         {isDiscounted && (
-          <span className="absolute top-3 left-3 bg-rose-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm z-10">
+          <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-rose-500 text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-1 rounded-full shadow-sm z-10">
             -{product.discountPercentage}%
           </span>
         )}
@@ -34,7 +34,7 @@ const ProductCard = ({ product }) => {
         {/* Wishlist Button */}
         <button
           onClick={() => toggleWishlist(product)}
-          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs text-slate-600 dark:text-slate-300 hover:text-rose-500 dark:hover:text-rose-500 shadow-xs hover:shadow-md transition-all duration-200 z-10 cursor-pointer"
+          className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs text-slate-600 dark:text-slate-300 hover:text-rose-500 dark:hover:text-rose-500 shadow-xs hover:shadow-md transition-all duration-200 z-10 cursor-pointer"
           aria-label="Add to wishlist"
         >
           {isWishlisted ? (
@@ -46,14 +46,14 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Content Section */}
-      <div className="p-4 flex flex-col flex-grow">
+      <div className="p-3 sm:p-4 flex flex-col flex-grow">
         {/* Brand & Category */}
-        <div className="flex items-center gap-1.5 mb-1">
-          <span className="text-[10px] tracking-wider uppercase font-semibold text-primary-600 dark:text-primary-400">
+        <div className="flex items-center gap-1.5 mb-1 min-w-0">
+          <span className="text-[10px] tracking-wider uppercase font-semibold text-primary-600 dark:text-primary-400 truncate">
             {product.brand}
           </span>
           <span className="text-[10px] text-slate-400">•</span>
-          <span className="text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500">
+          <span className="text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500 truncate">
             {product.category}
           </span>
         </div>
@@ -75,15 +75,15 @@ const ProductCard = ({ product }) => {
             {isDiscounted ? (
               <div className="flex flex-col">
                 <span className="text-xs text-slate-400 dark:text-slate-500 line-through leading-none">
-                  ${product.price.toFixed(2)}
+                  AED {product.price.toFixed(2)}
                 </span>
                 <span className="text-base font-extrabold text-slate-900 dark:text-white leading-none mt-1">
-                  ${discountPrice.toFixed(2)}
+                  AED {discountPrice.toFixed(2)}
                 </span>
               </div>
             ) : (
               <span className="text-base font-extrabold text-slate-900 dark:text-white">
-                ${product.price.toFixed(2)}
+                AED {product.price.toFixed(2)}
               </span>
             )}
           </div>

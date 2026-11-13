@@ -120,7 +120,7 @@ const Cart = () => {
                     <div className="col-span-1 sm:col-span-2 text-left sm:text-center flex sm:flex-col justify-between sm:justify-center items-center">
                       <span className="sm:hidden text-xs text-slate-400 font-bold uppercase">Price</span>
                       <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                        ${itemPrice.toFixed(2)}
+                        AED {itemPrice.toFixed(2)}
                       </span>
                     </div>
 
@@ -151,7 +151,7 @@ const Cart = () => {
                       <span className="sm:hidden text-xs text-slate-400 font-bold uppercase">Total</span>
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-extrabold text-slate-900 dark:text-white">
-                          ${(itemPrice * item.quantity).toFixed(2)}
+                          AED {(itemPrice * item.quantity).toFixed(2)}
                         </span>
                         <button
                           onClick={() => removeFromCart(item.cartItemId)}
@@ -209,7 +209,7 @@ const Cart = () => {
             <div className="flex flex-col gap-4 border-b border-slate-100 dark:border-slate-800 pb-5 mb-5 text-sm font-semibold text-slate-650 dark:text-slate-400">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span className="text-slate-900 dark:text-white">${getCartSubtotal().toFixed(2)}</span>
+                <span className="text-slate-900 dark:text-white">AED {getCartSubtotal().toFixed(2)}</span>
               </div>
 
               {/* Active coupon banner */}
@@ -226,7 +226,7 @@ const Cart = () => {
                       <RiCloseLine className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <span>-${getCartDiscount().toFixed(2)}</span>
+                  <span>-AED {getCartDiscount().toFixed(2)}</span>
                 </div>
               ) : null}
 
@@ -236,14 +236,14 @@ const Cart = () => {
                   {getShippingCost() === 0 ? (
                     <span className="text-emerald-600 dark:text-emerald-500 font-bold uppercase text-xs">Free</span>
                   ) : (
-                    `$${getShippingCost().toFixed(2)}`
+                    `AED ${getShippingCost().toFixed(2)}`
                   )}
                 </span>
               </div>
 
               <div className="flex justify-between">
                 <span>Tax (8%)</span>
-                <span className="text-slate-900 dark:text-white">${getTaxAmount().toFixed(2)}</span>
+                <span className="text-slate-900 dark:text-white">AED {getTaxAmount().toFixed(2)}</span>
               </div>
             </div>
 
@@ -251,7 +251,7 @@ const Cart = () => {
             <div className="flex justify-between items-baseline mb-6">
               <span className="font-bold text-slate-800 dark:text-slate-200">Total Amount</span>
               <span className="text-xl md:text-2xl font-black text-slate-950 dark:text-white">
-                ${getCartTotal().toFixed(2)}
+                AED {getCartTotal().toFixed(2)}
               </span>
             </div>
 
