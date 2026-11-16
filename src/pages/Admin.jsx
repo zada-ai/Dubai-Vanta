@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import FeatureIcon, { PRESET_ICONS } from '../components/FeatureIcon';
-import { categories } from '../data/mockData';
 import {
   RiDashboardLine,
   RiShoppingBag3Line,
@@ -36,7 +35,16 @@ import {
   RiSparklingLine,
   RiEyeLine,
   RiCheckLine,
-  RiFilter3Line
+  RiFilter3Line,
+  RiPriceTag3Line,
+  RiLinksLine,
+  RiCodeSSlashLine,
+  RiShareLine,
+  RiSmartphoneLine,
+  RiFileCopyLine,
+  RiExternalLinkLine,
+  RiPagesLine,
+  RiFileTextLine
 } from 'react-icons/ri';
 
 const Admin = () => {
@@ -63,18 +71,77 @@ const Admin = () => {
     uploadHeroImage,
     seoSettings,
     updateSeoSettings,
+    updatePageSeo,
+    uploadOgImage,
+    promoBanner,
+    updatePromoBanner,
+    uploadPromoImage,
+    resetPromoBanner,
     features,
     updateFeature,
     resetFeatures,
-    uploadFeatureIcon
+    uploadFeatureIcon,
+    categories,
+    addCategory,
+    deleteCategory,
+    uploadCategoryImage
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'hero' | 'features' | 'seo' | 'products' | 'orders'
   const [productSearch, setProductSearch] = useState('');
   const [orderFilter, setOrderFilter] = useState('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [newCatForm, setNewCatForm] = useState({
+    name: '',
+    image: '',
+    description: ''
+  });
+  const [isUploadingCatImg, setIsUploadingCatImg] = useState(false);
+  const catImgInputRef = useRef(null);
+
+  const handleCatImgUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      triggerToast('Category image must be under 8MB', 'warning');
+      return;
+    }
+    setIsUploadingCatImg(true);
+    try {
+      const url = await uploadCategoryImage(file);
+      if (url) {
+        setNewCatForm((prev) => ({ ...prev, image: url }));
+      }
+    } catch (err) {
+      triggerToast('Upload failed: ' + err.message, 'error');
+    } finally {
+      setIsUploadingCatImg(false);
+      if (catImgInputRef.current) catImgInputRef.current.value = '';
+    }
+  };
+
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const fileInputRef = useRef(null);
+
+  const handleCreateCategory = async (e) => {
+    e.preventDefault();
+    if (!newCatForm.name.trim()) {
+      triggerToast('Category name is required', 'warning');
+      return;
+    }
+    const created = await addCategory(newCatForm);
+    if (created) {
+      if (isAddModalOpen) {
+        setNewProd((prev) => ({ ...prev, category: created.id }));
+      }
+      if (isEditModalOpen && editingProduct) {
+        setEditingProduct((prev) => ({ ...prev, category: created.id }));
+      }
+      setNewCatForm({ name: '', image: '', description: '' });
+      setIsCategoryModalOpen(false);
+    }
+  };
 
   // Features Bar Editing State
   const [selectedFeatureId, setSelectedFeatureId] = useState(1);
@@ -97,12 +164,43 @@ const Admin = () => {
   const editImgInputRef = useRef(null);
   const addImgInputRef = useRef(null);
 
-  // SEO Editing State
-  const [localSeo, setLocalSeo] = useState({
+  // Promo Banner Editing State
+  const [editingPromo, setEditingPromo] = useState(null);
+  const [isUploadingPromoImg, setIsUploadingPromoImg] = useState(false);
+  const promoImgInputRef = useRef(null);
+
+  useEffect(() => {
+    if (promoBanner) {
+      setEditingPromo({ ...promoBanner });
+    }
+  }, [promoBanner]);
+
+  // Per-Page SEO & Global SEO State
+  const [activeSeoPage, setActiveSeoPage] = useState('home'); // 'home' | 'shop' | 'about' | 'contact' | 'faq' | 'global'
+  const [pageSeoForm, setPageSeoForm] = useState({
     metaTitle: '',
     metaDescription: '',
-    metaKeywords: ''
+    metaKeywords: '',
+    canonicalUrl: '',
+    ogTitle: '',
+    ogDescription: '',
+    ogImageUrl: ''
   });
+  const [globalSeoForm, setGlobalSeoForm] = useState({
+    metaTitle: '',
+    metaDescription: '',
+    metaKeywords: '',
+    robotsDirective: 'index, follow',
+    robotsTxt: '',
+    schemaOrgName: '',
+    schemaPhone: '',
+    schemaEmail: '',
+    schemaAddressLocality: 'Dubai',
+    schemaAddressCountry: 'AE',
+    schemaCurrency: 'AED'
+  });
+  const [isUploadingOgImg, setIsUploadingOgImg] = useState(false);
+  const ogImgInputRef = useRef(null);
 
   // Sync editing slide when heroSlides or selectedSlideIdx changes
   useEffect(() => {
@@ -112,16 +210,79 @@ const Admin = () => {
     }
   }, [heroSlides, selectedSlideIdx]);
 
-  // Sync local SEO when seoSettings changes
+  // Sync SEO form when activeSeoPage or seoSettings changes
   useEffect(() => {
-    if (seoSettings) {
-      setLocalSeo({
+    if (!seoSettings) return;
+    if (activeSeoPage === 'global') {
+      setGlobalSeoForm({
         metaTitle: seoSettings.metaTitle || '',
         metaDescription: seoSettings.metaDescription || '',
-        metaKeywords: seoSettings.metaKeywords || ''
+        metaKeywords: seoSettings.metaKeywords || '',
+        robotsDirective: seoSettings.robotsDirective || 'index, follow',
+        robotsTxt: seoSettings.robotsTxt || '',
+        schemaOrgName: seoSettings.schemaOrgName || '',
+        schemaPhone: seoSettings.schemaPhone || '',
+        schemaEmail: seoSettings.schemaEmail || '',
+        schemaAddressLocality: seoSettings.schemaAddressLocality || 'Dubai',
+        schemaAddressCountry: seoSettings.schemaAddressCountry || 'AE',
+        schemaCurrency: seoSettings.schemaCurrency || 'AED'
+      });
+    } else {
+      const pageData = seoSettings.pages?.[activeSeoPage] || {};
+      setPageSeoForm({
+        metaTitle: pageData.metaTitle || '',
+        metaDescription: pageData.metaDescription || '',
+        metaKeywords: pageData.metaKeywords || '',
+        canonicalUrl: pageData.canonicalUrl || '',
+        ogTitle: pageData.ogTitle || pageData.metaTitle || '',
+        ogDescription: pageData.ogDescription || pageData.metaDescription || '',
+        ogImageUrl: pageData.ogImageUrl || seoSettings.ogImageUrl || ''
       });
     }
-  }, [seoSettings]);
+  }, [activeSeoPage, seoSettings]);
+
+  // Super Admin: Database Users & Role Management
+  const [dbUsers, setDbUsers] = useState([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
+  const fetchUsers = async () => {
+    setIsLoadingUsers(true);
+    try {
+      const res = await fetch('/api/auth/users');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.users)) {
+        setDbUsers(data.users);
+      }
+    } catch (_) {}
+    finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'users' || user?.role === 'superadmin') {
+      fetchUsers();
+    }
+  }, [activeTab, user?.role]);
+
+  const handleChangeRole = async (userId, newRole) => {
+    try {
+      const res = await fetch(`/api/auth/users/${userId}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast(`User role updated to ${newRole}!`, 'success');
+        fetchUsers();
+      } else {
+        triggerToast(data.message || 'Failed to update role', 'error');
+      }
+    } catch (err) {
+      triggerToast('Error: ' + err.message, 'error');
+    }
+  };
 
   // Sync editing feature when features or selectedFeatureId changes
   useEffect(() => {
@@ -212,9 +373,64 @@ const Admin = () => {
     setSelectedSlideIdx(0);
   };
 
-  const handleSaveSeo = (e) => {
+  // Promo Banner Handlers
+  const handlePromoImgChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      triggerToast('Banner image must be under 8MB', 'warning');
+      return;
+    }
+    setIsUploadingPromoImg(true);
+    try {
+      const url = await uploadPromoImage(file);
+      if (url && editingPromo) {
+        setEditingPromo((prev) => ({ ...prev, image: url }));
+      }
+    } catch (err) {
+      triggerToast('Promo image upload failed: ' + err.message, 'error');
+    } finally {
+      setIsUploadingPromoImg(false);
+      if (promoImgInputRef.current) promoImgInputRef.current.value = '';
+    }
+  };
+
+  const handleSavePromoBanner = (e) => {
     e.preventDefault();
-    updateSeoSettings(localSeo);
+    if (!editingPromo) return;
+    updatePromoBanner(editingPromo);
+  };
+
+  // SEO Handlers
+  const handleSavePageSeo = (e) => {
+    e.preventDefault();
+    updatePageSeo(activeSeoPage, pageSeoForm);
+  };
+
+  const handleSaveGlobalSeo = (e) => {
+    e.preventDefault();
+    updateSeoSettings(globalSeoForm);
+  };
+
+  const handleOgImgUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      triggerToast('Image file size must be under 8MB', 'warning');
+      return;
+    }
+    setIsUploadingOgImg(true);
+    try {
+      const url = await uploadOgImage(file);
+      if (url) {
+        setPageSeoForm((prev) => ({ ...prev, ogImageUrl: url }));
+      }
+    } catch (err) {
+      triggerToast('OG image upload failed: ' + err.message, 'error');
+    } finally {
+      setIsUploadingOgImg(false);
+      if (ogImgInputRef.current) ogImgInputRef.current.value = '';
+    }
   };
 
   // New product form state
@@ -394,10 +610,8 @@ const Admin = () => {
       discountPrice: discountNum,
       stock: parseInt(newProd.stock) || 10,
       description: newProd.description || 'Premium quality product curated for AeroStore customers.',
-      images: [
-        newProd.image ||
-          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80'
-      ],
+      image: newProd.image || '',
+      images: (newProd.image && newProd.image.trim()) ? [newProd.image.trim()] : [],
       colors: ['#000000', '#FFFFFF'],
       sizes: ['Standard'],
       isFeatured: !!newProd.isFeatured,
@@ -676,6 +890,16 @@ const Admin = () => {
           <RiShieldCheckLine className="w-4 h-4" /> Features Bar ({features?.length || 4})
         </button>
         <button
+          onClick={() => setActiveTab('promo')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+            activeTab === 'promo'
+              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <RiPriceTag3Line className="w-4 h-4 text-violet-500" /> Promo Banner
+        </button>
+        <button
           onClick={() => setActiveTab('seo')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
             activeTab === 'seo'
@@ -705,6 +929,18 @@ const Admin = () => {
         >
           <RiFileList3Line className="w-4 h-4" /> Orders ({totalOrdersCount})
         </button>
+        {user?.role === 'superadmin' && (
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+              activeTab === 'users'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30'
+            }`}
+          >
+            <RiShieldCheckLine className="w-4 h-4" /> Users & Roles ({dbUsers.length})
+          </button>
+        )}
       </div>
 
       {/* TAB CONTENT: OVERVIEW */}
@@ -1443,153 +1679,287 @@ const Admin = () => {
         </div>
       )}
 
-      {/* TAB CONTENT: SEO & META TAGS */}
-      {activeTab === 'seo' && (
+      {/* TAB CONTENT: PROMOTIONAL OFFER BANNER */}
+      {activeTab === 'promo' && editingPromo && (
         <div className="space-y-6 text-left">
-          {/* Top Info */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <RiGlobalLine className="w-4 h-4" />
-              </span>
-              <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                Search Engine Optimization (SEO) & Meta Data
-              </h3>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Yahan se aap website ka <strong>Meta Title</strong>, <strong>Meta Description</strong> aur <strong>Keywords</strong> live change kar sakte hain. Changes foran browser tab title aur DOM tags mein reflect honge aur backend par save ho jayenge.
-            </p>
-          </div>
-
-          {/* Live Google Search Preview */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <RiGoogleFill className="w-5 h-5 text-amber-500" />
-                <span className="text-xs font-black uppercase tracking-wider text-slate-400">
-                  Live Google SERP Search Snippet Preview
+          {/* Top Info & Actions */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="p-1.5 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                  <RiPriceTag3Line className="w-4 h-4" />
                 </span>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                  Homepage Promotional Offer Banner
+                </h3>
               </div>
-              <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full font-bold">
-                Live Google Preview
-              </span>
-            </div>
-
-            {/* Google Result Card Simulation */}
-            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 max-w-2xl space-y-1.5">
-              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <span className="w-4 h-4 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[10px] flex items-center justify-center font-bold">
-                  A
-                </span>
-                <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">https://aerostore.com</span>
-                <span>›</span>
-                <span className="text-xs text-slate-400">home</span>
-              </div>
-              <h4 className="text-lg sm:text-xl font-normal text-[#1a0dab] dark:text-[#8ab4f8] hover:underline cursor-pointer leading-snug line-clamp-1">
-                {localSeo.metaTitle || 'AeroStore - Handcrafted Luxury & Modern Essentials'}
-              </h4>
-              <p className="text-xs sm:text-sm text-[#4d5156] dark:text-[#bdc1c6] leading-relaxed line-clamp-2">
-                {localSeo.metaDescription || 'Discover handcrafted luxury and modern essentials. Experience pure acoustic bliss, designer furniture, and timeless apparel.'}
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Home page par display hone wale 20% discount promotional banner ko yahan se customize karein (Badge, Heading, Coupon Code, Button, Image upload aur Background gradient).
               </p>
             </div>
 
-            {/* Live Browser Tab Simulation */}
-            <div className="pt-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-2">
-                Live Browser Tab Appearance:
+            <button
+              type="button"
+              onClick={resetPromoBanner}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-2xl transition cursor-pointer self-start sm:self-auto"
+            >
+              <RiRefreshLine className="w-4 h-4" /> Reset to Defaults
+            </button>
+          </div>
+
+          {/* Live Preview of Promotional Banner matching Homepage exactly */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+                Live Store Appearance (Home Page Promotional Section)
               </span>
-              <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-slate-200 dark:bg-slate-800 rounded-t-xl border-t border-x border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 font-medium max-w-sm shadow-xs">
-                <span className="w-3.5 h-3.5 rounded-full bg-primary-600 flex items-center justify-center text-[8px] text-white font-bold">
-                  ⚡
-                </span>
-                <span className="truncate">{localSeo.metaTitle || 'AeroStore'}</span>
-                <RiCloseLine className="w-3.5 h-3.5 text-slate-400 ml-auto shrink-0" />
+              <div className="flex items-center gap-2">
+                {editingPromo.isVisible === false ? (
+                  <span className="text-[11px] font-mono text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded-full font-bold">
+                    ⚠️ Hidden on Homepage
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full font-bold">
+                    ✓ Active on Homepage
+                  </span>
+                )}
               </div>
+            </div>
+
+            {/* Rendered Live Banner */}
+            <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-r ${editingPromo.bgGradient || 'from-violet-600 to-indigo-850'} p-6 md:p-10 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8`}>
+              <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+              <div className="w-full md:w-3/5 text-left relative z-10 flex flex-col items-start">
+                {editingPromo.badge && (
+                  <span className="text-[10px] font-extrabold tracking-widest text-white bg-white/15 px-3 py-1 rounded-full uppercase mb-3">
+                    {editingPromo.badge}
+                  </span>
+                )}
+                <h2 className="text-xl md:text-3xl font-black leading-tight mb-3">
+                  {editingPromo.title || 'Enjoy 20% Off Your First Purchase'}
+                </h2>
+                <div className="text-xs text-slate-200 mb-5 leading-relaxed max-w-md">
+                  <span>{editingPromo.description}</span>
+                  {editingPromo.couponCode && (
+                    <span className="block mt-2">
+                      Use code <strong className="text-white bg-slate-950/45 px-2 py-0.5 rounded font-mono font-bold tracking-wider">{editingPromo.couponCode}</strong> during checkout.
+                    </span>
+                  )}
+                </div>
+                <div className="px-5 py-2.5 bg-white text-slate-900 text-xs font-bold rounded-full shadow-md flex items-center gap-2">
+                  {editingPromo.btnText || 'Claim Discount'}
+                  <RiArrowRightLine className="w-3.5 h-3.5 animate-pulse" />
+                </div>
+              </div>
+
+              {editingPromo.image && (
+                <div className="w-full md:w-2/5 flex justify-center relative">
+                  <div className="absolute inset-0 bg-white/5 rounded-full filter blur-2xl" />
+                  <img
+                    src={editingPromo.image}
+                    alt={editingPromo.imageAlt || editingPromo.title}
+                    className="max-h-[140px] md:max-h-[170px] max-w-full object-contain rounded-2xl drop-shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-500 z-10"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* SEO Form */}
-          <form onSubmit={handleSaveSeo} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
+          {/* Edit Form */}
+          <form onSubmit={handleSavePromoBanner} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <h4 className="text-base font-black text-slate-900 dark:text-white">
-                Edit Meta Tags & SEO Configuration
+                Customize Promo Banner Content & Design
               </h4>
               <button
                 type="submit"
-                className="flex items-center gap-1.5 px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                className="flex items-center gap-1.5 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
               >
-                <RiSaveLine className="w-4 h-4" /> Save SEO Settings
+                <RiSaveLine className="w-4 h-4" /> Save Banner Changes
               </button>
             </div>
 
-            <div className="space-y-5">
-              {/* Meta Title */}
+            {/* Visibility Toggle */}
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Meta Title *
-                  </label>
-                  <span className={`text-[11px] font-mono font-bold ${
-                    localSeo.metaTitle?.length > 60 ? 'text-amber-500' : 'text-emerald-500'
-                  }`}>
-                    {localSeo.metaTitle?.length || 0} / 60 chars (Recommended)
-                  </span>
+                <div className="text-sm font-bold text-slate-900 dark:text-white">
+                  Show Promotional Banner on Homepage
                 </div>
+                <p className="text-xs text-slate-400">
+                  Enable ya disable karein agar aap temporary tor par banner ko chupana chahte hain.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editingPromo.isVisible !== false}
+                  onChange={(e) => setEditingPromo({ ...editingPromo, isVisible: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Badge Text */}
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Top Pill Badge Text *
+                </label>
                 <input
                   type="text"
                   required
-                  value={localSeo.metaTitle}
-                  onChange={(e) => setLocalSeo({ ...localSeo, metaTitle: e.target.value })}
-                  placeholder="e.g. AeroStore - Handcrafted Luxury & Modern Essentials"
-                  className="w-full px-4 py-3 text-sm font-semibold rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                  value={editingPromo.badge || ''}
+                  onChange={(e) => setEditingPromo({ ...editingPromo, badge: e.target.value })}
+                  placeholder="e.g. LIMITED TIME OFFER"
+                  className="w-full px-4 py-2.5 text-sm font-bold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Yeh title browser tab aur Google Search results ke main blue header link par show hota hai.
-                </p>
               </div>
 
-              {/* Meta Description */}
+              {/* Coupon Code */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Meta Description *
-                  </label>
-                  <span className={`text-[11px] font-mono font-bold ${
-                    localSeo.metaDescription?.length > 160 ? 'text-amber-500' : 'text-emerald-500'
-                  }`}>
-                    {localSeo.metaDescription?.length || 0} / 160 chars (Recommended)
-                  </span>
-                </div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Coupon / Promo Code (e.g. WELCOME20)
+                </label>
+                <input
+                  type="text"
+                  value={editingPromo.couponCode || ''}
+                  onChange={(e) => setEditingPromo({ ...editingPromo, couponCode: e.target.value.toUpperCase() })}
+                  placeholder="e.g. WELCOME20"
+                  className="w-full px-4 py-2.5 text-sm font-mono font-bold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              {/* Main Headline */}
+              <div className="md:col-span-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Main Headline / Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingPromo.title || ''}
+                  onChange={(e) => setEditingPromo({ ...editingPromo, title: e.target.value })}
+                  placeholder="e.g. Enjoy 20% Off Your First Purchase"
+                  className="w-full px-4 py-2.5 text-sm font-black rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="md:col-span-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Description Text *
+                </label>
                 <textarea
-                  rows="4"
+                  rows="3"
                   required
-                  value={localSeo.metaDescription}
-                  onChange={(e) => setLocalSeo({ ...localSeo, metaDescription: e.target.value })}
-                  placeholder="e.g. Discover handcrafted luxury and modern essentials. Experience pure acoustic bliss, designer furniture, and timeless apparel."
-                  className="w-full px-4 py-3 text-sm rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                  value={editingPromo.description || ''}
+                  onChange={(e) => setEditingPromo({ ...editingPromo, description: e.target.value })}
+                  placeholder="e.g. Register your account today and use code WELCOME20 during checkout to unlock discount rates."
+                  className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Google search snippet aur WhatsApp/Facebook/Twitter par share karte waqt preview snippet yahan se generate hota hai.
-                </p>
               </div>
 
-              {/* Meta Keywords */}
+              {/* Button Text */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Meta Keywords (Comma separated)
-                  </label>
-                </div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Call-to-Action Button Label
+                </label>
                 <input
                   type="text"
-                  value={localSeo.metaKeywords}
-                  onChange={(e) => setLocalSeo({ ...localSeo, metaKeywords: e.target.value })}
-                  placeholder="e.g. ecommerce, electronics, dubai, luxury, audio, headphones"
-                  className="w-full px-4 py-3 text-sm rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                  value={editingPromo.btnText || ''}
+                  onChange={(e) => setEditingPromo({ ...editingPromo, btnText: e.target.value })}
+                  placeholder="e.g. Claim Discount"
+                  className="w-full px-4 py-2.5 text-sm font-bold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Search engines aur indexing bots ke liye relevant search keywords comma se separate karein.
-                </p>
+              </div>
+
+              {/* Button Target Link */}
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Button Target URL / Route
+                </label>
+                <input
+                  type="text"
+                  value={editingPromo.btnLink || ''}
+                  onChange={(e) => setEditingPromo({ ...editingPromo, btnLink: e.target.value })}
+                  placeholder="e.g. /shop or /product/1"
+                  className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              {/* Background Gradient Selection */}
+              <div className="md:col-span-2 space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Background Color Gradient
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                  {[
+                    { label: 'Violet Indigo', val: 'from-violet-600 to-indigo-850', preview: 'from-violet-600 to-indigo-850' },
+                    { label: 'Sunset Crimson', val: 'from-rose-600 to-amber-700', preview: 'from-rose-600 to-amber-700' },
+                    { label: 'Emerald Luxury', val: 'from-emerald-600 to-teal-900', preview: 'from-emerald-600 to-teal-900' },
+                    { label: 'Deep Cyan', val: 'from-blue-600 to-cyan-900', preview: 'from-blue-600 to-cyan-900' },
+                    { label: 'Royal Purple', val: 'from-fuchsia-700 to-indigo-950', preview: 'from-fuchsia-700 to-indigo-950' },
+                    { label: 'Obsidian Dark', val: 'from-slate-900 to-zinc-950', preview: 'from-slate-900 to-zinc-950' }
+                  ].map((grad) => (
+                    <button
+                      key={grad.val}
+                      type="button"
+                      onClick={() => setEditingPromo({ ...editingPromo, bgGradient: grad.val })}
+                      className={`h-11 rounded-xl bg-gradient-to-r ${grad.preview} text-white text-[11px] font-bold shadow-xs transition flex items-center justify-center cursor-pointer ${
+                        editingPromo.bgGradient === grad.val ? 'ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-slate-900' : 'opacity-85 hover:opacity-100'
+                      }`}
+                    >
+                      {grad.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Banner Graphic Image */}
+              <div className="md:col-span-2 space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Promotional Graphic Image (URL ya Computer se Upload)
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="url"
+                    value={editingPromo.image || ''}
+                    onChange={(e) => setEditingPromo({ ...editingPromo, image: e.target.value })}
+                    placeholder="https://images.unsplash.com/..."
+                    className="flex-1 px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                  />
+                  <input
+                    type="file"
+                    ref={promoImgInputRef}
+                    onChange={handlePromoImgChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    disabled={isUploadingPromoImg}
+                    onClick={() => promoImgInputRef.current?.click()}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold rounded-xl transition cursor-pointer shrink-0 disabled:opacity-50 shadow-xs"
+                  >
+                    <RiUploadCloud2Line className="w-4 h-4" />
+                    {isUploadingPromoImg ? 'Uploading...' : 'Upload Image'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Image Alt Text for SEO */}
+              <div className="md:col-span-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Image Alt Text (SEO Accessibility Requirement) *
+                </label>
+                <input
+                  type="text"
+                  value={editingPromo.imageAlt || ''}
+                  onChange={(e) => setEditingPromo({ ...editingPromo, imageAlt: e.target.value })}
+                  placeholder="e.g. Nike red shoe discount promotional graphic"
+                  className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                />
               </div>
             </div>
 
@@ -1598,10 +1968,492 @@ const Admin = () => {
                 type="submit"
                 className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-2xl shadow-sm transition cursor-pointer"
               >
-                <RiSaveLine className="w-4 h-4" /> Save SEO Settings
+                <RiSaveLine className="w-4 h-4" /> Save Promo Banner
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* TAB CONTENT: SEO & META TAGS SUITE */}
+      {activeTab === 'seo' && (
+        <div className="space-y-6 text-left">
+          {/* Top Info */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <RiGlobalLine className="w-4 h-4" />
+                </span>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                  Per-Page Search Engine Optimization (SEO) & Social Meta Suite
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                AeroStore ke har individual page (Home, Shop, About, Contact, FAQ) ka <strong>Meta Title</strong>, <strong>Meta Description</strong>, <strong>Keywords</strong>, <strong>Canonical URL</strong>, aur <strong>OpenGraph / Social Image</strong> yahan se manage karein. Changes live DOM aur browser tabs par dynamic apply hotay hain.
+              </p>
+            </div>
+          </div>
+
+          {/* Page Selector Tabs */}
+          <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+            {[
+              { key: 'home', label: 'Home Page (/)', path: '/' },
+              { key: 'shop', label: 'Shop Catalog (/shop)', path: '/shop' },
+              { key: 'about', label: 'About Us (/about)', path: '/about' },
+              { key: 'contact', label: 'Contact Us (/contact)', path: '/contact' },
+              { key: 'faq', label: 'FAQ (/faq)', path: '/faq' },
+              { key: 'global', label: '⚙️ Global, Robots & Sitemap', path: 'Technical SEO' }
+            ].map((page) => (
+              <button
+                key={page.key}
+                type="button"
+                onClick={() => setActiveSeoPage(page.key)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  activeSeoPage === page.key
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <span>{page.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* PAGE-SPECIFIC SEO FORM & PREVIEWS */}
+          {activeSeoPage !== 'global' && (
+            <div className="space-y-6">
+              {/* Dual Previews: Google SERP + WhatsApp / Social Card */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* 1. Google SERP Snippet Preview */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <RiGoogleFill className="w-5 h-5 text-amber-500" />
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+                        Google Search SERP Preview
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      {activeSeoPage.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="w-4 h-4 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[10px] flex items-center justify-center font-bold">
+                        A
+                      </span>
+                      <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                        {pageSeoForm.canonicalUrl || `https://aerostore.com${activeSeoPage === 'home' ? '/' : '/' + activeSeoPage}`}
+                      </span>
+                    </div>
+                    <h4 className="text-base sm:text-lg font-normal text-[#1a0dab] dark:text-[#8ab4f8] hover:underline cursor-pointer leading-snug line-clamp-1">
+                      {pageSeoForm.metaTitle || `${activeSeoPage.toUpperCase()} - AeroStore Dubai`}
+                    </h4>
+                    <p className="text-xs sm:text-sm text-[#4d5156] dark:text-[#bdc1c6] leading-relaxed line-clamp-2">
+                      {pageSeoForm.metaDescription || 'Experience pure acoustic bliss, designer furniture, and timeless apparel.'}
+                    </p>
+                  </div>
+
+                  <div className="pt-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Browser Tab Preview:
+                    </span>
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-t-lg border-t border-x border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 font-medium max-w-sm truncate shadow-2xs">
+                      <span className="w-3 h-3 rounded-full bg-primary-600 flex items-center justify-center text-[7px] text-white font-bold">⚡</span>
+                      <span className="truncate">{pageSeoForm.metaTitle || 'AeroStore'}</span>
+                      <RiCloseLine className="w-3 h-3 text-slate-400 ml-auto shrink-0" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. OpenGraph WhatsApp / Social Share Card Preview */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <RiShareLine className="w-5 h-5 text-indigo-500" />
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+                        Social Share & WhatsApp Card Preview
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                      OpenGraph
+                    </span>
+                  </div>
+
+                  <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+                    <div className="h-32 sm:h-36 bg-slate-200 dark:bg-slate-800 overflow-hidden relative">
+                      {pageSeoForm.ogImageUrl ? (
+                        <img
+                          src={pageSeoForm.ogImageUrl}
+                          alt="OpenGraph Social Thumbnail"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
+                          No Social Image Selected
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3.5 space-y-1">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                        AEROSTORE.COM
+                      </span>
+                      <h5 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
+                        {pageSeoForm.ogTitle || pageSeoForm.metaTitle || 'AeroStore Dubai'}
+                      </h5>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                        {pageSeoForm.ogDescription || pageSeoForm.metaDescription}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Page SEO Editing Form */}
+              <form onSubmit={handleSavePageSeo} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <RiPagesLine className="w-5 h-5 text-primary-600" />
+                    <h4 className="text-base font-black text-slate-900 dark:text-white">
+                      Edit SEO Tags for {activeSeoPage.toUpperCase()} Page
+                    </h4>
+                  </div>
+                  <button
+                    type="submit"
+                    className="flex items-center gap-1.5 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                  >
+                    <RiSaveLine className="w-4 h-4" /> Save {activeSeoPage.toUpperCase()} SEO
+                  </button>
+                </div>
+
+                <div className="space-y-5">
+                  {/* Meta Title */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        Meta Title (&lt;title&gt;) *
+                      </label>
+                      <span className={`text-[11px] font-mono font-bold ${
+                        pageSeoForm.metaTitle?.length > 60 ? 'text-amber-500' : 'text-emerald-500'
+                      }`}>
+                        {pageSeoForm.metaTitle?.length || 0} / 60 chars (Recommended)
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={pageSeoForm.metaTitle || ''}
+                      onChange={(e) => setPageSeoForm({ ...pageSeoForm, metaTitle: e.target.value })}
+                      placeholder="e.g. Shop Luxury Collections | AeroStore Dubai"
+                      className="w-full px-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+
+                  {/* Meta Description */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        Meta Description (&lt;meta name="description"&gt;) *
+                      </label>
+                      <span className={`text-[11px] font-mono font-bold ${
+                        pageSeoForm.metaDescription?.length > 160 ? 'text-amber-500' : 'text-emerald-500'
+                      }`}>
+                        {pageSeoForm.metaDescription?.length || 0} / 160 chars (Recommended)
+                      </span>
+                    </div>
+                    <textarea
+                      rows="3"
+                      required
+                      value={pageSeoForm.metaDescription || ''}
+                      onChange={(e) => setPageSeoForm({ ...pageSeoForm, metaDescription: e.target.value })}
+                      placeholder="e.g. Explore our complete catalogue of premium headphones, smart watches, luxury fashion, and designer living essentials."
+                      className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+
+                  {/* Meta Keywords & Canonical URL */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                        Meta Keywords (Comma separated)
+                      </label>
+                      <input
+                        type="text"
+                        value={pageSeoForm.metaKeywords || ''}
+                        onChange={(e) => setPageSeoForm({ ...pageSeoForm, metaKeywords: e.target.value })}
+                        placeholder="e.g. online shopping dubai, buy electronics uae"
+                        className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                        Canonical URL (&lt;link rel="canonical"&gt;)
+                      </label>
+                      <input
+                        type="url"
+                        value={pageSeoForm.canonicalUrl || ''}
+                        onChange={(e) => setPageSeoForm({ ...pageSeoForm, canonicalUrl: e.target.value })}
+                        placeholder="https://aerostore.com/shop"
+                        className="w-full px-4 py-2.5 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* OpenGraph Social Meta Tags */}
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-400 block">
+                      OpenGraph Social Sharing Customization (og:title, og:desc, og:image)
+                    </span>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                          Social Title (og:title)
+                        </label>
+                        <input
+                          type="text"
+                          value={pageSeoForm.ogTitle || ''}
+                          onChange={(e) => setPageSeoForm({ ...pageSeoForm, ogTitle: e.target.value })}
+                          placeholder="Defaults to Meta Title if blank"
+                          className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                          Social Description (og:description)
+                        </label>
+                        <input
+                          type="text"
+                          value={pageSeoForm.ogDescription || ''}
+                          onChange={(e) => setPageSeoForm({ ...pageSeoForm, ogDescription: e.target.value })}
+                          placeholder="Defaults to Meta Description if blank"
+                          className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                        Social Share Thumbnail Image (og:image)
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="url"
+                          value={pageSeoForm.ogImageUrl || ''}
+                          onChange={(e) => setPageSeoForm({ ...pageSeoForm, ogImageUrl: e.target.value })}
+                          placeholder="https://images.unsplash.com/..."
+                          className="flex-1 px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                        />
+                        <input
+                          type="file"
+                          ref={ogImgInputRef}
+                          onChange={handleOgImgUpload}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          disabled={isUploadingOgImg}
+                          onClick={() => ogImgInputRef.current?.click()}
+                          className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold rounded-xl transition cursor-pointer shrink-0 disabled:opacity-50 shadow-xs"
+                        >
+                          <RiUploadCloud2Line className="w-4 h-4" />
+                          {isUploadingOgImg ? 'Uploading...' : 'Upload Image'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="submit"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-2xl shadow-sm transition cursor-pointer"
+                  >
+                    <RiSaveLine className="w-4 h-4" /> Save {activeSeoPage.toUpperCase()} SEO
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* GLOBAL TECHNICAL SEO, ROBOTS.TXT & SITEMAP.XML */}
+          {activeSeoPage === 'global' && (
+            <div className="space-y-6">
+              <form onSubmit={handleSaveGlobalSeo} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <RiGlobalLine className="w-5 h-5 text-emerald-600" />
+                    <h4 className="text-base font-black text-slate-900 dark:text-white">
+                      Global Search Engine & Technical SEO Configuration
+                    </h4>
+                  </div>
+                  <button
+                    type="submit"
+                    className="flex items-center gap-1.5 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                  >
+                    <RiSaveLine className="w-4 h-4" /> Save Technical SEO
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Organization / Brand Name (Schema.org)
+                    </label>
+                    <input
+                      type="text"
+                      value={globalSeoForm.schemaOrgName || ''}
+                      onChange={(e) => setGlobalSeoForm({ ...globalSeoForm, schemaOrgName: e.target.value })}
+                      placeholder="e.g. AeroStore UAE"
+                      className="w-full px-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Search Engine Robots Directive (&lt;meta name="robots"&gt;)
+                    </label>
+                    <select
+                      value={globalSeoForm.robotsDirective || 'index, follow'}
+                      onChange={(e) => setGlobalSeoForm({ ...globalSeoForm, robotsDirective: e.target.value })}
+                      className="w-full px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500 cursor-pointer"
+                    >
+                      <option value="index, follow">index, follow (Default - Allow full Google indexing)</option>
+                      <option value="noindex, follow">noindex, follow (Hide from search, follow links)</option>
+                      <option value="noindex, nofollow">noindex, nofollow (Complete privacy blocking)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Concierge Support Phone (Schema)
+                    </label>
+                    <input
+                      type="text"
+                      value={globalSeoForm.schemaPhone || ''}
+                      onChange={(e) => setGlobalSeoForm({ ...globalSeoForm, schemaPhone: e.target.value })}
+                      placeholder="+971 4 123 4567"
+                      className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Support Email (Schema)
+                    </label>
+                    <input
+                      type="email"
+                      value={globalSeoForm.schemaEmail || ''}
+                      onChange={(e) => setGlobalSeoForm({ ...globalSeoForm, schemaEmail: e.target.value })}
+                      placeholder="support@aerostore.com"
+                      className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Robots.txt Live Editor */}
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <RiFileTextLine className="w-4 h-4 text-primary-600" />
+                        Live robots.txt Configuration
+                      </span>
+                      <p className="text-[11px] text-slate-400">
+                        Bots aur crawlers ke liye rules define karein.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(globalSeoForm.robotsTxt || seoSettings.robotsTxt);
+                        triggerToast('robots.txt copied to clipboard!', 'info');
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition cursor-pointer"
+                    >
+                      <RiFileCopyLine className="w-3.5 h-3.5" /> Copy robots.txt
+                    </button>
+                  </div>
+
+                  <textarea
+                    rows="6"
+                    value={globalSeoForm.robotsTxt || ''}
+                    onChange={(e) => setGlobalSeoForm({ ...globalSeoForm, robotsTxt: e.target.value })}
+                    className="w-full p-4 font-mono text-xs rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950 text-emerald-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+
+                {/* Sitemap.xml Live Inspector */}
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <RiCodeSSlashLine className="w-4 h-4 text-emerald-600" />
+                        Dynamic XML Sitemap (sitemap.xml)
+                      </span>
+                      <p className="text-[11px] text-slate-400">
+                        All application routes, products, categories, change frequencies, and priorities automatically indexed.
+                      </p>
+                    </div>
+                    <a
+                      href="http://localhost:5000/sitemap.xml"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-xl hover:bg-emerald-500/20 transition"
+                    >
+                      <RiExternalLinkLine className="w-3.5 h-3.5" /> Open /sitemap.xml
+                    </a>
+                  </div>
+
+                  <pre className="p-4 rounded-2xl bg-slate-950 text-slate-300 font-mono text-[11px] overflow-x-auto border border-slate-800 max-h-56">
+{`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://aerostore.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://aerostore.com/shop</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://aerostore.com/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://aerostore.com/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://aerostore.com/faq</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <!-- Plus all dynamic store products & categories -->
+</urlset>`}
+                  </pre>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="submit"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-2xl shadow-sm transition cursor-pointer"
+                  >
+                    <RiSaveLine className="w-4 h-4" /> Save Technical SEO
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
       )}
 
@@ -1625,12 +2477,20 @@ const Admin = () => {
                 </p>
               </div>
 
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs rounded-2xl hover:opacity-90 transition cursor-pointer shrink-0"
-              >
-                <RiAddLine className="w-4 h-4" /> Add New Product
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setIsCategoryModalOpen(true)}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold text-xs rounded-2xl hover:bg-primary-500/20 transition cursor-pointer border border-primary-500/20"
+                >
+                  <RiAddLine className="w-4 h-4" /> Add Category
+                </button>
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs rounded-2xl hover:opacity-90 transition cursor-pointer shadow-xs"
+                >
+                  <RiAddLine className="w-4 h-4" /> Add New Product
+                </button>
+              </div>
             </div>
 
             {/* Filter Pills */}
@@ -1732,11 +2592,17 @@ const Admin = () => {
                       <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
-                            <img
-                              src={p.images?.[0] || 'https://via.placeholder.com/80'}
-                              alt={p.name}
-                              className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-                            />
+                            {p.image || p.images?.[0] ? (
+                              <img
+                                src={p.image || p.images[0]}
+                                alt={p.name}
+                                className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 shrink-0 text-slate-400">
+                                <RiShoppingBag3Line className="w-5 h-5 opacity-40" />
+                              </div>
+                            )}
                             <div className="min-w-0">
                               <p className="font-bold text-slate-900 dark:text-white leading-tight line-clamp-1">
                                 {p.name}
@@ -1897,14 +2763,28 @@ const Admin = () => {
                       <span className="font-mono font-bold text-slate-900 dark:text-white">{ord.orderId}</span>
                       <span className="text-xs text-slate-400">• {ord.date}</span>
                       {getStatusBadge(ord.status)}
+                      {((typeof ord.paymentMethod === 'string' && ord.paymentMethod.toLowerCase().includes('cash')) || 
+                        (typeof ord.paymentMethod === 'object' && ord.paymentMethod?.method?.toLowerCase().includes('cash'))) ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          💵 Cash on Delivery
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                          💳 Card Payment
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-slate-500">
                       Customer:{' '}
                       <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        {ord.shippingDetails
-                          ? `${ord.shippingDetails.firstName} ${ord.shippingDetails.lastName} (${ord.shippingDetails.email || 'N/A'})`
-                          : 'Customer'}
+                        {ord.customerName || 
+                         (ord.shippingDetails 
+                           ? (ord.shippingDetails.fullName || `${ord.shippingDetails.firstName || ''} ${ord.shippingDetails.lastName || ''}`.trim() || ord.shippingDetails.email || 'Customer') 
+                           : 'Customer')}
                       </span>
+                      {ord.shippingDetails?.phone && (
+                        <span className="text-slate-400 ml-2 font-mono">({ord.shippingDetails.phone})</span>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-400">
                       {ord.items?.map((it, idx) => (
@@ -1939,6 +2819,95 @@ const Admin = () => {
                 </div>
               ))
             )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB CONTENT: USERS & ROLES (SUPER ADMIN ONLY) */}
+      {activeTab === 'users' && user?.role === 'superadmin' && (
+        <div className="space-y-6 text-left">
+          <div className="bg-white dark:bg-slate-900 border border-purple-500/20 rounded-3xl p-6 sm:p-7 shadow-xs">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20">
+                  ⚡ Super Admin Access Only
+                </span>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                  Database Users & Roles Management
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Database ke sabhi registered users yahan show hotay hain. Super Admin kisi bhi user ka role change kar sakta hai.
+                </p>
+              </div>
+              <button
+                onClick={fetchUsers}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold transition cursor-pointer"
+              >
+                <RiRefreshLine className="w-3.5 h-3.5" /> Refresh Users
+              </button>
+            </div>
+
+            {/* Users Table */}
+            <div className="overflow-x-auto mt-4">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-black uppercase text-slate-400">
+                    <th className="py-3 px-4">User</th>
+                    <th className="py-3 px-4">Email</th>
+                    <th className="py-3 px-4">Phone</th>
+                    <th className="py-3 px-4">Current Role</th>
+                    <th className="py-3 px-4 text-right">Assign Role</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                  {dbUsers.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}
+                            alt={u.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                          <div>
+                            <span className="font-bold text-slate-900 dark:text-white block">{u.name}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">User #{u.id}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-300">
+                        {u.email}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-500">
+                        {u.phone || 'N/A'}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                          u.role === 'superadmin'
+                            ? 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20'
+                            : u.role === 'admin'
+                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        }`}>
+                          {u.role === 'superadmin' ? '⚡ Super Admin' : u.role === 'admin' ? '👑 Admin' : '👤 Customer'}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <select
+                          value={u.role}
+                          onChange={(e) => handleChangeRole(u.id, e.target.value)}
+                          className="text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-purple-500 cursor-pointer"
+                        >
+                          <option value="superadmin">⚡ Super Admin</option>
+                          <option value="admin">👑 Admin</option>
+                          <option value="customer">👤 Customer</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -1989,19 +2958,37 @@ const Admin = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                    Category *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      Category *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCategoryModalOpen(true)}
+                      className="text-[11px] font-bold text-primary-600 hover:text-primary-700 dark:text-primary-400 flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <RiAddLine className="w-3.5 h-3.5" /> + Add Category
+                    </button>
+                  </div>
                   <select
                     value={newProd.category}
-                    onChange={(e) => setNewProd({ ...newProd, category: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 capitalize focus:outline-hidden focus:ring-2 focus:ring-primary-500 cursor-pointer"
+                    onChange={(e) => {
+                      if (e.target.value === '__add_new__') {
+                        setIsCategoryModalOpen(true);
+                      } else {
+                        setNewProd({ ...newProd, category: e.target.value });
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 capitalize focus:outline-hidden focus:ring-2 focus:ring-primary-500 cursor-pointer font-medium"
                   >
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.name}
                       </option>
                     ))}
+                    <option value="__add_new__" className="font-bold text-primary-600">
+                      + Add New Category...
+                    </option>
                   </select>
                 </div>
               </div>
@@ -2058,7 +3045,7 @@ const Admin = () => {
                     type="url"
                     value={newProd.image}
                     onChange={(e) => setNewProd({ ...newProd, image: e.target.value })}
-                    placeholder="https://images.unsplash.com/photo-..."
+                    placeholder="Storage path (e.g. /storage/...) ya computer se upload karein"
                     className="flex-1 px-3.5 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
                   />
                   <input
@@ -2232,19 +3219,37 @@ const Admin = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                    Category *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      Category *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCategoryModalOpen(true)}
+                      className="text-[11px] font-bold text-primary-600 hover:text-primary-700 dark:text-primary-400 flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <RiAddLine className="w-3.5 h-3.5" /> + Add Category
+                    </button>
+                  </div>
                   <select
                     value={editingProduct.category || 'electronics'}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 capitalize focus:outline-hidden focus:ring-2 focus:ring-primary-500 cursor-pointer"
+                    onChange={(e) => {
+                      if (e.target.value === '__add_new__') {
+                        setIsCategoryModalOpen(true);
+                      } else {
+                        setEditingProduct({ ...editingProduct, category: e.target.value });
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 capitalize focus:outline-hidden focus:ring-2 focus:ring-primary-500 cursor-pointer font-medium"
                   >
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.name}
                       </option>
                     ))}
+                    <option value="__add_new__" className="font-bold text-primary-600">
+                      + Add New Category...
+                    </option>
                   </select>
                 </div>
               </div>
@@ -2301,7 +3306,7 @@ const Admin = () => {
                     type="url"
                     value={editingProduct.image || ''}
                     onChange={(e) => setEditingProduct({ ...editingProduct, image: e.target.value })}
-                    placeholder="https://images.unsplash.com/photo-..."
+                    placeholder="Storage path (e.g. /storage/...) ya computer se upload karein"
                     className="flex-1 px-3.5 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
                   />
                   <input
@@ -2422,6 +3427,116 @@ const Admin = () => {
                   className="px-6 py-2.5 text-xs font-bold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-xs cursor-pointer"
                 >
                   Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADD CATEGORY MODAL */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5 text-left">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">Add New Category</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Nayi product category create karein</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                <RiCloseLine className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCategory} className="space-y-4">
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Category Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newCatForm.name}
+                  onChange={(e) => setNewCatForm({ ...newCatForm, name: e.target.value })}
+                  placeholder="e.g. Gaming, Perfumes, Smart Home, Watches"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Category Image (Computer se File Upload ya Storage URL)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newCatForm.image}
+                    onChange={(e) => setNewCatForm({ ...newCatForm, image: e.target.value })}
+                    placeholder="/storage/upload-... ya Image URL"
+                    className="flex-1 px-3.5 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                  />
+                  <input
+                    type="file"
+                    ref={catImgInputRef}
+                    onChange={handleCatImgUpload}
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    disabled={isUploadingCatImg}
+                    onClick={() => catImgInputRef.current && catImgInputRef.current.click()}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold rounded-xl hover:opacity-90 transition cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    <RiUploadCloud2Line className="w-4 h-4" />
+                    {isUploadingCatImg ? 'Uploading...' : 'Upload Image'}
+                  </button>
+                </div>
+                {newCatForm.image && (
+                  <div className="flex items-center gap-3 mt-2 p-2 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <img
+                      src={newCatForm.image}
+                      alt="Category Preview"
+                      className="w-12 h-12 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-slate-500 truncate">{newCatForm.image}</p>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">✓ Saved in /storage/</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Description (Optional)
+                </label>
+                <textarea
+                  rows="2"
+                  value={newCatForm.description}
+                  onChange={(e) => setNewCatForm({ ...newCatForm, description: e.target.value })}
+                  placeholder="Short description of this category..."
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsCategoryModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-bold text-xs shadow-md transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <RiAddLine className="w-4 h-4" /> Save Category
                 </button>
               </div>
             </form>

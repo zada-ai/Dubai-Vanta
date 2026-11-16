@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { coupons, products } from '../data/mockData';
+import { coupons, products, categories as defaultCategories } from '../data/mockData';
 
 const AppContext = createContext();
 
@@ -39,10 +39,118 @@ export const defaultHeroSlides = [
   }
 ];
 
+export const defaultPromoBanner = {
+  badge: 'LIMITED TIME OFFER',
+  title: 'Enjoy 20% Off Your First Purchase',
+  description: 'Register your account today and use code WELCOME20 during checkout to unlock discount rates.',
+  couponCode: 'WELCOME20',
+  btnText: 'Claim Discount',
+  btnLink: '/shop',
+  image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
+  imageAlt: 'Nike red shoe discount promotional graphic',
+  bgGradient: 'from-violet-600 to-indigo-850',
+  isVisible: true
+};
+
 export const defaultSeoSettings = {
   metaTitle: 'AeroStore - Handcrafted Luxury & Modern Essentials',
   metaDescription: 'Discover handcrafted luxury and modern essentials. Experience pure acoustic bliss, designer furniture, and timeless apparel.',
-  metaKeywords: 'ecommerce, electronics, fashion, home living, dubai, luxury, aero store'
+  metaKeywords: 'ecommerce, electronics, fashion, home living, dubai, luxury, aero store',
+  siteUrl: 'https://aerostore.com',
+  canonicalUrl: 'https://aerostore.com',
+  ogTitle: 'AeroStore - Handcrafted Luxury & Modern Essentials',
+  ogDescription: 'Discover handcrafted luxury and modern essentials. Experience pure acoustic bliss, designer furniture, and timeless apparel.',
+  ogImageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80',
+  ogImageAlt: 'AeroStore UAE Luxury Essentials Collection',
+  twitterCard: 'summary_large_image',
+  robotsDirective: 'index, follow',
+  schemaOrgName: 'AeroStore UAE',
+  schemaCategory: 'OnlineStore',
+  schemaCurrency: 'AED',
+  schemaPhone: '+971 4 123 4567',
+  schemaEmail: 'support@aerostore.com',
+  schemaAddressLocality: 'Dubai',
+  schemaAddressCountry: 'AE',
+  pages: {
+    home: {
+      name: 'Home',
+      path: '/',
+      metaTitle: 'AeroStore - Handcrafted Luxury & Modern Essentials | Dubai, UAE',
+      metaDescription: 'Shop premium acoustic headphones, handcrafted furniture, and luxury essentials in Dubai with fast UAE delivery.',
+      metaKeywords: 'ecommerce, dubai luxury, electronics dubai, lifestyle, aerostore, uae',
+      canonicalUrl: 'https://aerostore.com/',
+      ogTitle: 'AeroStore - Handcrafted Luxury & Modern Essentials',
+      ogDescription: 'Shop premium acoustic headphones, handcrafted furniture, and luxury essentials in Dubai with fast UAE delivery.',
+      ogImageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80'
+    },
+    shop: {
+      name: 'Shop',
+      path: '/shop',
+      metaTitle: 'Shop All Products & Luxury Collections | AeroStore Dubai',
+      metaDescription: 'Explore our complete catalogue of premium headphones, smart watches, luxury fashion, and designer living essentials.',
+      metaKeywords: 'online shopping dubai, buy electronics uae, luxury apparel, fast delivery uae',
+      canonicalUrl: 'https://aerostore.com/shop',
+      ogTitle: 'Shop All Collections | AeroStore Dubai',
+      ogDescription: 'Explore our complete catalogue of premium electronics, fashion, and designer living essentials.',
+      ogImageUrl: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200&auto=format&fit=crop&q=80'
+    },
+    about: {
+      name: 'About Us',
+      path: '/about',
+      metaTitle: 'About AeroStore - Craftsmanship & Design Philosophy | Dubai',
+      metaDescription: 'Learn about our heritage in Dubai, commitment to acoustic excellence, sustainable materials, and uncompromising luxury design.',
+      metaKeywords: 'about aerostore, dubai design studio, luxury brand heritage, uae ecommerce story',
+      canonicalUrl: 'https://aerostore.com/about',
+      ogTitle: 'About AeroStore | Dubai Luxury Heritage',
+      ogDescription: 'Learn about our heritage in Dubai, acoustic excellence, and uncompromising luxury design.',
+      ogImageUrl: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=1200&auto=format&fit=crop&q=80'
+    },
+    contact: {
+      name: 'Contact',
+      path: '/contact',
+      metaTitle: 'Contact Us & Concierge Support | AeroStore Dubai',
+      metaDescription: 'Get in touch with our Dubai concierge team for product assistance, orders, corporate inquiries, or store visits.',
+      metaKeywords: 'contact aerostore, customer support dubai, help center, uae concierge',
+      canonicalUrl: 'https://aerostore.com/contact',
+      ogTitle: 'Contact AeroStore Concierge | Dubai',
+      ogDescription: 'Get in touch with our Dubai concierge team for product assistance, orders, or store visits.',
+      ogImageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1200&auto=format&fit=crop&q=80'
+    },
+    faq: {
+      name: 'FAQ',
+      path: '/faq',
+      metaTitle: 'Frequently Asked Questions (FAQ) | AeroStore UAE',
+      metaDescription: 'Find answers about order tracking, Cash on Delivery in UAE, returns, warranties, and international shipping.',
+      metaKeywords: 'faq, questions, shipping uae, cash on delivery, returns policy',
+      canonicalUrl: 'https://aerostore.com/faq',
+      ogTitle: 'Frequently Asked Questions | AeroStore UAE',
+      ogDescription: 'Find answers about order tracking, Cash on Delivery in UAE, returns, and warranties.',
+      ogImageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80'
+    }
+  },
+  robotsTxt: `# robots.txt for AeroStore E-Commerce (UAE & Global)
+User-agent: *
+Allow: /
+Allow: /shop
+Allow: /about
+Allow: /contact
+Allow: /faq
+Allow: /product/
+
+# Disallow private user & administrative paths
+Disallow: /admin
+Disallow: /api/
+Disallow: /checkout
+Disallow: /orders
+Disallow: /cart
+Disallow: /profile
+
+# Crawl Delay
+Crawl-delay: 1
+
+# Host & Dynamic Sitemap
+Host: https://aerostore.com
+Sitemap: https://aerostore.com/sitemap.xml`
 };
 
 export const defaultFeatures = [
@@ -104,11 +212,24 @@ export const AppProvider = ({ children }) => {
     const saved = localStorage.getItem('user');
     return saved ? JSON.parse(saved) : null;
   });
+  const [accessToken, setAccessToken] = useState(null);
 
   // Products state
   const [productsList, setProductsList] = useState(() => {
     const saved = localStorage.getItem('products');
     return saved ? JSON.parse(saved) : products;
+  });
+
+  // Categories state (Dynamic Store Categories)
+  const [categories, setCategories] = useState(() => {
+    const saved = localStorage.getItem('categories');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (_) {}
+    }
+    return defaultCategories;
   });
 
   // Orders state
@@ -193,6 +314,22 @@ export const AppProvider = ({ children }) => {
   // Coupons state
   const [activeCoupon, setActiveCoupon] = useState(null);
 
+  // Cash on Delivery Modal State
+  const [codModalProduct, setCodModalProduct] = useState(null);
+
+  const openCodModal = (product, quantity = 1, color = null, size = null) => {
+    setCodModalProduct({
+      ...product,
+      selectedQuantity: quantity,
+      selectedColor: color || (product.colors && product.colors[0]) || 'Standard',
+      selectedSize: size || (product.sizes && product.sizes[0]) || 'Standard'
+    });
+  };
+
+  const closeCodModal = () => {
+    setCodModalProduct(null);
+  };
+
   // Toast notifications state
   const [toasts, setToasts] = useState([]);
 
@@ -227,8 +364,86 @@ export const AppProvider = ({ children }) => {
 
   // Sync user
   useEffect(() => {
-    localStorage.setItem('user', JSON.stringify(user));
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
   }, [user]);
+
+  // Silent Auth Verification & Session Refresh Helper
+  const silentRefresh = async () => {
+    try {
+      const res = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        setUser(data.user);
+        if (data.accessToken) setAccessToken(data.accessToken);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        return data.accessToken;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  };
+
+  // 1. Session Refresh on Mount + Proactive Keep-Alive Heartbeat + Tab Focus Listener
+  useEffect(() => {
+    // Initial mount check
+    silentRefresh();
+
+    // Proactive refresh every 10 minutes to prevent 15m access token expiry while working
+    const heartbeatTimer = setInterval(() => {
+      silentRefresh();
+    }, 10 * 60 * 1000);
+
+    // Refresh immediately when user switches back to this tab after hours / inactive period
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        silentRefresh();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange);
+
+    return () => {
+      clearInterval(heartbeatTimer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
+    };
+  }, []);
+
+  // Universal authenticated fetch wrapper with automatic 401 retry
+  const authFetch = async (url, options = {}) => {
+    const defaultHeaders = {};
+    if (accessToken) {
+      defaultHeaders['Authorization'] = `Bearer ${accessToken}`;
+    }
+    const finalOptions = {
+      ...options,
+      credentials: 'include',
+      headers: {
+        ...defaultHeaders,
+        ...(options.headers || {})
+      }
+    };
+
+    let response = await fetch(url, finalOptions);
+
+    // If access token expired (401), automatically silent refresh and retry request
+    if (response.status === 401) {
+      const newToken = await silentRefresh();
+      if (newToken) {
+        finalOptions.headers['Authorization'] = `Bearer ${newToken}`;
+        response = await fetch(url, finalOptions);
+      }
+    }
+    return response;
+  };
 
   // Sync orders
   useEffect(() => {
@@ -272,37 +487,138 @@ export const AppProvider = ({ children }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed && parsed.metaTitle) return parsed;
+        if (parsed && parsed.metaTitle) {
+          return {
+            ...defaultSeoSettings,
+            ...parsed,
+            pages: { ...defaultSeoSettings.pages, ...(parsed.pages || {}) }
+          };
+        }
       } catch (_) {}
     }
     return defaultSeoSettings;
   });
 
-  // Dynamic DOM Meta Tag Sync
+  // Promotional Banner State (Controlled via Admin)
+  const [promoBanner, setPromoBanner] = useState(() => {
+    const saved = localStorage.getItem('promoBanner');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return { ...defaultPromoBanner, ...parsed };
+      } catch (_) {}
+    }
+    return defaultPromoBanner;
+  });
+
   useEffect(() => {
-    if (seoSettings?.metaTitle) {
+    localStorage.setItem('promoBanner', JSON.stringify(promoBanner));
+  }, [promoBanner]);
+
+  // Dynamic DOM Meta Tag & Schema Graph Sync
+  useEffect(() => {
+    if (!seoSettings) return;
+
+    // 1. Page Title
+    if (seoSettings.metaTitle) {
       document.title = seoSettings.metaTitle;
     }
-    if (seoSettings?.metaDescription) {
-      let descTag = document.querySelector('meta[name="description"]');
-      if (!descTag) {
-        descTag = document.createElement('meta');
-        descTag.setAttribute('name', 'description');
-        document.head.appendChild(descTag);
+
+    // Helper to create or update meta tag
+    const setMetaTag = (attrName, attrVal, contentVal) => {
+      if (!contentVal) return;
+      let el = document.querySelector(`meta[${attrName}="${attrVal}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attrName, attrVal);
+        document.head.appendChild(el);
       }
-      descTag.setAttribute('content', seoSettings.metaDescription);
+      el.setAttribute('content', contentVal);
+    };
+
+    // 2. Standard Search Meta Tags
+    setMetaTag('name', 'description', seoSettings.metaDescription);
+    setMetaTag('name', 'keywords', seoSettings.metaKeywords);
+    setMetaTag('name', 'robots', seoSettings.robotsDirective || 'index, follow');
+
+    // 3. OpenGraph Social Sharing Tags
+    const effectiveSiteUrl = seoSettings.siteUrl || 'https://aerostore.com';
+    const effectiveCanonical = seoSettings.canonicalUrl || effectiveSiteUrl;
+    const effectiveOgTitle = seoSettings.ogTitle || seoSettings.metaTitle;
+    const effectiveOgDesc = seoSettings.ogDescription || seoSettings.metaDescription;
+    const effectiveOgImg = seoSettings.ogImageUrl || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80';
+
+    setMetaTag('property', 'og:type', 'website');
+    setMetaTag('property', 'og:site_name', seoSettings.schemaOrgName || storeName || 'AeroStore');
+    setMetaTag('property', 'og:title', effectiveOgTitle);
+    setMetaTag('property', 'og:description', effectiveOgDesc);
+    setMetaTag('property', 'og:url', effectiveCanonical);
+    setMetaTag('property', 'og:image', effectiveOgImg);
+    setMetaTag('property', 'og:image:alt', seoSettings.ogImageAlt || effectiveOgTitle);
+
+    // 4. Twitter Card Tags
+    setMetaTag('name', 'twitter:card', seoSettings.twitterCard || 'summary_large_image');
+    setMetaTag('name', 'twitter:title', effectiveOgTitle);
+    setMetaTag('name', 'twitter:description', effectiveOgDesc);
+    setMetaTag('name', 'twitter:image', effectiveOgImg);
+
+    // 5. Canonical Link
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
     }
-    if (seoSettings?.metaKeywords) {
-      let kwTag = document.querySelector('meta[name="keywords"]');
-      if (!kwTag) {
-        kwTag = document.createElement('meta');
-        kwTag.setAttribute('name', 'keywords');
-        document.head.appendChild(kwTag);
-      }
-      kwTag.setAttribute('content', seoSettings.metaKeywords);
+    canonical.setAttribute('href', effectiveCanonical);
+
+    // 6. Schema.org JSON-LD Structured Graph
+    const schemaGraph = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": `${effectiveSiteUrl}/#website`,
+          "url": effectiveSiteUrl,
+          "name": seoSettings.schemaOrgName || storeName || "AeroStore",
+          "description": seoSettings.metaDescription,
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": `${effectiveSiteUrl}/shop?search={search_term_string}`,
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": seoSettings.schemaCategory || "OnlineStore",
+          "@id": `${effectiveSiteUrl}/#organization`,
+          "name": seoSettings.schemaOrgName || storeName || "AeroStore",
+          "url": effectiveSiteUrl,
+          "logo": storeLogo || `${effectiveSiteUrl}/favicon.svg`,
+          "image": effectiveOgImg,
+          "description": seoSettings.metaDescription,
+          "telephone": seoSettings.schemaPhone || "+971 4 123 4567",
+          "email": seoSettings.schemaEmail || "support@aerostore.com",
+          "currenciesAccepted": seoSettings.schemaCurrency || "AED",
+          "priceRange": "AED 50 - AED 2500",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": seoSettings.schemaAddressLocality || "Dubai",
+            "addressCountry": seoSettings.schemaAddressCountry || "AE"
+          }
+        }
+      ]
+    };
+
+    let schemaScript = document.getElementById('aerostore-schema-graph');
+    if (!schemaScript) {
+      schemaScript = document.createElement('script');
+      schemaScript.setAttribute('type', 'application/ld+json');
+      schemaScript.setAttribute('id', 'aerostore-schema-graph');
+      document.head.appendChild(schemaScript);
     }
+    schemaScript.textContent = JSON.stringify(schemaGraph, null, 2);
+
     localStorage.setItem('seoSettings', JSON.stringify(seoSettings));
-  }, [seoSettings]);
+  }, [seoSettings, storeName, storeLogo]);
 
   // Sync hero slides to localStorage
   useEffect(() => {
@@ -355,6 +671,10 @@ export const AppProvider = ({ children }) => {
             setFeatures(data.settings.features);
             localStorage.setItem('features', JSON.stringify(data.settings.features));
           }
+          if (data.settings.promoBanner && typeof data.settings.promoBanner === 'object') {
+            setPromoBanner(data.settings.promoBanner);
+            localStorage.setItem('promoBanner', JSON.stringify(data.settings.promoBanner));
+          }
           if (data.settings.products && Array.isArray(data.settings.products) && data.settings.products.length > 0) {
             setProductsList(data.settings.products);
             localStorage.setItem('products', JSON.stringify(data.settings.products));
@@ -364,7 +684,107 @@ export const AppProvider = ({ children }) => {
       .catch(() => {
         // Offline / fallback to localStorage
       });
+
+    // Fetch categories from backend database
+    fetch('/api/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
+          setCategories(data.categories);
+          localStorage.setItem('categories', JSON.stringify(data.categories));
+        }
+      })
+      .catch(() => {});
+
+    // Fetch products directly from MySQL database (with storage paths)
+    fetch('/api/products')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+          setProductsList(data.products);
+          localStorage.setItem('products', JSON.stringify(data.products));
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  const uploadCategoryImage = async (file) => {
+    if (!file) return null;
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success && data.imageUrl) {
+        triggerToast('Category image uploaded to storage!', 'success');
+        return data.imageUrl;
+      }
+      throw new Error(data.message || 'Upload failed');
+    } catch (_) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve(reader.result);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const addCategory = async (newCatData) => {
+    const name = (newCatData.name || '').trim();
+    if (!name) {
+      triggerToast('Category name is required', 'warning');
+      return null;
+    }
+    const catId = newCatData.id || name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const newCategory = {
+      id: catId,
+      name,
+      icon: newCatData.icon || 'RiShoppingBagLine',
+      image: newCatData.image || '',
+      description: newCatData.description || `${name} collection.`,
+      count: 0
+    };
+
+    setCategories((prev) => {
+      const updated = [...prev.filter((c) => c.id !== catId), newCategory];
+      try {
+        localStorage.setItem('categories', JSON.stringify(updated));
+      } catch (_) {}
+      return updated;
+    });
+
+    try {
+      await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCategory)
+      });
+    } catch (_) {}
+
+    triggerToast(`Category "${name}" added successfully!`, 'success');
+    return newCategory;
+  };
+
+  const deleteCategory = async (catId) => {
+    setCategories((prev) => {
+      const updated = prev.filter((c) => c.id !== catId);
+      try {
+        localStorage.setItem('categories', JSON.stringify(updated));
+      } catch (_) {}
+      return updated;
+    });
+
+    try {
+      await fetch(`/api/categories/${catId}`, { method: 'DELETE' });
+    } catch (_) {}
+
+    triggerToast('Category deleted.', 'info');
+  };
 
   const uploadLogo = async (file) => {
     if (!file) return;
@@ -460,7 +880,7 @@ export const AppProvider = ({ children }) => {
       title: newSlide.title || 'New Highlight Banner',
       subtitle: newSlide.subtitle || 'EXCLUSIVE COLLECTION',
       description: newSlide.description || 'Add an attractive description here.',
-      image: newSlide.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80',
+      image: newSlide.image || '',
       link: newSlide.link || '/shop',
       btnText: newSlide.btnText || 'Shop Collection',
       bgColor: newSlide.bgColor || 'from-violet-600 to-indigo-900',
@@ -525,7 +945,119 @@ export const AppProvider = ({ children }) => {
       } catch (_) {}
       return next;
     });
-    triggerToast('Meta Title & Description updated successfully!', 'success');
+    triggerToast('SEO, OpenGraph & Schema settings saved successfully!', 'success');
+  };
+
+  const updatePageSeo = (pageKey, pageSeoData) => {
+    setSeoSettings((prev) => {
+      const currentPages = prev.pages || defaultSeoSettings.pages;
+      const updatedPages = {
+        ...currentPages,
+        [pageKey]: {
+          ...(currentPages[pageKey] || {}),
+          ...pageSeoData
+        }
+      };
+      const next = {
+        ...prev,
+        pages: updatedPages
+      };
+      localStorage.setItem('seoSettings', JSON.stringify(next));
+      try {
+        fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seo: next })
+        });
+      } catch (_) {}
+      return next;
+    });
+    const pageDisplayName = (prev) => {
+      const names = { home: 'Home', shop: 'Shop', about: 'About', contact: 'Contact', faq: 'FAQ' };
+      return names[pageKey] || pageKey.toUpperCase();
+    };
+    triggerToast(`SEO for "${pageKey.toUpperCase()}" page updated!`, 'success');
+  };
+
+  const updatePromoBanner = (updates) => {
+    setPromoBanner((prev) => {
+      const next = { ...prev, ...updates };
+      localStorage.setItem('promoBanner', JSON.stringify(next));
+      try {
+        fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ promoBanner: next })
+        });
+      } catch (_) {}
+      return next;
+    });
+    triggerToast('Promotional banner updated successfully!', 'success');
+  };
+
+  const uploadPromoImage = async (file) => {
+    if (!file) return null;
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await fetch('/api/settings/upload-image', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success && data.imageUrl) {
+        triggerToast('Promo banner image uploaded!', 'success');
+        return data.imageUrl;
+      }
+      throw new Error(data.message || 'Upload failed');
+    } catch (_) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve(reader.result);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const resetPromoBanner = () => {
+    setPromoBanner(defaultPromoBanner);
+    localStorage.setItem('promoBanner', JSON.stringify(defaultPromoBanner));
+    try {
+      fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ promoBanner: defaultPromoBanner })
+      });
+    } catch (_) {}
+    triggerToast('Promotional banner reset to default.', 'info');
+  };
+
+  const uploadOgImage = async (file) => {
+    if (!file) return null;
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await fetch('/api/settings/upload-image', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success && data.imageUrl) {
+        triggerToast('OpenGraph social image uploaded!', 'success');
+        return data.imageUrl;
+      }
+      throw new Error(data.message || 'Upload failed');
+    } catch (_) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve(reader.result);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
   };
 
   const uploadHeroImage = async (file) => {
@@ -636,18 +1168,25 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const addProduct = (newProduct) => {
+  const addProduct = async (newProduct) => {
+    const rawImage = newProduct.image || (newProduct.images && newProduct.images[0]) || '';
+    const generatedId = newProduct.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('vnt-' + Date.now()));
+    const catCode = (newProduct.category || 'GEN').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4) || 'GEN';
+    const generatedSku = (newProduct.sku && newProduct.sku.trim())
+      ? newProduct.sku.trim().toUpperCase()
+      : `VNT-${catCode}-${Math.floor(1000 + Math.random() * 9000)}`;
+
     const productWithId = {
       ...newProduct,
-      id: Date.now(),
+      id: generatedId,
+      sku: generatedSku,
       rating: newProduct.rating || 5.0,
       reviewsCount: newProduct.reviewsCount || 0,
       isFeatured: !!newProduct.isFeatured,
       isBestSeller: !!newProduct.isBestSeller,
       isNewArrival: typeof newProduct.isNewArrival === 'boolean' ? newProduct.isNewArrival : true,
-      images: newProduct.images?.length
-        ? newProduct.images
-        : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80']
+      image: rawImage,
+      images: rawImage ? [rawImage] : []
     };
     setProductsList((prev) => {
       const next = [productWithId, ...prev];
@@ -661,13 +1200,23 @@ export const AppProvider = ({ children }) => {
       } catch (_) {}
       return next;
     });
-    triggerToast(`Product "${productWithId.name}" added successfully!`, 'success');
+
+    // Persist directly into MySQL products table
+    try {
+      await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productWithId)
+      });
+    } catch (_) {}
+
+    triggerToast(`Product "${productWithId.name}" (${generatedSku}) added successfully!`, 'success');
     return productWithId;
   };
 
-  const updateProduct = (productId, updatedFields) => {
+  const updateProduct = async (productId, updatedFields) => {
     setProductsList((prev) => {
-      const next = prev.map((p) => (p.id === productId ? { ...p, ...updatedFields } : p));
+      const next = prev.map((p) => (String(p.id) === String(productId) ? { ...p, ...updatedFields } : p));
       localStorage.setItem('products', JSON.stringify(next));
       try {
         fetch('/api/settings', {
@@ -678,6 +1227,16 @@ export const AppProvider = ({ children }) => {
       } catch (_) {}
       return next;
     });
+
+    // Update in MySQL products table
+    try {
+      await fetch(`/api/products/${productId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedFields)
+      });
+    } catch (_) {}
+
     triggerToast('Product updated successfully!', 'success');
   };
 
@@ -686,7 +1245,7 @@ export const AppProvider = ({ children }) => {
       let updatedName = '';
       let newState = false;
       const next = prev.map((p) => {
-        if (p.id === productId) {
+        if (String(p.id) === String(productId)) {
           updatedName = p.name;
           newState = !p[badgeKey];
           return { ...p, [badgeKey]: newState };
@@ -715,9 +1274,9 @@ export const AppProvider = ({ children }) => {
     });
   };
 
-  const deleteProduct = (productId) => {
+  const deleteProduct = async (productId) => {
     setProductsList((prev) => {
-      const next = prev.filter((p) => p.id !== productId);
+      const next = prev.filter((p) => String(p.id) !== String(productId));
       localStorage.setItem('products', JSON.stringify(next));
       try {
         fetch('/api/settings', {
@@ -728,6 +1287,12 @@ export const AppProvider = ({ children }) => {
       } catch (_) {}
       return next;
     });
+
+    // Delete from MySQL products table
+    try {
+      await fetch(`/api/products/${productId}`, { method: 'DELETE' });
+    } catch (_) {}
+
     triggerToast('Product deleted.', 'info');
   };
 
@@ -900,17 +1465,19 @@ export const AppProvider = ({ children }) => {
     }
     const normalizedEmail = email.trim().toLowerCase();
 
-    // 1. Authenticate with SQLite Backend API
+    // 1. Authenticate with Backend API (Sets httpOnly refreshToken cookie)
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email: normalizedEmail, password })
       });
       const data = await response.json();
 
       if (response.ok && data.success && data.user) {
         setUser(data.user);
+        if (data.accessToken) setAccessToken(data.accessToken);
         localStorage.setItem('user', JSON.stringify(data.user));
         triggerToast(data.message || 'Logged in successfully!', 'success');
         return true;
@@ -992,19 +1559,21 @@ export const AppProvider = ({ children }) => {
     }
     const normalizedEmail = email.trim().toLowerCase();
 
-    // 1. Register with SQLite Backend API
+    // 1. Register with Backend API (Sets httpOnly refreshToken cookie)
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ name: fullName, email: normalizedEmail, phone, password })
       });
       const data = await response.json();
 
       if (response.ok && data.success && data.user) {
         setUser(data.user);
+        if (data.accessToken) setAccessToken(data.accessToken);
         localStorage.setItem('user', JSON.stringify(data.user));
-        triggerToast(data.message || 'Account registered in SQLite successfully!', 'success');
+        triggerToast(data.message || 'Account registered successfully!', 'success');
         return true;
       } else {
         triggerToast(data.message || 'Registration failed.', 'error');
@@ -1032,8 +1601,15 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (_) {}
     setUser(null);
+    setAccessToken(null);
     localStorage.removeItem('user');
     setCart([]);
     setWishlist([]);
@@ -1049,27 +1625,89 @@ export const AppProvider = ({ children }) => {
     });
   };
 
-  // Checkout / Create Order
-  const createOrder = (shippingDetails, paymentMethod) => {
+  // Checkout / Create Order (Supports cart orders and direct Cash on Delivery modal orders)
+  const createOrder = async (shippingDetails, paymentMethod, directItems = null, customTotal = null) => {
+    const isDirectOrder = Array.isArray(directItems) && directItems.length > 0;
+    const orderItems = isDirectOrder ? directItems : [...cart];
+
+    let subtotalVal = 0;
+    let shippingVal = 0;
+    let taxVal = 0;
+    let discountVal = 0;
+    let finalTotalVal = 0;
+
+    if (isDirectOrder) {
+      subtotalVal = orderItems.reduce((acc, item) => {
+        const p = item.discountPrice || item.price || 0;
+        return acc + p * (item.quantity || 1);
+      }, 0);
+      shippingVal = subtotalVal > 150 ? 0 : 15.00;
+      taxVal = 0;
+      discountVal = 0;
+      finalTotalVal = customTotal !== null ? customTotal : (subtotalVal + shippingVal);
+    } else {
+      subtotalVal = getCartSubtotal();
+      shippingVal = getShippingCost();
+      taxVal = getTaxAmount();
+      discountVal = getCartDiscount();
+      finalTotalVal = getCartTotal();
+    }
+
     const newOrder = {
       orderId: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
       date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-      items: [...cart],
+      items: orderItems,
       totals: {
-        subtotal: getCartSubtotal(),
-        discount: getCartDiscount(),
-        shipping: getShippingCost(),
-        tax: getTaxAmount(),
-        total: getCartTotal()
+        subtotal: subtotalVal,
+        discount: discountVal,
+        shipping: shippingVal,
+        tax: taxVal,
+        total: finalTotalVal
       },
       shippingDetails,
       paymentMethod,
       status: 'Processing'
     };
 
-    setOrders((prevOrders) => [newOrder, ...prevOrders]);
-    setCart([]);
-    setActiveCoupon(null);
+    setOrders((prevOrders) => {
+      const updated = [newOrder, ...prevOrders];
+      try {
+        localStorage.setItem('orders', JSON.stringify(updated));
+      } catch (_) {}
+      return updated;
+    });
+
+    if (!isDirectOrder) {
+      setCart([]);
+      setActiveCoupon(null);
+    }
+
+    // Sync order to backend database with auto-refresh protection (401 retry)
+    try {
+      await authFetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: newOrder.orderId,
+          userId: user?.id || null,
+          customerName: shippingDetails.fullName || user?.name || 'Customer',
+          customerEmail: shippingDetails.email || user?.email || '',
+          customerPhone: shippingDetails.phone || user?.phone || '',
+          shippingAddress: `${shippingDetails.street || ''}, ${shippingDetails.area || shippingDetails.city || ''}, ${shippingDetails.emirate || shippingDetails.state || ''} ${shippingDetails.country || 'United Arab Emirates'}`.trim(),
+          items: newOrder.items,
+          totalAmount: newOrder.totals.total,
+          currency: 'AED',
+          paymentMethod: typeof paymentMethod === 'string' ? paymentMethod : (paymentMethod?.method || 'Cash on Delivery'),
+          paymentStatus: (typeof paymentMethod === 'string' ? paymentMethod : paymentMethod?.method) === 'Cash on Delivery'
+            ? 'Pending (Pay upon arrival)'
+            : 'Paid',
+          orderStatus: 'Processing',
+          shippingDetails,
+          totals: newOrder.totals
+        })
+      }).catch(() => {});
+    } catch (_) {}
+
     triggerToast('Order placed successfully!', 'success');
     return newOrder.orderId;
   };
@@ -1085,6 +1723,10 @@ export const AppProvider = ({ children }) => {
         darkMode,
         setDarkMode,
         productsList,
+        categories,
+        addCategory,
+        deleteCategory,
+        uploadCategoryImage,
         addProduct,
         updateProduct,
         deleteProduct,
@@ -1104,6 +1746,12 @@ export const AppProvider = ({ children }) => {
         uploadHeroImage,
         seoSettings,
         updateSeoSettings,
+        updatePageSeo,
+        uploadOgImage,
+        promoBanner,
+        updatePromoBanner,
+        uploadPromoImage,
+        resetPromoBanner,
         features,
         updateFeature,
         resetFeatures,
@@ -1115,12 +1763,18 @@ export const AppProvider = ({ children }) => {
         wishlist,
         toggleWishlist,
         user,
+        accessToken,
+        silentRefresh,
+        authFetch,
         login,
         register,
         logout,
         updateProfile,
         orders,
         createOrder,
+        codModalProduct,
+        openCodModal,
+        closeCodModal,
         toasts,
         triggerToast,
         activeCoupon,

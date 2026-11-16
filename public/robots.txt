@@ -1,0 +1,24 @@
+# robots.txt for AeroStore E-Commerce (UAE & Global)
+User-agent: *
+Allow: /
+Allow: /shop
+Allow: /about
+Allow: /contact
+Allow: /faq
+Allow: /product/
+
+# Disallow private user & administrative paths
+Disallow: /admin
+Disallow: /api/
+Disallow: /checkout
+Disallow: /orders
+Disallow: /cart
+Disallow: /profile
+
+# Crawl Delay
+Crawl-delay: 1
+
+# Host & Dynamic Sitemap
+Host: https://aerostore.com
+Sitemap: https://aerostore.com/sitemap.xml
+

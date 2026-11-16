@@ -6,12 +6,13 @@ import FeatureIcon from '../components/FeatureIcon';
 import CategoryCard from '../components/CategoryCard';
 import ProductCard from '../components/ProductCard';
 import RatingComponent from '../components/RatingComponent';
-import { categories, products as initialProducts, testimonials } from '../data/mockData';
+import { categories as initialCategories, products as initialProducts, testimonials } from '../data/mockData';
 import { RiArrowRightLine } from 'react-icons/ri';
 
 const Home = () => {
-  const { productsList, features } = useApp();
+  const { productsList, features, categories: appCategories, promoBanner } = useApp();
   const products = productsList || initialProducts;
+  const categories = appCategories || initialCategories;
 
   // Filter products for various sections
   const featuredProducts = products.filter(p => p.isFeatured).slice(0, 4);
@@ -57,36 +58,47 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Promotional Banner */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 to-indigo-850 p-6 md:p-12 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
-        <div className="absolute inset-0 bg-black/10 pointer-events-none" />
-        <div className="w-full md:w-3/5 text-left relative z-10 flex flex-col items-start">
-          <span className="text-[10px] font-extrabold tracking-widest text-white bg-white/15 px-3 py-1 rounded-full uppercase mb-4">
-            LIMITED TIME OFFER
-          </span>
-          <h2 className="text-2xl md:text-4xl font-black leading-tight mb-4">
-            Enjoy 20% Off Your First Purchase
-          </h2>
-          <p className="text-xs md:text-sm text-slate-200 mb-6 leading-relaxed max-w-md">
-            Register your account today and use code <strong className="text-white bg-slate-950/45 px-2 py-0.5 rounded font-mono">WELCOME20</strong> during checkout to unlock discount rates.
-          </p>
-          <Link
-            to="/shop"
-            className="px-6 py-3 bg-white text-slate-900 font-bold rounded-full hover:bg-primary-50 transition-all shadow-md hover:shadow-xl duration-200 flex items-center gap-2 cursor-pointer"
-          >
-            Claim Discount
-            <RiArrowRightLine className="w-4 h-4 animate-pulse" />
-          </Link>
-        </div>
-        <div className="w-full md:w-2/5 flex justify-center relative">
-          <div className="absolute inset-0 bg-white/5 rounded-full filter blur-2xl" />
-          <img
-            src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80"
-            alt="Nike red shoe discount promotional graphic"
-            className="max-h-[160px] md:max-h-[200px] max-w-full object-contain rounded-2xl drop-shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-500 z-10"
-          />
-        </div>
-      </section>
+      {/* Promotional Banner (Admin Managed) */}
+      {promoBanner && promoBanner.isVisible !== false && (
+        <section className={`relative overflow-hidden rounded-3xl bg-gradient-to-r ${promoBanner.bgGradient || 'from-violet-600 to-indigo-850'} p-6 md:p-12 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8`}>
+          <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+          <div className="w-full md:w-3/5 text-left relative z-10 flex flex-col items-start">
+            {promoBanner.badge && (
+              <span className="text-[10px] font-extrabold tracking-widest text-white bg-white/15 px-3 py-1 rounded-full uppercase mb-4">
+                {promoBanner.badge}
+              </span>
+            )}
+            <h2 className="text-2xl md:text-4xl font-black leading-tight mb-4">
+              {promoBanner.title}
+            </h2>
+            <div className="text-xs md:text-sm text-slate-200 mb-6 leading-relaxed max-w-md">
+              <span>{promoBanner.description}</span>
+              {promoBanner.couponCode && (
+                <span className="block mt-2">
+                  Use coupon code <strong className="text-white bg-slate-950/45 px-2 py-0.5 rounded font-mono font-bold tracking-wider">{promoBanner.couponCode}</strong> during checkout.
+                </span>
+              )}
+            </div>
+            <Link
+              to={promoBanner.btnLink || '/shop'}
+              className="px-6 py-3 bg-white text-slate-900 font-bold rounded-full hover:bg-primary-50 transition-all shadow-md hover:shadow-xl duration-200 flex items-center gap-2 cursor-pointer"
+            >
+              {promoBanner.btnText || 'Claim Discount'}
+              <RiArrowRightLine className="w-4 h-4 animate-pulse" />
+            </Link>
+          </div>
+          {promoBanner.image && (
+            <div className="w-full md:w-2/5 flex justify-center relative">
+              <div className="absolute inset-0 bg-white/5 rounded-full filter blur-2xl" />
+              <img
+                src={promoBanner.image}
+                alt={promoBanner.imageAlt || promoBanner.title || 'Promotional Offer'}
+                className="max-h-[160px] md:max-h-[200px] max-w-full object-contain rounded-2xl drop-shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-500 z-10"
+              />
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Featured Products */}
       <section className="flex flex-col gap-4 sm:gap-6">

@@ -154,8 +154,18 @@ const Orders = () => {
                           Payment Details
                         </h4>
                         <div className="text-xs text-slate-650 dark:text-slate-400 font-medium pl-5">
-                          <span>{order.paymentMethod.method}</span>
-                          <span className="block text-slate-400 font-mono mt-0.5">{order.paymentMethod.cardNumber}</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">
+                            {typeof order.paymentMethod === 'string'
+                              ? order.paymentMethod
+                              : (order.paymentMethod?.method || 'Cash on Delivery')}
+                          </span>
+                          {order.paymentMethod?.cardNumber ? (
+                            <span className="block text-slate-400 font-mono mt-0.5">{order.paymentMethod.cardNumber}</span>
+                          ) : (
+                            <span className="block text-emerald-600 dark:text-emerald-400 text-[11px] mt-0.5 font-semibold">
+                              💵 Pay in AED upon delivery
+                            </span>
+                          )}
                         </div>
                       </div>
 

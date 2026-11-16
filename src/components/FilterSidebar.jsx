@@ -1,9 +1,12 @@
 import React from 'react';
-import { categories } from '../data/mockData';
+import { useApp } from '../context/AppContext';
+import { categories as defaultCategories } from '../data/mockData';
 import RatingComponent from './RatingComponent';
 import { RiCloseLine, RiFilterLine, RiRefreshLine } from 'react-icons/ri';
 
 const FilterSidebar = ({ filters, setFilters, onClose }) => {
+  const { categories: appCategories } = useApp();
+  const categories = appCategories || defaultCategories;
   const handleCategoryChange = (catId) => {
     setFilters((prev) => ({
       ...prev,

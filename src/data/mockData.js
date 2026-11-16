@@ -5,7 +5,7 @@ export const categories = [
     id: 'electronics',
     name: 'Electronics',
     icon: 'RiSmartphoneLine',
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80',
+    image: '',
     count: 24,
     description: 'Smartphones, headphones, smartwatches, and more.'
   },
@@ -13,7 +13,7 @@ export const categories = [
     id: 'fashion',
     name: 'Fashion & Apparel',
     icon: 'RiShirtLine',
-    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&auto=format&fit=crop&q=80',
+    image: '',
     count: 36,
     description: 'Premium apparel, shoes, and luxury accessories.'
   },
@@ -21,7 +21,7 @@ export const categories = [
     id: 'home-decor',
     name: 'Home & Living',
     icon: 'RiHome4Line',
-    image: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&auto=format&fit=crop&q=80',
+    image: '',
     count: 18,
     description: 'Designer furniture, ambient lighting, and art.'
   },
@@ -29,7 +29,7 @@ export const categories = [
     id: 'wellness',
     name: 'Fitness & Wellness',
     icon: 'RiHeartPulseLine',
-    image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&auto=format&fit=crop&q=80',
+    image: '',
     count: 15,
     description: 'Activewear, tracking gadgets, and wellness essentials.'
   }
@@ -48,11 +48,7 @@ export const products = [
     rating: 4.8,
     reviewsCount: 184,
     stock: 15,
-    images: [
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#000000', '#4A5568', '#E2E8F0'],
     sizes: ['Standard'],
     description: 'Experience pure acoustic bliss with AeroSound Max. Active Noise Cancellation, high-fidelity audio drivers, and up to 40 hours of battery life deliver an unmatched listening experience for audio enthusiasts.',
@@ -82,10 +78,7 @@ export const products = [
     rating: 4.6,
     reviewsCount: 92,
     stock: 8,
-    images: [
-      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#000000', '#D69E2E', '#3182CE'],
     sizes: ['41mm', '45mm'],
     description: 'Stay connected, active, and healthy with AeroWatch Series 4. Featuring an Always-On Retina display, blood oxygen tracking, ECG monitoring, and auto-workout detection, it is the ultimate companion on your wrist.',
@@ -115,10 +108,7 @@ export const products = [
     rating: 4.7,
     reviewsCount: 312,
     stock: 22,
-    images: [
-      'https://images.unsplash.com/photo-1588444839799-eaa4344eba19?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#FFFFFF', '#000000'],
     sizes: ['Standard'],
     description: 'Tiny size, massive sound. AeroBuds Pro feature custom audio tech, smart ANC, Transparency mode, and comfortable secure-fit tips, so you can block out the world or let it in.',
@@ -147,10 +137,7 @@ export const products = [
     rating: 4.5,
     reviewsCount: 45,
     stock: 5,
-    images: [
-      'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#FFFFFF'],
     sizes: ['Standard'],
     description: 'Turn any wall into a premium home theatre. CinemaHome outputs true 4K resolution, 2500 ANSI Lumens brightness, and has Android TV built-in for native Netflix, YouTube, and Disney+ streaming.',
@@ -181,11 +168,7 @@ export const products = [
     rating: 4.9,
     reviewsCount: 204,
     stock: 14,
-    images: [
-      'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#FFFFFF', '#E2E8F0', '#2D3748'],
     sizes: ['7', '8', '9', '10', '11'],
     description: 'Crafted from full-grain Italian leather, our classic minimalist sneakers fit any setting from boardroom meetings to casual weekends. Breathable calfskin lining and stitched rubber cupsole guarantee long-lasting durability and comfort.',
@@ -214,10 +197,7 @@ export const products = [
     rating: 4.7,
     reviewsCount: 78,
     stock: 6,
-    images: [
-      'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#2D3748', '#8C7853'],
     sizes: ['S', 'M', 'L', 'XL'],
     description: 'Tailored for a modern silhouette, this premium wool coat is warm, sophisticated, and built for cold months. Made from a heavy-weight wool and cashmere blend, it has elegant notched lapels and satin lining.',
@@ -245,10 +225,7 @@ export const products = [
     rating: 4.4,
     reviewsCount: 145,
     stock: 30,
-    images: [
-      'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1611312449412-6cefac5dc3e4?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#4299E1', '#2B6CB0'],
     sizes: ['S', 'M', 'L', 'XL', 'XXL'],
     description: 'The definitive classic denim jacket, designed with a comfortable relaxed fit. Featuring reinforced metal shank buttons, double chest pockets, and horizontal side pockets, it will develop a unique patina over time.',
@@ -276,10 +253,7 @@ export const products = [
     rating: 4.8,
     reviewsCount: 88,
     stock: 12,
-    images: [
-      'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1598532163257-ae3c6b2524b6?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#8C7853', '#000000'],
     sizes: ['One Size'],
     description: 'A stylish, spacious messenger bag for work or school. Crafted from water-resistant, cruelty-free vegan leather, it includes a padded sleeve for up to a 15-inch laptop and multi-compartment organizers.',
@@ -309,10 +283,7 @@ export const products = [
     rating: 4.9,
     reviewsCount: 38,
     stock: 4,
-    images: [
-      'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1592078615290-033ee584e267?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#E2E8F0', '#EDF2F7', '#CBD5E0'],
     sizes: ['Standard'],
     description: 'Bring clean lines and warmth to your room. Crafted from FSC-certified solid European oak and upholstered in a luxurious, durable wool blend, the Nordic Oak Lounge Chair is designed for maximum relaxation and timeless appeal.',
@@ -341,10 +312,7 @@ export const products = [
     rating: 4.6,
     reviewsCount: 160,
     stock: 25,
-    images: [
-      'https://images.unsplash.com/photo-1602928321679-560bb453f190?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1519183071298-a2962feb14f4?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#FFFFFF', '#1A202C'],
     sizes: ['150ml', '300ml'],
     description: 'Transform your room into a relaxing spa. Made from hand-crafted matte ceramic, this ultrasonic diffuser humidifies air while circulating dry mist with essential oils. Featuring a warm ambient glow.',
@@ -373,10 +341,7 @@ export const products = [
     rating: 4.7,
     reviewsCount: 54,
     stock: 9,
-    images: [
-      'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#000000', '#D69E2E'],
     sizes: ['Standard'],
     description: 'A striking statement piece that arches beautifully over a reading nook or sectional sofa. Featuring a heavy marble base, a matte black iron neck, and a step-less dimming control wheel.',
@@ -405,10 +370,7 @@ export const products = [
     rating: 4.8,
     reviewsCount: 37,
     stock: 18,
-    images: [
-      'https://images.unsplash.com/photo-1578500494198-246f612d3b3d?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#CBD5E0'],
     sizes: ['Set of 3'],
     description: 'Add a subtle, Scandinavian artistic touch to your mantelpiece or dining table. This set contains three premium ceramic vases in varying heights and shapes, finished in a fine-speckled matte sand glaze.',
@@ -438,10 +400,7 @@ export const products = [
     rating: 4.8,
     reviewsCount: 121,
     stock: 20,
-    images: [
-      'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1592432678016-e910b452f9a2?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#D69E2E'],
     sizes: ['6mm Thickness'],
     description: 'Step onto natural comfort. FlexiFit Yoga Mats combine a organic Portuguese cork upper surface with a non-slip natural tree rubber backing. Cork is antimicrobial, hypoallergenic, and provides superior grip when wet.',
@@ -470,10 +429,7 @@ export const products = [
     rating: 4.5,
     reviewsCount: 42,
     stock: 10,
-    images: [
-      'https://images.unsplash.com/photo-1510017808632-95f08e047f36?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1557167678-65979e35ef41?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#000000', '#E53E3E'],
     sizes: ['Standard'],
     description: 'Track your heart metrics with precision. Unlike wrist-based trackers, the SmartPulse chest strap reads electronic activity directly, feeding live heart rate variability, training zones, and calorie count into your favorite workout app.',
@@ -502,10 +458,7 @@ export const products = [
     rating: 4.9,
     reviewsCount: 95,
     stock: 14,
-    images: [
-      'https://images.unsplash.com/photo-1600881333168-2ef49b341f30?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#2D3748'],
     sizes: ['Standard'],
     description: 'Recover faster and move better. The HyperGrip percussive therapy device targets sore muscles with rapid pulses to relieve tension, stimulate blood flow, and break down lactic acid. Features a ultra-quiet brushless motor.',
@@ -534,10 +487,7 @@ export const products = [
     rating: 4.7,
     reviewsCount: 340,
     stock: 45,
-    images: [
-      'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=800&auto=format&fit=crop&q=80'
-    ],
+    images: [],
     colors: ['#319795', '#2B6CB0', '#1A202C', '#E53E3E'],
     sizes: ['24oz', '32oz'],
     description: 'Keep your hydration ice-cold all day. The Double-wall vacuum insulation keeps drinks cold for 24 hours or hot for 12. Built with durable 18/8 food-grade stainless steel and featuring a leakproof straw lid.',
@@ -627,19 +577,19 @@ export const teamMembers = [
   {
     name: 'Sophia Sterling',
     role: 'CEO & Founder',
-    image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=80',
+    image: '',
     bio: 'Sophia has over 15 years of retail tech experience and wanted to build a storefront focused on pure product design and quality.'
   },
   {
     name: 'Ethan Brooks',
     role: 'Head of Product Design',
-    image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80',
+    image: '',
     bio: 'Ethan leads the curation team, ensuring every product on our platform meets high aesthetic and functional standards.'
   },
   {
     name: 'Nisha Patel',
     role: 'Customer Experience Lead',
-    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+    image: '',
     bio: 'Nisha is dedicated to making sure every customer leaves our shop satisfied, coordinating our 24/7 client relations department.'
   }
 ];

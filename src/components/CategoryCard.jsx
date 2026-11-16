@@ -9,12 +9,20 @@ const CategoryCard = ({ category }) => {
     >
       <div className="aspect-16/10 w-full overflow-hidden bg-slate-100 dark:bg-slate-950 relative">
         {/* Category image */}
-        <img
-          src={category.image}
-          alt={category.name}
-          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-          loading="lazy"
-        />
+        {category.image ? (
+          <img
+            src={category.image}
+            alt={category.name}
+            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center">
+            <span className="text-2xl font-black text-white/20 uppercase tracking-widest">
+              {category.name?.slice(0, 3)}
+            </span>
+          </div>
+        )}
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 

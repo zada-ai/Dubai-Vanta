@@ -80,10 +80,14 @@ const Navbar = () => {
             {(user?.role === 'admin' || user?.role === 'superadmin') && (
               <Link 
                 to="/admin" 
-                className="px-2.5 sm:px-3 py-1 rounded-full bg-primary-500/15 text-primary-600 dark:text-primary-400 font-bold hover:bg-primary-500/25 transition-all flex items-center gap-1 text-[11px] sm:text-xs"
+                className={`px-2.5 sm:px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 text-[11px] sm:text-xs ${
+                  user?.role === 'superadmin'
+                    ? 'bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 shadow-xs hover:bg-purple-500/30'
+                    : 'bg-primary-500/15 text-primary-600 dark:text-primary-400 hover:bg-primary-500/25'
+                }`}
               >
                 <RiShieldCheckLine className="w-3.5 h-3.5" />
-                Admin Panel
+                {user?.role === 'superadmin' ? '⚡ Super Admin' : 'Admin Panel'}
               </Link>
             )}
           </nav>

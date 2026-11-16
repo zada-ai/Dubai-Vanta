@@ -2,7 +2,43 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Breadcrumb from '../components/Breadcrumb';
-import { RiSecurePaymentLine, RiTruckLine, RiWallet3Line, RiArrowRightLine } from 'react-icons/ri';
+import { 
+  RiSecurePaymentLine, 
+  RiTruckLine, 
+  RiWallet3Line, 
+  RiArrowRightLine,
+  RiMoneyDollarCircleLine,
+  RiHandCoinLine,
+  RiShieldCheckLine,
+  RiCheckLine,
+  RiMapPinLine,
+  RiTimeLine,
+  RiPhoneLine
+} from 'react-icons/ri';
+
+const UAE_EMIRATES = [
+  'Dubai',
+  'Abu Dhabi',
+  'Sharjah',
+  'Ajman',
+  'Ras Al Khaimah',
+  'Fujairah',
+  'Umm Al Quwain'
+];
+
+const DELIVERY_TIMES = [
+  'Anytime (Fastest Dispatch)',
+  'Morning (9:00 AM – 1:00 PM)',
+  'Afternoon (1:00 PM – 6:00 PM)',
+  'Evening (6:00 PM – 10:00 PM)'
+];
+
+const CHANGE_OPTIONS = [
+  'I will have exact cash ready',
+  'Need change for AED 500 note',
+  'Need change for AED 1000 note',
+  'Will pay with Card on Delivery (POS Machine)'
+];
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -30,19 +66,27 @@ const Checkout = () => {
     );
   }
 
-  // Set default shipping form details
+  // Set default shipping form details (UAE & Dubai default)
   const [shippingDetails, setShippingDetails] = useState({
     fullName: user?.name || '',
     email: user?.email || '',
-    phone: user?.phone || '',
+    phone: user?.phone || '+971 ',
+    altPhone: '',
+    emirate: user?.addresses?.[0]?.state || 'Dubai',
+    area: user?.addresses?.[0]?.city || '',
     street: user?.addresses?.[0]?.street || '',
-    city: user?.addresses?.[0]?.city || '',
-    state: user?.addresses?.[0]?.state || '',
-    zip: user?.addresses?.[0]?.zip || '',
-    country: user?.addresses?.[0]?.country || 'United States'
+    landmark: '',
+    deliveryTime: 'Anytime (Fastest Dispatch)',
+    changeNote: 'I will have exact cash ready',
+    instructions: '',
+    city: user?.addresses?.[0]?.city || 'Dubai',
+    state: user?.addresses?.[0]?.state || 'Dubai',
+    zip: '00000',
+    country: 'United Arab Emirates'
   });
 
   const [deliveryMethod, setDeliveryMethod] = useState('standard'); // standard (free/15) vs express (25)
+  const [paymentMethod, setPaymentMethod] = useState('cod'); // 'cod' (Cash on Delivery) vs 'card' (Credit/Debit Card)
   const [paymentDetails, setPaymentDetails] = useState({
     cardName: '',
     cardNumber: '',
@@ -73,37 +117,64 @@ const Checkout = () => {
     return Math.max(0, subtotal - discount + shipping + tax);
   };
 
-  const handlePlaceOrder = (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
 
-    // Basic Validation
-    const requiredShippingFields = ['fullName', 'email', 'phone', 'street', 'city', 'state', 'zip'];
-    const isShippingValid = requiredShippingFields.every((field) => shippingDetails[field].trim() !== '');
-
-    const requiredPaymentFields = ['cardName', 'cardNumber', 'cardExpiry', 'cardCvv'];
-    const isPaymentValid = requiredPaymentFields.every((field) => paymentDetails[field].trim() !== '');
-
-    if (!isShippingValid) {
-      triggerToast('Please complete all shipping address fields.', 'warning');
+    // Validation for Doorstep Delivery in UAE
+    if (!shippingDetails.fullName.trim()) {
+      triggerToast('Please enter your full receiver name.', 'warning');
       return;
     }
 
-    if (!isPaymentValid) {
-      triggerToast('Please fill out your billing card details.', 'warning');
+    const cleanPhone = (shippingDetails.phone || '').trim();
+    if (!cleanPhone || cleanPhone === '+971' || cleanPhone.length < 9) {
+      triggerToast('Please provide a valid UAE mobile number for the delivery rider.', 'warning');
       return;
+    }
+
+    if (!shippingDetails.area.trim()) {
+      triggerToast('Please enter your Area / Neighborhood (e.g. Downtown Dubai).', 'warning');
+      return;
+    }
+
+    if (!shippingDetails.street.trim()) {
+      triggerToast('Please enter your Building Name, Villa or Flat number.', 'warning');
+      return;
+    }
+
+    if (paymentMethod === 'card') {
+      const requiredPaymentFields = ['cardName', 'cardNumber', 'cardExpiry', 'cardCvv'];
+      const isPaymentValid = requiredPaymentFields.every((field) => (paymentDetails[field] || '').trim() !== '');
+      if (!isPaymentValid) {
+        triggerToast('Please fill out your billing card details.', 'warning');
+        return;
+      }
     }
 
     // Call Context action to clear cart and create order
-    const orderId = createOrder(
-      shippingDetails,
-      {
-        method: 'Credit Card',
-        cardNumber: `•••• •••• •••• ${paymentDetails.cardNumber.slice(-4) || '4321'}`
-      }
-    );
+    const paymentPayload = paymentMethod === 'cod'
+      ? {
+          method: 'Cash on Delivery',
+          details: `Doorstep Cash on Delivery in ${shippingDetails.emirate}. Change: ${shippingDetails.changeNote}. Time: ${shippingDetails.deliveryTime}`,
+          status: 'Pending (Pay upon arrival)'
+        }
+      : {
+          method: 'Credit Card',
+          cardNumber: `•••• •••• •••• ${paymentDetails.cardNumber.slice(-4) || '4321'}`,
+          status: 'Paid'
+        };
 
-    // Redirect to success screen
-    navigate(`/order-success?id=${orderId}`);
+    const finalShippingDetails = {
+      ...shippingDetails,
+      city: shippingDetails.area.trim() || shippingDetails.emirate,
+      state: shippingDetails.emirate,
+      country: 'United Arab Emirates'
+    };
+
+    const orderId = await createOrder(finalShippingDetails, paymentPayload);
+
+    // Redirect to success screen with method param
+    navigate(`/order-success?id=${orderId}&method=${paymentMethod}`);
   };
 
   return (
@@ -132,106 +203,183 @@ const Checkout = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Full Name */}
               <div className="flex flex-col gap-1 sm:col-span-2">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Full Name</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Receiver's Full Name *
+                </label>
                 <input
                   type="text"
                   name="fullName"
                   value={shippingDetails.fullName}
                   onChange={handleInputChange}
                   required
-                  placeholder="Jane Doe"
+                  placeholder="e.g. Mohammed Al Mansoori"
                   className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
                 />
               </div>
 
+              {/* UAE Mobile */}
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Email Address</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  UAE Mobile / WhatsApp * (For Rider)
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={shippingDetails.phone}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="+971 50 123 4567"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
+                />
+              </div>
+
+              {/* Alternate Phone */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Alternative Phone (Optional)
+                </label>
+                <input
+                  type="tel"
+                  name="altPhone"
+                  value={shippingDetails.altPhone}
+                  onChange={handleInputChange}
+                  placeholder="+971 55 987 6543"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
+                />
+              </div>
+
+              {/* Email Address */}
+              <div className="flex flex-col gap-1 sm:col-span-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Email Address (For Invoice & Order Tracking)
+                </label>
                 <input
                   type="email"
                   name="email"
                   value={shippingDetails.email}
                   onChange={handleInputChange}
-                  required
-                  placeholder="jane@example.com"
+                  placeholder="name@example.com"
                   className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
                 />
               </div>
 
+              {/* Emirate Selection */}
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Phone Number</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Emirate (State) *
+                </label>
+                <select
+                  name="emirate"
+                  value={shippingDetails.emirate}
+                  onChange={handleInputChange}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100 font-semibold cursor-pointer"
+                >
+                  {UAE_EMIRATES.map((em) => (
+                    <option key={em} value={em}>
+                      {em}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Area / Neighborhood */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Area / Neighborhood *
+                </label>
                 <input
                   type="text"
-                  name="phone"
-                  value={shippingDetails.phone}
+                  name="area"
+                  value={shippingDetails.area}
                   onChange={handleInputChange}
                   required
-                  placeholder="+1 (555) 019-2834"
+                  placeholder="e.g. Downtown Dubai / Marina / JVC"
                   className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
                 />
               </div>
 
+              {/* Building & Street & Apartment */}
               <div className="flex flex-col gap-1 sm:col-span-2">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Street Address</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Building Name, Street & Apartment / Villa # *
+                </label>
                 <input
                   type="text"
                   name="street"
                   value={shippingDetails.street}
                   onChange={handleInputChange}
                   required
-                  placeholder="128 Pine Street, Suite 400"
+                  placeholder="e.g. Marina Gate Tower 1, Flat 1402, Al Marsa St"
                   className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
                 />
               </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">City</label>
+              {/* Landmark */}
+              <div className="flex flex-col gap-1 sm:col-span-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Nearest Landmark (Helps Rider find location fast)
+                </label>
                 <input
                   type="text"
-                  name="city"
-                  value={shippingDetails.city}
+                  name="landmark"
+                  value={shippingDetails.landmark}
                   onChange={handleInputChange}
-                  required
-                  placeholder="San Francisco"
+                  placeholder="e.g. Opposite Dubai Mall / Near Metro Station"
                   className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
                 />
               </div>
 
+              {/* Preferred Delivery Time */}
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">State / Region</label>
-                <input
-                  type="text"
-                  name="state"
-                  value={shippingDetails.state}
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Preferred Delivery Time Slot
+                </label>
+                <select
+                  name="deliveryTime"
+                  value={shippingDetails.deliveryTime}
                   onChange={handleInputChange}
-                  required
-                  placeholder="CA"
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
-                />
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100 font-semibold cursor-pointer"
+                >
+                  {DELIVERY_TIMES.map((time) => (
+                    <option key={time} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </select>
               </div>
 
+              {/* Cash on Delivery Note */}
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Postal / ZIP Code</label>
-                <input
-                  type="text"
-                  name="zip"
-                  value={shippingDetails.zip}
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Cash on Delivery Note
+                </label>
+                <select
+                  name="changeNote"
+                  value={shippingDetails.changeNote}
                   onChange={handleInputChange}
-                  required
-                  placeholder="94103"
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
-                />
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100 font-semibold cursor-pointer"
+                >
+                  {CHANGE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Country</label>
+              {/* Delivery Instructions */}
+              <div className="flex flex-col gap-1 sm:col-span-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Delivery Instructions for Courier Rider
+                </label>
                 <input
                   type="text"
-                  name="country"
-                  value={shippingDetails.country}
+                  name="instructions"
+                  value={shippingDetails.instructions}
                   onChange={handleInputChange}
-                  required
-                  placeholder="United States"
+                  placeholder="e.g. Ring bell twice, leave with security if unavailable"
                   className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
                 />
               </div>
@@ -302,74 +450,164 @@ const Checkout = () => {
 
           {/* Payment Method section */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex flex-col gap-5">
-            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <RiWallet3Line className="w-5 h-5 text-primary-600" />
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Payment Method</h3>
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <RiWallet3Line className="w-5 h-5 text-primary-600" />
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Payment Method</h3>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                UAE Delivery Available
+              </span>
             </div>
 
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3.5 p-4 rounded-2xl border border-slate-900 dark:border-white bg-slate-50/50 dark:bg-slate-900">
-                <RiSecurePaymentLine className="w-5 h-5 text-slate-905 dark:text-white" />
-                <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Credit / Debit Card</span>
-              </div>
-
-              {/* Credit Card inputs */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-2">
-                <div className="flex flex-col gap-1 sm:col-span-4">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cardholder Name</label>
+            {/* Payment Method Selection Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Option 1: Cash on Delivery (COD) */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('cod')}
+                className={`p-4 rounded-2xl border text-left flex items-start gap-3.5 transition-all cursor-pointer relative overflow-hidden ${
+                  paymentMethod === 'cod'
+                    ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-950/20 ring-2 ring-emerald-500/30'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-transparent'
+                }`}
+              >
+                <div className="mt-1">
                   <input
-                    type="text"
-                    name="cardName"
-                    value={paymentDetails.cardName}
-                    onChange={handlePaymentChange}
-                    required
-                    placeholder="Jane Doe"
-                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
+                    type="radio"
+                    name="paymentMethod"
+                    checked={paymentMethod === 'cod'}
+                    onChange={() => setPaymentMethod('cod')}
+                    className="accent-emerald-600 cursor-pointer w-4 h-4"
                   />
                 </div>
+                <div className="flex flex-col flex-grow">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <RiHandCoinLine className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      Cash on Delivery (COD)
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Pay with cash in AED upon doorstep delivery across UAE.
+                  </span>
+                  <span className="mt-2 text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-900/40 w-fit px-2 py-0.5 rounded-md">
+                    ✓ Recommended
+                  </span>
+                </div>
+              </button>
 
-                <div className="flex flex-col gap-1 sm:col-span-2">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Card Number</label>
+              {/* Option 2: Credit / Debit Card */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('card')}
+                className={`p-4 rounded-2xl border text-left flex items-start gap-3.5 transition-all cursor-pointer relative overflow-hidden ${
+                  paymentMethod === 'card'
+                    ? 'border-slate-900 dark:border-white bg-slate-50/50 dark:bg-slate-900 ring-2 ring-slate-900/20 dark:ring-white/20'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-transparent'
+                }`}
+              >
+                <div className="mt-1">
                   <input
-                    type="text"
-                    name="cardNumber"
-                    value={paymentDetails.cardNumber}
-                    onChange={handlePaymentChange}
-                    required
-                    maxLength="16"
-                    placeholder="4111 2222 3333 4444"
-                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
+                    type="radio"
+                    name="paymentMethod"
+                    checked={paymentMethod === 'card'}
+                    onChange={() => setPaymentMethod('card')}
+                    className="accent-slate-900 dark:accent-white cursor-pointer w-4 h-4"
                   />
                 </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Expiry (MM/YY)</label>
-                  <input
-                    type="text"
-                    name="cardExpiry"
-                    value={paymentDetails.cardExpiry}
-                    onChange={handlePaymentChange}
-                    required
-                    placeholder="12/29"
-                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
-                  />
+                <div className="flex flex-col flex-grow">
+                  <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <RiSecurePaymentLine className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                    Credit / Debit Card
+                  </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Pay online with Visa, Mastercard, or AMEX.
+                  </span>
+                  <span className="mt-2 text-[10px] font-bold text-slate-400">
+                    100% Encrypted Checkout
+                  </span>
                 </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">CVV</label>
-                  <input
-                    type="password"
-                    name="cardCvv"
-                    value={paymentDetails.cardCvv}
-                    onChange={handlePaymentChange}
-                    required
-                    maxLength="3"
-                    placeholder="123"
-                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
-                  />
-                </div>
-              </div>
+              </button>
             </div>
+
+            {/* COD Explanation Notice Banner */}
+            {paymentMethod === 'cod' && (
+              <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-800/60 flex items-start gap-3 text-left">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <RiMoneyDollarCircleLine className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col text-xs text-slate-650 dark:text-slate-300">
+                  <span className="font-bold text-emerald-800 dark:text-emerald-300">
+                    Cash on Delivery is Active
+                  </span>
+                  <p className="mt-0.5 text-slate-600 dark:text-slate-400 leading-relaxed">
+                    No card details needed. Please keep <strong className="text-slate-900 dark:text-white">AED {calculateFinalTotal().toFixed(2)}</strong> in cash ready when our courier rider delivers to your doorstep in the UAE.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Credit Card inputs (shown only when card selected) */}
+            {paymentMethod === 'card' && (
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div className="flex flex-col gap-1 sm:col-span-4">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cardholder Name</label>
+                    <input
+                      type="text"
+                      name="cardName"
+                      value={paymentDetails.cardName}
+                      onChange={handlePaymentChange}
+                      required={paymentMethod === 'card'}
+                      placeholder="Jane Doe"
+                      className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1 sm:col-span-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Card Number</label>
+                    <input
+                      type="text"
+                      name="cardNumber"
+                      value={paymentDetails.cardNumber}
+                      onChange={handlePaymentChange}
+                      required={paymentMethod === 'card'}
+                      maxLength="16"
+                      placeholder="4111 2222 3333 4444"
+                      className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Expiry (MM/YY)</label>
+                    <input
+                      type="text"
+                      name="cardExpiry"
+                      value={paymentDetails.cardExpiry}
+                      onChange={handlePaymentChange}
+                      required={paymentMethod === 'card'}
+                      placeholder="12/29"
+                      className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">CVV</label>
+                    <input
+                      type="password"
+                      name="cardCvv"
+                      value={paymentDetails.cardCvv}
+                      onChange={handlePaymentChange}
+                      required={paymentMethod === 'card'}
+                      maxLength="3"
+                      placeholder="123"
+                      className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -427,6 +665,21 @@ const Checkout = () => {
                 <span>Tax (8%)</span>
                 <span className="text-slate-900 dark:text-white">AED {getTaxAmount().toFixed(2)}</span>
               </div>
+
+              <div className="flex justify-between text-xs pt-1">
+                <span className="text-slate-500">Payment</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  {paymentMethod === 'cod' ? (
+                    <>
+                      <RiHandCoinLine className="w-3.5 h-3.5" /> Cash on Delivery
+                    </>
+                  ) : (
+                    <>
+                      <RiSecurePaymentLine className="w-3.5 h-3.5" /> Credit/Debit Card
+                    </>
+                  )}
+                </span>
+              </div>
             </div>
 
             {/* Grand Total */}
@@ -437,14 +690,31 @@ const Checkout = () => {
               </span>
             </div>
 
-            {/* Place Order CTA */}
-            <button
-              type="submit"
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-slate-900 dark:bg-white dark:text-slate-950 text-white font-bold transition-all shadow-md hover:shadow-lg cursor-pointer"
-            >
-              Place Secure Order
-              <RiArrowRightLine className="w-4 h-4" />
-            </button>
+            {/* Place Order CTA - Dynamic for COD or Card */}
+            {paymentMethod === 'cod' ? (
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold transition-all shadow-md hover:shadow-lg cursor-pointer text-sm"
+              >
+                <RiHandCoinLine className="w-5 h-5" />
+                Place Order (Cash on Delivery)
+                <RiArrowRightLine className="w-4 h-4 ml-1" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-slate-900 dark:bg-white dark:text-slate-950 text-white font-bold transition-all shadow-md hover:shadow-lg cursor-pointer text-sm"
+              >
+                <RiSecurePaymentLine className="w-5 h-5" />
+                Pay & Place Order
+                <RiArrowRightLine className="w-4 h-4 ml-1" />
+              </button>
+            )}
+
+            <p className="text-[11px] text-center text-slate-400 mt-3 flex items-center justify-center gap-1">
+              <RiShieldCheckLine className="w-3.5 h-3.5 text-emerald-500" />
+              Safe & Secure Checkout • Dubai, UAE
+            </p>
           </div>
         </div>
       </form>

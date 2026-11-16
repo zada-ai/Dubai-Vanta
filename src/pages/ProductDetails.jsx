@@ -14,13 +14,14 @@ import {
   RiSubtractLine,
   RiShieldCheckLine,
   RiExchangeLine,
-  RiArrowRightLine
+  RiArrowRightLine,
+  RiHandCoinLine
 } from 'react-icons/ri';
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, wishlist, toggleWishlist, triggerToast, productsList } = useApp();
+  const { addToCart, wishlist, toggleWishlist, triggerToast, productsList, openCodModal } = useApp();
   const products = productsList || initialProducts;
 
   // Find current product
@@ -62,6 +63,74 @@ const ProductDetails = () => {
   const discountPrice = product.discountPrice;
   const isDiscounted = discountPrice && discountPrice < product.price;
   const activePrice = discountPrice || product.price;
+
+  // Dynamic Product Page SEO & Schema.org JSON-LD (Google Rich Results)
+  useEffect(() => {
+    if (!product) return;
+
+    const prevTitle = document.title;
+    document.title = `${product.name} | AeroStore Dubai`;
+
+    let descTag = document.querySelector('meta[name="description"]');
+    const prevDesc = descTag ? descTag.getAttribute('content') : '';
+    if (!descTag) {
+      descTag = document.createElement('meta');
+      descTag.setAttribute('name', 'description');
+      document.head.appendChild(descTag);
+    }
+    descTag.setAttribute('content', product.description ? product.description.slice(0, 160) : `${product.name} available at AeroStore UAE.`);
+
+    // Set Product Schema JSON-LD
+    const productSchema = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": product.name,
+      "image": product.images || [],
+      "description": product.description || '',
+      "sku": `AERO-${product.id}`,
+      "mpn": `AERO-PROD-${product.id}`,
+      "brand": {
+        "@type": "Brand",
+        "name": product.brand || "AeroStore"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": window.location.href,
+        "priceCurrency": "AED",
+        "price": activePrice,
+        "priceValidUntil": "2027-12-31",
+        "itemCondition": "https://schema.org/NewCondition",
+        "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "seller": {
+          "@type": "Organization",
+          "name": "AeroStore"
+        }
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": product.rating || 4.8,
+        "reviewCount": (product.reviewsCount || 10) + (customReviews?.length || 0),
+        "bestRating": "5",
+        "worstRating": "1"
+      }
+    };
+
+    let schemaTag = document.getElementById('product-schema-jsonld');
+    if (!schemaTag) {
+      schemaTag = document.createElement('script');
+      schemaTag.setAttribute('type', 'application/ld+json');
+      schemaTag.setAttribute('id', 'product-schema-jsonld');
+      document.head.appendChild(schemaTag);
+    }
+    schemaTag.textContent = JSON.stringify(productSchema, null, 2);
+
+    return () => {
+      document.title = prevTitle;
+      if (descTag && prevDesc) descTag.setAttribute('content', prevDesc);
+      const tag = document.getElementById('product-schema-jsonld');
+      if (tag) tag.remove();
+    };
+  }, [product, activePrice, customReviews]);
 
   // Quantity controls
   const handleQuantityIncrease = () => {
@@ -126,11 +195,18 @@ const ProductDetails = () => {
         {/* Left Column: Image Gallery (5 cols) */}
         <div className="lg:col-span-5 flex flex-col gap-4">
           <div className="aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-900 rounded-3xl border border-slate-200/50 dark:border-slate-800/80">
-            <img
-              src={product.images[activeImgIdx]}
-              alt={product.name}
-              className="w-full h-full object-cover object-center transition-all duration-300"
-            />
+            {product.images && product.images[activeImgIdx] ? (
+              <img
+                src={product.images[activeImgIdx]}
+                alt={product.altText || product.name}
+                className="w-full h-full object-cover object-center transition-all duration-300"
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center p-8 text-slate-400">
+                <RiShoppingBag3Line className="w-16 h-16 mb-2 opacity-30 text-slate-500" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">VANTA DUBAI</span>
+              </div>
+            )}
           </div>
           {/* Thumbnails */}
           {product.images.length > 1 && (
@@ -145,7 +221,7 @@ const ProductDetails = () => {
                       : 'border-transparent hover:border-slate-300 dark:hover:border-slate-800'
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img src={img} alt={`${product.name} - preview ${idx + 1}`} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -277,6 +353,8 @@ const ProductDetails = () => {
           {/* Action Buttons */}
           {product.stock > 0 ? (
             <div className="flex flex-col sm:flex-row gap-4 w-full mb-8">
+              {/* Add to Cart button commented out for Direct Cash on Delivery flow */}
+              {/*
               <button
                 onClick={handleAddToCart}
                 className="flex-grow flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-slate-900 dark:bg-slate-800 text-white font-bold hover:bg-primary-600 dark:hover:bg-primary-600 transition-all shadow-md cursor-pointer"
@@ -290,9 +368,20 @@ const ProductDetails = () => {
               >
                 Buy Now
               </button>
+              */}
+
+              {/* Primary Direct Cash on Delivery Button */}
+              <button
+                onClick={() => openCodModal(product, quantity, selectedColor, selectedSize)}
+                className="flex-grow flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-base font-extrabold shadow-lg hover:shadow-xl transition-all cursor-pointer"
+              >
+                <RiHandCoinLine className="w-6 h-6" />
+                <span>Order with Cash on Delivery (COD)</span>
+              </button>
+
               <button
                 onClick={() => toggleWishlist(product)}
-                className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-650 hover:text-rose-500 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
+                className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-650 hover:text-rose-500 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer flex items-center justify-center"
                 aria-label="Add to Wishlist"
               >
                 {isWishlisted ? (

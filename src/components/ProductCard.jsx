@@ -2,10 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import RatingComponent from './RatingComponent';
-import { RiHeartLine, RiHeartFill, RiShoppingBagLine } from 'react-icons/ri';
+import { RiHeartLine, RiHeartFill, RiShoppingBagLine, RiHandCoinLine } from 'react-icons/ri';
 
 const ProductCard = ({ product }) => {
-  const { addToCart, wishlist, toggleWishlist } = useApp();
+  const { addToCart, wishlist, toggleWishlist, openCodModal } = useApp();
 
   const isWishlisted = wishlist.some((item) => item.id === product.id);
   const discountPrice = product.discountPrice;
@@ -16,12 +16,19 @@ const ProductCard = ({ product }) => {
       {/* Product Image Section */}
       <div className="relative aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-950">
         <Link to={`/product/${product.id}`} className="block w-full h-full">
-          <img
-            src={product.images[0]}
-            alt={product.name}
-            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
-            loading="lazy"
-          />
+          {product.images && product.images[0] ? (
+            <img
+              src={product.images[0]}
+              alt={product.altText || product.name}
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-slate-100 dark:bg-slate-950 text-slate-400 group-hover:bg-slate-200/60 dark:group-hover:bg-slate-900 transition-colors">
+              <RiShoppingBagLine className="w-10 h-10 mb-1 opacity-30 text-slate-500" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">VANTA DUBAI</span>
+            </div>
+          )}
         </Link>
 
         {/* Discount Badge */}
@@ -88,6 +95,8 @@ const ProductCard = ({ product }) => {
             )}
           </div>
 
+          {/* Add to Cart button commented out for Direct Cash on Delivery flow */}
+          {/*
           <button
             onClick={() => addToCart(product)}
             className="p-2.5 rounded-xl bg-slate-900 hover:bg-primary-600 dark:bg-slate-800 dark:hover:bg-primary-600 text-white shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer"
@@ -95,6 +104,20 @@ const ProductCard = ({ product }) => {
             disabled={product.stock === 0}
           >
             <RiShoppingBagLine className="w-4 h-4" />
+          </button>
+          */}
+
+          {/* Cash on Delivery Direct Order Button */}
+          <button
+            onClick={() => openCodModal(product)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Order with Cash on Delivery"
+            disabled={product.stock === 0}
+            title={product.stock === 0 ? "Out of Stock" : "Quick Order with Cash on Delivery"}
+          >
+            <RiHandCoinLine className="w-4 h-4" />
+            <span className="hidden xs:inline">Cash on Delivery</span>
+            <span className="xs:hidden">COD</span>
           </button>
         </div>
       </div>
