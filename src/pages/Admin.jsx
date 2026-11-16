@@ -436,6 +436,7 @@ const Admin = () => {
   // New product form state
   const [newProd, setNewProd] = useState({
     name: '',
+    sku: '',
     brand: '',
     category: 'electronics',
     price: '',
@@ -493,7 +494,8 @@ const Admin = () => {
   const handleOpenEditProduct = (prod) => {
     setEditingProduct({
       ...prod,
-      image: prod.images?.[0] || '',
+      sku: prod.sku || '',
+      image: prod.image || (prod.images && prod.images[0]) || '',
       isFeatured: !!prod.isFeatured,
       isBestSeller: !!prod.isBestSeller,
       isNewArrival: !!prod.isNewArrival
@@ -509,12 +511,14 @@ const Admin = () => {
 
     updateProduct(editingProduct.id, {
       name: editingProduct.name,
-      brand: editingProduct.brand || 'AeroStore',
+      sku: editingProduct.sku ? editingProduct.sku.trim().toUpperCase() : undefined,
+      brand: editingProduct.brand || 'VANTA DUBAI',
       category: editingProduct.category,
       price: priceNum,
       discountPrice: discountNum,
       stock: parseInt(editingProduct.stock) || 0,
       description: editingProduct.description || '',
+      image: editingProduct.image || '',
       images: editingProduct.image ? [editingProduct.image] : editingProduct.images || [],
       isFeatured: !!editingProduct.isFeatured,
       isBestSeller: !!editingProduct.isBestSeller,
@@ -575,12 +579,15 @@ const Admin = () => {
   const bestSellerCount = (productsList || []).filter((p) => p.isBestSeller).length;
   const newArrivalCount = (productsList || []).filter((p) => p.isNewArrival).length;
 
-  // Filtered products with badge filtering
+  // Filtered products with badge & SKU/UUID search
   const filteredProducts = (productsList || []).filter((p) => {
+    const term = productSearch.toLowerCase();
     const matchesSearch =
-      p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-      p.category.toLowerCase().includes(productSearch.toLowerCase()) ||
-      (p.brand && p.brand.toLowerCase().includes(productSearch.toLowerCase()));
+      p.name.toLowerCase().includes(term) ||
+      (p.sku && p.sku.toLowerCase().includes(term)) ||
+      (p.id && String(p.id).toLowerCase().includes(term)) ||
+      p.category.toLowerCase().includes(term) ||
+      (p.brand && p.brand.toLowerCase().includes(term));
     if (!matchesSearch) return false;
     if (productBadgeFilter === 'featured') return !!p.isFeatured;
     if (productBadgeFilter === 'bestsellers') return !!p.isBestSeller;
@@ -604,7 +611,8 @@ const Admin = () => {
 
     addProduct({
       name: newProd.name,
-      brand: newProd.brand || 'AeroStore',
+      sku: newProd.sku ? newProd.sku.trim().toUpperCase() : undefined,
+      brand: newProd.brand || 'VANTA DUBAI',
       category: newProd.category,
       price: priceNum,
       discountPrice: discountNum,
@@ -621,6 +629,7 @@ const Admin = () => {
 
     setNewProd({
       name: '',
+      sku: '',
       brand: '',
       category: 'electronics',
       price: '',
@@ -2607,9 +2616,16 @@ const Admin = () => {
                               <p className="font-bold text-slate-900 dark:text-white leading-tight line-clamp-1">
                                 {p.name}
                               </p>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-xs text-slate-400">{p.brand || 'AeroStore'}</span>
-                                <span className="text-[10px] text-slate-300 dark:text-slate-600 font-mono">ID: {p.id}</span>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                {p.sku && (
+                                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 border border-primary-200/60 dark:border-primary-800/40">
+                                    {p.sku}
+                                  </span>
+                                )}
+                                <span className="text-xs text-slate-400">{p.brand || 'VANTA DUBAI'}</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono" title={p.id}>
+                                  UUID: {String(p.id).slice(0, 8)}...
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -2930,18 +2946,32 @@ const Admin = () => {
             </div>
 
             <form onSubmit={handleAddProductSubmit} className="space-y-4">
-              <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                  Product Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newProd.name}
-                  onChange={(e) => setNewProd({ ...newProd, name: e.target.value })}
-                  placeholder="e.g. AeroSound Elite Wireless Headphones"
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500 font-semibold"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newProd.name}
+                    onChange={(e) => setNewProd({ ...newProd, name: e.target.value })}
+                    placeholder="e.g. AeroSound Elite Wireless Headphones"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500 font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    SKU (Stock Keeping Unit)
+                  </label>
+                  <input
+                    type="text"
+                    value={newProd.sku || ''}
+                    onChange={(e) => setNewProd({ ...newProd, sku: e.target.value.toUpperCase() })}
+                    placeholder="e.g. VNT-ELEC-1001 (auto if empty)"
+                    className="w-full px-3.5 py-2.5 text-sm font-mono font-bold uppercase rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -3178,6 +3208,9 @@ const Admin = () => {
               <div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white">Edit Product Details</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Product attributes aur Home page section access modify karein</p>
+                <p className="text-[10px] font-mono text-primary-600 dark:text-primary-400 mt-1 font-semibold truncate">
+                  UUID: {editingProduct.id}
+                </p>
               </div>
               <button
                 onClick={() => {
@@ -3191,18 +3224,33 @@ const Admin = () => {
             </div>
 
             <form onSubmit={handleSaveEditProduct} className="space-y-4">
-              <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                  Product Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editingProduct.name || ''}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                  placeholder="e.g. AeroSound Max"
-                  className="w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingProduct.name || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                    placeholder="e.g. AeroSound Max"
+                    className="w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    SKU (Stock Keeping Unit) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingProduct.sku || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, sku: e.target.value.toUpperCase() })}
+                    placeholder="e.g. VNT-ELEC-001"
+                    className="w-full px-3.5 py-2.5 text-sm font-mono font-bold uppercase rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

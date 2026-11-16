@@ -55,10 +55,14 @@ const Shop = () => {
   // Filter and sort items
   const filteredProducts = products
     .filter((product) => {
-      // 1. Search Query Filter
+      // 1. Search Query Filter (matches Name, Brand, SKU, UUID)
+      const term = (filters.search || '').toLowerCase();
       const matchSearch = 
-        product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        product.brand.toLowerCase().includes(filters.search.toLowerCase());
+        !term || 
+        product.name.toLowerCase().includes(term) ||
+        (product.brand && product.brand.toLowerCase().includes(term)) ||
+        (product.sku && product.sku.toLowerCase().includes(term)) ||
+        (product.id && String(product.id).toLowerCase().includes(term));
       
       // 2. Category Filter
       const matchCategory = filters.category === 'all' || product.category === filters.category;
@@ -85,7 +89,7 @@ const Shop = () => {
           return b.reviewsCount - a.reviewsCount;
         case 'latest':
         default:
-          return b.id - a.id;
+          return (new Date(b.createdAt || 0)) - (new Date(a.createdAt || 0));
       }
     });
 

@@ -24,8 +24,8 @@ const ProductDetails = () => {
   const { addToCart, wishlist, toggleWishlist, triggerToast, productsList, openCodModal } = useApp();
   const products = productsList || initialProducts;
 
-  // Find current product
-  const product = products.find((p) => p.id === Number(id));
+  // Find current product (supports UUID or SKU)
+  const product = products.find((p) => String(p.id) === String(id) || (p.sku && p.sku.toLowerCase() === String(id).toLowerCase()));
 
   if (!product) {
     return (
@@ -230,11 +230,19 @@ const ProductDetails = () => {
 
         {/* Right Column: Product Actions & Selector (7 cols) */}
         <div className="lg:col-span-7 flex flex-col items-start text-left">
-          {/* Brand & Stock Status */}
-          <div className="flex items-center gap-3 mb-2">
+          {/* Brand, SKU & Stock Status */}
+          <div className="flex items-center gap-3 mb-2 flex-wrap">
             <span className="text-xs tracking-wider uppercase font-black text-primary-600 dark:text-primary-400">
               {product.brand}
             </span>
+            {product.sku && (
+              <>
+                <span className="text-slate-300 dark:text-slate-700">|</span>
+                <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                  SKU: {product.sku}
+                </span>
+              </>
+            )}
             <span className="text-slate-300 dark:text-slate-700">|</span>
             {product.stock > 0 ? (
               <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-500">
