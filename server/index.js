@@ -30,6 +30,7 @@ import {
   updateSettings, 
   deleteSettingKey 
 } from './db.js';
+import { registerSeoRoutes } from './seo.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -599,6 +600,7 @@ app.post('/api/categories', async (req, res) => {
       description
     });
     cache.del('categories');
+    cache.del('sitemap');
     res.status(201).json({ success: true, category: newCat });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -609,6 +611,7 @@ app.delete('/api/categories/:id', async (req, res) => {
   try {
     await deleteCategoryInDb(req.params.id);
     cache.del('categories');
+    cache.del('sitemap');
     res.json({ success: true, message: 'Category deleted successfully' });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -840,98 +843,7 @@ app.delete('/api/settings/logo', async (req, res) => {
 // ==========================================
 // 4. Dynamic SEO Routes: robots.txt & sitemap.xml
 // ==========================================
-app.get('/robots.txt', (req, res) => {
-  try {
-    const settings = getAllSettings();
-    if (settings.seo && settings.seo.robotsTxt) {
-      res.type('text/plain').send(settings.seo.robotsTxt);
-      return;
-    }
-  } catch (_) {}
-
-  const robotsPath = path.join(__dirname, '..', 'public', 'robots.txt');
-  if (fs.existsSync(robotsPath)) {
-    return res.sendFile(robotsPath);
-  }
-  res.type('text/plain').send(
-    `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /checkout\nDisallow: /orders\nSitemap: https://aerostore.com/sitemap.xml`
-  );
-});
-
-app.get('/sitemap.xml', async (req, res) => {
-  try {
-    const cached = cache.get('sitemap');
-    if (cached) {
-      res.setHeader('X-Cache', 'HIT');
-      res.setHeader('Cache-Control', 'public, max-age=300');
-      return res.type('application/xml').send(cached);
-    }
-
-    const settings = await getAllSettings();
-    const siteUrl = (settings.seo && settings.seo.siteUrl) || 'https://aerostore.com';
-    let dbProducts = [];
-    try {
-      dbProducts = await getAllProducts();
-    } catch (_) {}
-    const products = (Array.isArray(dbProducts) && dbProducts.length > 0) ? dbProducts : (settings.products || []);
-
-    const today = new Date().toISOString().split('T')[0];
-
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n`;
-
-    // Core static routes
-    const staticPages = [
-      { path: '', priority: '1.0', changefreq: 'daily' },
-      { path: 'shop', priority: '0.9', changefreq: 'daily' },
-      { path: 'about', priority: '0.7', changefreq: 'monthly' },
-      { path: 'contact', priority: '0.7', changefreq: 'monthly' },
-      { path: 'faq', priority: '0.6', changefreq: 'monthly' }
-    ];
-
-    staticPages.forEach((p) => {
-      const loc = p.path ? `${siteUrl}/${p.path}` : `${siteUrl}/`;
-      xml += `  <url>\n`;
-      xml += `    <loc>${loc}</loc>\n`;
-      xml += `    <lastmod>${today}</lastmod>\n`;
-      xml += `    <changefreq>${p.changefreq}</changefreq>\n`;
-      xml += `    <priority>${p.priority}</priority>\n`;
-      xml += `  </url>\n`;
-    });
-
-    // Dynamic products
-    if (Array.isArray(products) && products.length > 0) {
-      products.forEach((prod) => {
-        xml += `  <url>\n`;
-        xml += `    <loc>${siteUrl}/product/${prod.id}</loc>\n`;
-        xml += `    <lastmod>${today}</lastmod>\n`;
-        xml += `    <changefreq>weekly</changefreq>\n`;
-        xml += `    <priority>0.8</priority>\n`;
-        if (prod.images && prod.images[0]) {
-          const imgUrl = prod.images[0].replace(/&/g, '&amp;');
-          const imgTitle = (prod.name || '').replace(/&/g, '&amp;');
-          xml += `    <image:image>\n`;
-          xml += `      <image:loc>${imgUrl}</image:loc>\n`;
-          xml += `      <image:title>${imgTitle}</image:title>\n`;
-          xml += `    </image:image>\n`;
-        }
-        xml += `  </url>\n`;
-      });
-    }
-
-    xml += `</urlset>`;
-    cache.set('sitemap', xml, 600); // 10 minutes cache
-    res.setHeader('X-Cache', 'MISS');
-    res.setHeader('Cache-Control', 'public, max-age=300');
-    res.type('application/xml').send(xml);
-  } catch (error) {
-    const sitemapPath = path.join(__dirname, '..', 'public', 'sitemap.xml');
-    if (fs.existsSync(sitemapPath)) {
-      return res.sendFile(sitemapPath);
-    }
-    res.status(500).type('text/plain').send('Error generating sitemap.xml');
-  }
-});
+registerSeoRoutes(app, { cache, getAllSettings, getAllProducts, getAllCategories });
 
 // Update robots.txt
 app.post('/api/settings/robots', async (req, res) => {

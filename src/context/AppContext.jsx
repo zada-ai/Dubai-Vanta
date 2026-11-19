@@ -128,29 +128,24 @@ export const defaultSeoSettings = {
       ogImageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80'
     }
   },
-  robotsTxt: `# robots.txt for AeroStore E-Commerce (UAE & Global)
-User-agent: *
+  robotsTxt: `User-agent: *
 Allow: /
-Allow: /shop
-Allow: /about
-Allow: /contact
-Allow: /faq
-Allow: /product/
 
-# Disallow private user & administrative paths
+# Private, account and checkout pages
 Disallow: /admin
 Disallow: /api/
-Disallow: /checkout
-Disallow: /orders
 Disallow: /cart
+Disallow: /checkout
+Disallow: /order-success
+Disallow: /orders
 Disallow: /profile
+Disallow: /wishlist
+Disallow: /login
+Disallow: /register
 
-# Crawl Delay
-Crawl-delay: 1
-
-# Host & Dynamic Sitemap
-Host: https://aerostore.com
-Sitemap: https://aerostore.com/sitemap.xml`
+# Internal search result pages
+Disallow: /*?search=
+Disallow: /*&search=`
 };
 
 export const defaultFeatures = [
@@ -784,6 +779,101 @@ export const AppProvider = ({ children }) => {
     } catch (_) {}
 
     triggerToast('Category deleted.', 'info');
+  };
+
+  const updateCategory = async (catId, updatedFields) => {
+    setCategories((prev) => {
+      const updated = prev.map((c) => (c.id === catId ? { ...c, ...updatedFields } : c));
+      try {
+        localStorage.setItem('categories', JSON.stringify(updated));
+      } catch (_) {}
+      return updated;
+    });
+
+    try {
+      await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: catId, ...updatedFields })
+      });
+    } catch (_) {}
+
+    triggerToast('Category updated successfully!', 'success');
+  };
+
+  // Contact Info State (Manageable via Super Admin)
+  const defaultContactInfo = {
+    supportEmail: 'support@aerostore.com',
+    phoneHotline: '+971 4 123 4567',
+    officeAddress: 'Downtown Dubai, Boulevard Plaza Tower 1, Level 14, Dubai, UAE',
+    operationHours: 'Monday – Saturday: 9:00 AM – 8:00 PM (GST)'
+  };
+
+  const [contactInfo, setContactInfo] = useState(() => {
+    const saved = localStorage.getItem('contactInfo');
+    if (saved) {
+      try {
+        return { ...defaultContactInfo, ...JSON.parse(saved) };
+      } catch (_) {}
+    }
+    return defaultContactInfo;
+  });
+
+  const updateContactInfo = (newInfo) => {
+    setContactInfo((prev) => {
+      const updated = { ...prev, ...newInfo };
+      localStorage.setItem('contactInfo', JSON.stringify(updated));
+      return updated;
+    });
+    triggerToast('Contact details updated successfully!', 'success');
+  };
+
+  // Contact Messages / Inquiries State (Routed to Super Admin)
+  const [contactMessages, setContactMessages] = useState(() => {
+    const saved = localStorage.getItem('contactMessages');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (_) {}
+    }
+    return [
+      {
+        id: 'MSG-101',
+        name: 'Mohammed Al-Falasi',
+        email: 'mohammed.falasi@example.ae',
+        subject: 'Bulk Luxury Order Inquiry',
+        message: 'Looking to purchase 15 units of AeroSound Max for our Dubai office executive suite. Can you provide custom invoices?',
+        createdAt: new Date(Date.now() - 3600000 * 24).toISOString()
+      }
+    ];
+  });
+
+  const submitContactMessage = (msgData) => {
+    const newMsg = {
+      id: 'MSG-' + Date.now(),
+      name: msgData.name || '',
+      email: msgData.email || '',
+      subject: msgData.subject || 'Customer Inquiry',
+      message: msgData.message || '',
+      createdAt: new Date().toISOString()
+    };
+    setContactMessages((prev) => {
+      const updated = [newMsg, ...prev];
+      localStorage.setItem('contactMessages', JSON.stringify(updated));
+      return updated;
+    });
+    triggerToast('Thank you! Your message has been sent to our Super Admin.', 'success');
+    return newMsg;
+  };
+
+  const deleteContactMessage = (msgId) => {
+    setContactMessages((prev) => {
+      const updated = prev.filter((m) => m.id !== msgId);
+      localStorage.setItem('contactMessages', JSON.stringify(updated));
+      return updated;
+    });
+    triggerToast('Message deleted.', 'info');
   };
 
   const uploadLogo = async (file) => {
@@ -1457,6 +1547,24 @@ export const AppProvider = ({ children }) => {
     });
   };
 
+  // Registered Users list from localStorage (sync for local authentication)
+  const getRegisteredUsers = () => {
+    try {
+      const saved = localStorage.getItem('registeredUsers');
+      return saved ? JSON.parse(saved) : [];
+    } catch (_) {
+      return [];
+    }
+  };
+
+  const saveRegisteredUser = (userData) => {
+    try {
+      const users = getRegisteredUsers();
+      const updated = [...users.filter((u) => u.email.toLowerCase() !== userData.email.toLowerCase()), userData];
+      localStorage.setItem('registeredUsers', JSON.stringify(updated));
+    } catch (_) {}
+  };
+
   // Authentication operations with SQLite Backend
   const login = async (email, password) => {
     if (!email || !password) {
@@ -1486,7 +1594,7 @@ export const AppProvider = ({ children }) => {
         return false;
       }
     } catch (_) {
-      // 2. Offline Fallback
+      // 2. Offline / Local Fallback: ONLY verify against actually registered accounts or official admins!
       if (normalizedEmail === 'superadmin@gmail.com') {
         if (password !== 'password123') {
           triggerToast('Incorrect password for Super Admin.', 'error');
@@ -1518,36 +1626,43 @@ export const AppProvider = ({ children }) => {
         return true;
       }
 
-      const isAdmin = 
-        normalizedEmail === 'admin@aerostore.com' ||
-        normalizedEmail.startsWith('admin@') ||
-        normalizedEmail.includes('admin') ||
-        password === 'admin123';
+      if (normalizedEmail === 'admin@aerostore.com') {
+        if (password !== 'admin123') {
+          triggerToast('Incorrect password for Administrator.', 'error');
+          return false;
+        }
+        const adminUser = {
+          id: 2,
+          name: 'Store Administrator',
+          email: 'admin@aerostore.com',
+          role: 'admin',
+          phone: '+971 4 999 0000',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+          joinedDate: 'January 2026',
+          addresses: []
+        };
+        setUser(adminUser);
+        localStorage.setItem('user', JSON.stringify(adminUser));
+        triggerToast('Welcome back, Administrator!', 'success');
+        return true;
+      }
 
-      const mockUser = {
-        name: isAdmin ? 'Store Administrator' : 'Jane Doe',
-        email: email,
-        role: isAdmin ? 'admin' : 'customer',
-        phone: isAdmin ? '+1 (555) 999-0000' : '+1 (555) 019-2834',
-        avatar: isAdmin
-          ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'
-          : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80',
-        joinedDate: isAdmin ? 'January 2026' : 'August 2026',
-        addresses: [
-          {
-            id: 'addr_1',
-            street: '128 Pine Street, Suite 400',
-            city: 'San Francisco',
-            state: 'CA',
-            zip: '94103',
-            country: 'United States',
-            isDefault: true
-          }
-        ]
-      };
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      triggerToast(isAdmin ? 'Welcome back, Administrator!' : 'Logged in successfully!', 'success');
+      // Check registered users in storage
+      const registered = getRegisteredUsers().find((u) => u.email.toLowerCase() === normalizedEmail);
+      if (!registered) {
+        triggerToast('Account does not exist. Please sign up first.', 'error');
+        return false;
+      }
+
+      if (registered.password !== password) {
+        triggerToast('Incorrect password. Please try again.', 'error');
+        return false;
+      }
+
+      const { password: _pwd, ...safeUser } = registered;
+      setUser(safeUser);
+      localStorage.setItem('user', JSON.stringify(safeUser));
+      triggerToast(`Welcome back, ${safeUser.name}!`, 'success');
       return true;
     }
   };
@@ -1558,6 +1673,13 @@ export const AppProvider = ({ children }) => {
       return false;
     }
     const normalizedEmail = email.trim().toLowerCase();
+
+    // Check if email already registered locally
+    const existingLocally = getRegisteredUsers().find((u) => u.email.toLowerCase() === normalizedEmail);
+    if (existingLocally) {
+      triggerToast('An account with this email already exists. Please sign in.', 'error');
+      return false;
+    }
 
     // 1. Register with Backend API (Sets httpOnly refreshToken cookie)
     try {
@@ -1573,6 +1695,7 @@ export const AppProvider = ({ children }) => {
         setUser(data.user);
         if (data.accessToken) setAccessToken(data.accessToken);
         localStorage.setItem('user', JSON.stringify(data.user));
+        saveRegisteredUser({ name: fullName, email: normalizedEmail, phone, password, role: data.user.role || 'customer' });
         triggerToast(data.message || 'Account registered successfully!', 'success');
         return true;
       } else {
@@ -1580,23 +1703,25 @@ export const AppProvider = ({ children }) => {
         return false;
       }
     } catch (_) {
-      // 2. Offline Fallback
+      // 2. Offline / Local fallback: Save user to registeredUsers
       const isSuper = normalizedEmail === 'superadmin@gmail.com';
       const isAdmin = isSuper || normalizedEmail.includes('admin');
-      const mockUser = {
+      const newUser = {
+        id: 'usr_' + Date.now(),
         name: fullName,
-        email: email,
+        email: normalizedEmail,
+        password: password,
         role: isSuper ? 'superadmin' : isAdmin ? 'admin' : 'customer',
-        phone: phone || '+1 (555) 000-0000',
-        avatar: isAdmin
-          ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'
-          : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80',
-        joinedDate: 'November 2026',
+        phone: phone || '',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+        joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
         addresses: []
       };
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      triggerToast('Account registered successfully!', 'success');
+      saveRegisteredUser(newUser);
+      const { password: _newPwd, ...safeUser } = newUser;
+      setUser(safeUser);
+      localStorage.setItem('user', JSON.stringify(safeUser));
+      triggerToast('Account registered successfully! Welcome to VANTA DUBAI.', 'success');
       return true;
     }
   };
@@ -1725,8 +1850,14 @@ export const AppProvider = ({ children }) => {
         productsList,
         categories,
         addCategory,
+        updateCategory,
         deleteCategory,
         uploadCategoryImage,
+        contactInfo,
+        updateContactInfo,
+        contactMessages,
+        submitContactMessage,
+        deleteContactMessage,
         addProduct,
         updateProduct,
         deleteProduct,

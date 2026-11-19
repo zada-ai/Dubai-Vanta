@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { motion, MotionConfig } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import {
-  RiGithubFill,
+  RiFacebookFill,
+  RiTiktokFill,
+  RiWhatsappFill,
   RiTwitterFill,
   RiLinkedinBoxFill,
   RiMailSendLine,
@@ -28,9 +30,11 @@ const categoryLinks = [
 ];
 
 const socials = [
+  { label: 'Facebook', href: 'https://facebook.com', Icon: RiFacebookFill },
+  { label: 'TikTok', href: 'https://tiktok.com', Icon: RiTiktokFill },
+  { label: 'WhatsApp', href: 'https://wa.me', Icon: RiWhatsappFill },
   { label: 'Twitter', href: 'https://twitter.com', Icon: RiTwitterFill },
-  { label: 'LinkedIn', href: 'https://linkedin.com', Icon: RiLinkedinBoxFill },
-  { label: 'GitHub', href: 'https://github.com', Icon: RiGithubFill }
+  { label: 'LinkedIn', href: 'https://linkedin.com', Icon: RiLinkedinBoxFill }
 ];
 
 // Columns reveal one after another when the footer scrolls into view

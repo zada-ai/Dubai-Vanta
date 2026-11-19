@@ -26,8 +26,7 @@ const Cart = () => {
     getCartDiscount,
     getShippingCost,
     getTaxAmount,
-    getCartTotal,
-    user
+    getCartTotal
   } = useApp();
 
   const [couponCode, setCouponCode] = useState('');
@@ -41,11 +40,8 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
-    if (!user) {
-      navigate('/login?redirect=checkout');
-    } else {
-      navigate('/checkout');
-    }
+    // Guests can order without an account
+    navigate('/checkout');
   };
 
   if (cart.length === 0) {

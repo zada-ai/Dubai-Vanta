@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { products as initialProducts } from '../data/mockData';
@@ -20,8 +20,7 @@ import {
 
 const ProductDetails = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const { addToCart, wishlist, toggleWishlist, triggerToast, productsList, openCodModal } = useApp();
+  const { productsList } = useApp();
   const products = productsList || initialProducts;
 
   // Find current product (supports UUID or SKU)
@@ -38,10 +37,17 @@ const ProductDetails = () => {
     );
   }
 
+  return <ProductView key={product.id} id={id} product={product} products={products} />;
+};
+
+const ProductView = ({ id, product, products }) => {
+  const navigate = useNavigate();
+  const { addToCart, wishlist, toggleWishlist, triggerToast, openCodModal } = useApp();
+
   // Gallery, options and review states
   const [activeImgIdx, setActiveImgIdx] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(product.colors[0] || '');
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0] || '');
+  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || '');
+  const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || '');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   
@@ -52,8 +58,8 @@ const ProductDetails = () => {
   useEffect(() => {
     // Reset states when product changes
     setActiveImgIdx(0);
-    setSelectedColor(product.colors[0] || '');
-    setSelectedSize(product.sizes[0] || '');
+    setSelectedColor(product.colors?.[0] || '');
+    setSelectedSize(product.sizes?.[0] || '');
     setQuantity(1);
     setCustomReviews(product.reviews || []);
     setNewReview({ name: '', rating: 5, comment: '' });
@@ -176,10 +182,20 @@ const ProductDetails = () => {
     setNewReview({ name: '', rating: 5, comment: '' });
   };
 
-  // Related products (same category, excluding current product)
-  const relatedProducts = products
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
+  // Related products (custom super admin selected or same category fallback)
+  const relatedProducts = useMemo(() => {
+    if (product?.relatedSkuList && Array.isArray(product.relatedSkuList) && product.relatedSkuList.length > 0) {
+      const explicit = products.filter((p) => 
+        product.relatedSkuList.includes(p.sku) || 
+        product.relatedSkuList.includes(String(p.id)) ||
+        product.relatedSkuList.includes(p.name)
+      );
+      if (explicit.length > 0) return explicit;
+    }
+    return products
+      .filter((p) => p.category === product.category && p.id !== product.id)
+      .slice(0, 4);
+  }, [product, products]);
 
   return (
     <div className="flex flex-col gap-6 py-2">
@@ -360,31 +376,26 @@ const ProductDetails = () => {
 
           {/* Action Buttons */}
           {product.stock > 0 ? (
-            <div className="flex flex-col sm:flex-row gap-4 w-full mb-8">
-              {/* Add to Cart button commented out for Direct Cash on Delivery flow */}
-              {/*
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full mb-8">
+              {/* Add to Cart button */}
               <button
-                onClick={handleAddToCart}
-                className="flex-grow flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-slate-900 dark:bg-slate-800 text-white font-bold hover:bg-primary-600 dark:hover:bg-primary-600 transition-all shadow-md cursor-pointer"
+                onClick={() => addToCart(product, selectedColor, selectedSize, quantity)}
+                className="flex-grow flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold transition-all shadow-md cursor-pointer"
               >
                 <RiShoppingBag3Line className="w-5 h-5" />
                 Add to Cart
               </button>
-              <button
-                onClick={handleBuyNow}
-                className="flex-grow flex items-center justify-center px-8 py-3.5 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-bold transition-all shadow-md cursor-pointer"
-              >
-                Buy Now
-              </button>
-              */}
 
-              {/* Primary Direct Cash on Delivery Button */}
+              {/* Primary Direct Cash on Delivery Button - opens dedicated checkout page without modal popup */}
               <button
-                onClick={() => openCodModal(product, quantity, selectedColor, selectedSize)}
-                className="flex-grow flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-base font-extrabold shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                onClick={() => {
+                  addToCart(product, selectedColor, selectedSize, quantity);
+                  navigate('/checkout');
+                }}
+                className="flex-grow flex items-center justify-center gap-2.5 px-6 sm:px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-sm sm:text-base font-extrabold shadow-lg hover:shadow-xl transition-all cursor-pointer"
               >
-                <RiHandCoinLine className="w-6 h-6" />
-                <span>Order with Cash on Delivery (COD)</span>
+                <RiHandCoinLine className="w-5 h-5" />
+                <span>Cash on Delivery (Checkout)</span>
               </button>
 
               <button
@@ -410,15 +421,15 @@ const ProductDetails = () => {
           {/* Small Trust Guarantees */}
           <div className="grid grid-cols-2 gap-4 w-full border-t border-slate-200/50 dark:border-slate-800/80 pt-6">
             <div className="flex items-center gap-3 text-left">
-              <RiShieldCheckLine className="w-5 h-5 text-primary-600" />
+              <RiShieldCheckLine className="w-5 h-5 text-primary-600 shrink-0" />
               <span className="text-xs text-slate-500 font-semibold dark:text-slate-400">
-                1-Year standard warranty
+                {product.warrantyText || '1-Year standard warranty'}
               </span>
             </div>
             <div className="flex items-center gap-3 text-left">
-              <RiExchangeLine className="w-5 h-5 text-primary-600" />
+              <RiExchangeLine className="w-5 h-5 text-primary-600 shrink-0" />
               <span className="text-xs text-slate-500 font-semibold dark:text-slate-400">
-                30-day money-back guarantee
+                {product.returnPolicyText || '30-day money-back guarantee'}
               </span>
             </div>
           </div>

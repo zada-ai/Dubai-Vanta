@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Breadcrumb from '../components/Breadcrumb';
 import { 
@@ -16,18 +16,17 @@ const Profile = () => {
   const navigate = useNavigate();
   const { user, updateProfile, logout, orders, wishlist } = useApp();
 
-  // If not logged in, redirect to login
-  if (!user) {
-    setTimeout(() => navigate('/login'), 0);
-    return null;
-  }
-
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
-    name: user.name,
-    email: user.email,
-    phone: user.phone
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || ''
   });
+
+  // If not logged in, redirect to login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
