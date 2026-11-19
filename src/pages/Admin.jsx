@@ -44,7 +44,11 @@ import {
   RiFileCopyLine,
   RiExternalLinkLine,
   RiPagesLine,
-  RiFileTextLine
+  RiFileTextLine,
+  RiPencilLine,
+  RiDeleteBin6Line,
+  RiGridFill,
+  RiMailLine
 } from 'react-icons/ri';
 
 const Admin = () => {
@@ -83,9 +87,59 @@ const Admin = () => {
     uploadFeatureIcon,
     categories,
     addCategory,
+    updateCategory,
     deleteCategory,
-    uploadCategoryImage
+    uploadCategoryImage,
+    contactInfo,
+    updateContactInfo,
+    contactMessages,
+    deleteContactMessage
   } = useApp();
+
+  const [editingContactInfo, setEditingContactInfo] = useState({
+    supportEmail: '',
+    phoneHotline: '',
+    officeAddress: '',
+    operationHours: ''
+  });
+
+  useEffect(() => {
+    if (contactInfo) {
+      setEditingContactInfo({ ...contactInfo });
+    }
+  }, [contactInfo]);
+
+  // Edit Existing Category State
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
+  const [isUploadingEditCatImg, setIsUploadingEditCatImg] = useState(false);
+  const editCatImgInputRef = useRef(null);
+
+  const handleEditCatImgUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingEditCatImg(true);
+    try {
+      const url = await uploadCategoryImage(file);
+      if (url && editingCategory) {
+        setEditingCategory((prev) => ({ ...prev, image: url }));
+      }
+    } finally {
+      setIsUploadingEditCatImg(false);
+    }
+  };
+
+  const handleSaveEditCategory = async (e) => {
+    e.preventDefault();
+    if (!editingCategory) return;
+    await updateCategory(editingCategory.id, {
+      name: editingCategory.name,
+      image: editingCategory.image,
+      description: editingCategory.description
+    });
+    setIsEditCategoryModalOpen(false);
+    setEditingCategory(null);
+  };
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'hero' | 'features' | 'seo' | 'products' | 'orders'
   const [productSearch, setProductSearch] = useState('');
@@ -937,6 +991,26 @@ const Admin = () => {
           }`}
         >
           <RiFileList3Line className="w-4 h-4" /> Orders ({totalOrdersCount})
+        </button>
+        <button
+          onClick={() => setActiveTab('categories')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+            activeTab === 'categories'
+              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <RiGridFill className="w-4 h-4 text-emerald-500" /> Categories ({categories?.length || 0})
+        </button>
+        <button
+          onClick={() => setActiveTab('messages')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+            activeTab === 'messages'
+              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <RiMailLine className="w-4 h-4 text-sky-500" /> Contact & Inquiries ({contactMessages?.length || 0})
         </button>
         {user?.role === 'superadmin' && (
           <button
@@ -2410,7 +2484,7 @@ const Admin = () => {
                       </p>
                     </div>
                     <a
-                      href="http://localhost:5000/sitemap.xml"
+                      href="/sitemap.xml"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-xl hover:bg-emerald-500/20 transition"
@@ -2839,7 +2913,336 @@ const Admin = () => {
         </div>
       )}
 
-      {/* TAB CONTENT: USERS & ROLES (SUPER ADMIN ONLY) */}
+      {/* TAB CONTENT: CATEGORIES MANAGEMENT (SUPER ADMIN & ADMIN) */}
+      {activeTab === 'categories' && (
+        <div className="space-y-6 text-left">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">Store Categories & Display Images</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Har category ki display image, title aur details yahan se change karein. Changes website aur database mein instantly reflect hoti hain.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-bold text-xs shadow-md transition cursor-pointer shrink-0"
+              >
+                <RiAddLine className="w-4 h-4" /> Add New Category
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
+              {categories.map((cat) => (
+                <div
+                  key={cat.id}
+                  className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 overflow-hidden flex flex-col group hover:shadow-md transition"
+                >
+                  <div className="relative aspect-video w-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                    {cat.image ? (
+                      <img
+                        src={cat.image.startsWith('/uploads/') ? cat.image.replace('/uploads/', '/storage/') : cat.image}
+                        alt={cat.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-800 to-slate-950 text-white/50">
+                        <RiGridFill className="w-8 h-8 mb-1 text-primary-400 opacity-60" />
+                        <span className="text-[11px] font-bold uppercase tracking-wider">No Image Set</span>
+                      </div>
+                    )}
+                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white text-[10px] font-mono">
+                      ID: {cat.id}
+                    </span>
+                  </div>
+
+                  <div className="p-4 flex flex-col flex-1">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h4 className="text-base font-bold text-slate-800 dark:text-slate-100">{cat.name}</h4>
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400">
+                        {cat.count || 0} items
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">
+                      {cat.description || 'No description provided.'}
+                    </p>
+
+                    <div className="mt-auto flex items-center gap-2 pt-3 border-t border-slate-200/60 dark:border-slate-800/80">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingCategory({ ...cat });
+                          setIsEditCategoryModalOpen(true);
+                        }}
+                        className="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+                      >
+                        <RiPencilLine className="w-3.5 h-3.5" /> Edit / Change Image
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteCategory(cat.id)}
+                        className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                        title="Delete category"
+                      >
+                        <RiDeleteBin6Line className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB CONTENT: CONTACT INQUIRIES & SETTINGS (SUPER ADMIN) */}
+      {activeTab === 'messages' && (
+        <div className="space-y-6 text-left">
+          {/* 1. Get in Touch Details Editor */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs">
+            <div className="pb-4 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-xl font-black text-slate-900 dark:text-white">Customer Support & "Get in Touch" Settings</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Contact page par show hone wala Support Email, Phone Hotline, Office Address aur Operating Hours yahan se live update karein.
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateContactInfo(editingContactInfo);
+              }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5"
+            >
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Customer Support Email
+                </label>
+                <input
+                  type="email"
+                  value={editingContactInfo.supportEmail}
+                  onChange={(e) => setEditingContactInfo({ ...editingContactInfo, supportEmail: e.target.value })}
+                  placeholder="support@aerostore.com"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Phone Hotline
+                </label>
+                <input
+                  type="text"
+                  value={editingContactInfo.phoneHotline}
+                  onChange={(e) => setEditingContactInfo({ ...editingContactInfo, phoneHotline: e.target.value })}
+                  placeholder="+971 4 123 4567"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Office Headquarters Address
+                </label>
+                <input
+                  type="text"
+                  value={editingContactInfo.officeAddress}
+                  onChange={(e) => setEditingContactInfo({ ...editingContactInfo, officeAddress: e.target.value })}
+                  placeholder="Downtown Dubai, Boulevard Plaza Tower 1, Level 14, Dubai, UAE"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Operating Hours
+                </label>
+                <input
+                  type="text"
+                  value={editingContactInfo.operationHours}
+                  onChange={(e) => setEditingContactInfo({ ...editingContactInfo, operationHours: e.target.value })}
+                  placeholder="Monday – Saturday: 9:00 AM – 8:00 PM (GST)"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              <div className="sm:col-span-2 flex justify-end pt-2">
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-bold text-xs shadow-md transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <RiSaveLine className="w-4 h-4" /> Save Contact Details
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* 2. Received Contact Messages Table */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">Customer Inquiries Inbox</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Customers jo Contact form fill karte hain, unka message yahan automatically receive hota hai.
+                </p>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 text-xs font-bold">
+                {contactMessages?.length || 0} Inquiries
+              </span>
+            </div>
+
+            <div className="divide-y divide-slate-100 dark:divide-slate-800/80 mt-2">
+              {!contactMessages || contactMessages.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 text-sm">
+                  Koi contact message receive nahi hua abhi tak.
+                </div>
+              ) : (
+                contactMessages.map((msg) => (
+                  <div key={msg.id} className="py-4 flex flex-col sm:flex-row items-start justify-between gap-4">
+                    <div className="space-y-1 max-w-2xl">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{msg.name}</span>
+                        <span className="text-xs text-primary-600 dark:text-primary-400 font-semibold font-mono">
+                          &lt;{msg.email}&gt;
+                        </span>
+                      </div>
+                      <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{msg.subject}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200/50 dark:border-slate-800/50">
+                        {msg.message}
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        Received: {new Date(msg.createdAt || Date.now()).toLocaleString()}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => deleteContactMessage(msg.id)}
+                      className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer self-start sm:self-center"
+                      title="Delete message"
+                    >
+                      <RiDeleteBin6Line className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT CATEGORY MODAL */}
+      {isEditCategoryModalOpen && editingCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5 text-left">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">Edit Category</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Category image aur display settings update karein</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditCategoryModalOpen(false);
+                  setEditingCategory(null);
+                }}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                <RiCloseLine className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditCategory} className="space-y-4">
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Category Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingCategory.name || ''}
+                  onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Category Image (Storage Upload ya URL)
+                </label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      ref={editCatImgInputRef}
+                      onChange={handleEditCatImgUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      disabled={isUploadingEditCatImg}
+                      onClick={() => editCatImgInputRef.current?.click()}
+                      className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <RiUploadCloud2Line className="w-4 h-4 text-primary-500" />
+                      {isUploadingEditCatImg ? 'Uploading...' : 'Upload Image'}
+                    </button>
+                    <span className="text-[11px] text-slate-400">or paste URL below:</span>
+                  </div>
+                  <input
+                    type="url"
+                    value={editingCategory.image || ''}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, image: e.target.value })}
+                    placeholder="https://images.unsplash.com/... or /storage/..."
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                  />
+                  {editingCategory.image && (
+                    <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+                      <img
+                        src={editingCategory.image.startsWith('/uploads/') ? editingCategory.image.replace('/uploads/', '/storage/') : editingCategory.image}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Description
+                </label>
+                <textarea
+                  rows="2"
+                  value={editingCategory.description || ''}
+                  onChange={(e) => setEditingCategory({ ...editingCategory, description: e.target.value })}
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditCategoryModalOpen(false);
+                    setEditingCategory(null);
+                  }}
+                  className="px-4 py-2 text-xs font-bold rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-xs font-bold rounded-xl bg-primary-600 hover:bg-primary-500 text-white shadow-md transition cursor-pointer"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       {activeTab === 'users' && user?.role === 'superadmin' && (
         <div className="space-y-6 text-left">
           <div className="bg-white dark:bg-slate-900 border border-purple-500/20 rounded-3xl p-6 sm:p-7 shadow-xs">

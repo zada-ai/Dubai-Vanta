@@ -10,7 +10,7 @@ import {
 } from 'react-icons/ri';
 
 const Contact = () => {
-  const { triggerToast } = useApp();
+  const { triggerToast, contactInfo, submitContactMessage } = useApp();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -26,8 +26,10 @@ const Contact = () => {
   const handleContactSubmit = (e) => {
     e.preventDefault();
     if (formData.name && formData.email && formData.message) {
-      triggerToast('Thank you for contacting us! Our support team will respond shortly.', 'success');
+      submitContactMessage(formData);
       setFormData({ name: '', email: '', subject: '', message: '' });
+    } else {
+      triggerToast('Please fill out all required fields.', 'warning');
     }
   };
 
@@ -66,7 +68,9 @@ const Contact = () => {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-bold text-slate-400">Customer Support</span>
-                  <span className="text-slate-800 dark:text-slate-200 mt-0.5">support@aerostore.com</span>
+                  <a href={`mailto:${contactInfo?.supportEmail || 'support@aerostore.com'}`} className="text-slate-800 dark:text-slate-200 mt-0.5 hover:text-primary-600 transition">
+                    {contactInfo?.supportEmail || 'support@aerostore.com'}
+                  </a>
                 </div>
               </div>
 
@@ -77,7 +81,9 @@ const Contact = () => {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-bold text-slate-400">Phone Hotline</span>
-                  <span className="text-slate-800 dark:text-slate-205 mt-0.5">+1 (800) 555-0199</span>
+                  <a href={`tel:${contactInfo?.phoneHotline || '+971 4 123 4567'}`} className="text-slate-800 dark:text-slate-200 mt-0.5 hover:text-primary-600 transition">
+                    {contactInfo?.phoneHotline || '+971 4 123 4567'}
+                  </a>
                 </div>
               </div>
 
@@ -88,7 +94,9 @@ const Contact = () => {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-bold text-slate-400">Office Headquarters</span>
-                  <span className="text-slate-800 dark:text-slate-205 mt-0.5">128 Pine Street, Suite 400, San Francisco, CA 94103</span>
+                  <span className="text-slate-800 dark:text-slate-200 mt-0.5">
+                    {contactInfo?.officeAddress || 'Downtown Dubai, Boulevard Plaza Tower 1, Level 14, Dubai, UAE'}
+                  </span>
                 </div>
               </div>
 
@@ -99,7 +107,9 @@ const Contact = () => {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-bold text-slate-400">Operating Hours</span>
-                  <span className="text-slate-800 dark:text-slate-205 mt-0.5">Monday - Friday: 9:00 AM - 6:00 PM EST</span>
+                  <span className="text-slate-800 dark:text-slate-200 mt-0.5">
+                    {contactInfo?.operationHours || 'Monday – Saturday: 9:00 AM – 8:00 PM (GST)'}
+                  </span>
                 </div>
               </div>
             </div>

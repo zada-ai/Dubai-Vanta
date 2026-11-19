@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 
 const Hero = () => {
   const { heroSlides } = useApp();
@@ -82,65 +81,62 @@ const Hero = () => {
                   {slide.subtitle}
                 </span>
               )}
-              <h2 className="text-[28px] md:text-5xl lg:text-6xl font-black leading-tight text-white mb-2.5 md:mb-4">
+              <h2 className="text-[26px] sm:text-[28px] md:text-5xl lg:text-6xl font-black leading-tight text-white mb-2 md:mb-4">
                 {slide.title}
               </h2>
-              <p className="text-[13px] md:text-base text-slate-200 max-w-md mb-4 md:mb-8 font-medium leading-relaxed line-clamp-3 md:line-clamp-none">
+              <p className="text-[12px] sm:text-[13px] md:text-base text-slate-200 max-w-md mb-3 md:mb-8 font-medium leading-relaxed line-clamp-2 md:line-clamp-none">
                 {slide.description}
               </p>
-              <Link
-                to={slide.link || '/shop'}
-                className="px-6 py-2.5 md:px-8 md:py-3.5 text-sm md:text-base rounded-full bg-white text-slate-900 font-bold hover:bg-primary-100 shadow-md hover:shadow-xl transition-all duration-200 cursor-pointer"
-              >
-                {slide.btnText || 'Shop Collection'}
-              </Link>
+              {/* Desktop Button */}
+              <div className="hidden md:block">
+                <Link
+                  to={slide.link || '/shop'}
+                  className="px-6 py-2.5 md:px-8 md:py-3.5 text-sm md:text-base rounded-full bg-white text-slate-900 font-bold hover:bg-primary-100 shadow-md hover:shadow-xl transition-all duration-200 cursor-pointer inline-block"
+                >
+                  {slide.btnText || 'Shop Collection'}
+                </Link>
+              </div>
             </div>
 
-            {/* Slide Image */}
-            <div className="w-full md:w-1/2 flex-1 min-h-0 md:flex-none md:h-full flex items-center justify-center relative mt-5 md:mt-0">
-              <div className="absolute inset-0 bg-white/5 rounded-full filter blur-3xl" />
-              <img
-                src={slide.image}
-                alt={slide.title}
-                className="max-h-full max-w-full md:max-h-[380px] object-contain rounded-2xl shadow-2xl transform rotate-2 hover:rotate-0 transition-transform duration-500 z-20"
-              />
+            {/* Slide Image + Mobile Button (Image placed ABOVE button on mobile) */}
+            <div className="w-full md:w-1/2 flex-1 min-h-0 md:flex-none md:h-full flex flex-col items-center justify-center relative mt-2 md:mt-0">
+              <div className="relative flex items-center justify-center w-full max-h-[170px] sm:max-h-[220px] md:max-h-none flex-1">
+                <div className="absolute inset-0 bg-white/10 rounded-full filter blur-3xl" />
+                <img
+                  src={slide.image}
+                  alt={slide.title}
+                  className="relative z-10 max-h-[150px] sm:max-h-[200px] md:max-h-[380px] max-w-full object-contain drop-shadow-2xl transform hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+
+              {/* Mobile Button: Placed directly below image on mobile */}
+              <div className="md:hidden mt-3 z-20">
+                <Link
+                  to={slide.link || '/shop'}
+                  className="px-6 py-2 text-xs sm:text-sm rounded-full bg-white text-slate-900 font-bold hover:bg-primary-100 shadow-md transition-all duration-200 cursor-pointer inline-block"
+                >
+                  {slide.btnText || 'Shop Collection'}
+                </Link>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Slider Controls */}
+      {/* Slider Indicator Dots (Arrows removed as requested) */}
       {slides.length > 1 && (
-        <>
-          <button
-            onClick={prevSlide}
-            className="hidden md:block absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-xs transition-colors cursor-pointer"
-            aria-label="Previous slide"
-          >
-            <RiArrowLeftSLine className="w-6 h-6" />
-          </button>
-          <button
-            onClick={nextSlide}
-            className="hidden md:block absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-xs transition-colors cursor-pointer"
-            aria-label="Next slide"
-          >
-            <RiArrowRightSLine className="w-6 h-6" />
-          </button>
-
-          {/* Indicator Dots */}
-          <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-2">
-            {slides.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentSlide(idx)}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                  idx === currentSlide ? 'bg-white w-6' : 'bg-white/40'
-                }`}
-                aria-label={`Go to slide ${idx + 1}`}
-              />
-            ))}
-          </div>
-        </>
+        <div className="absolute bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+          {slides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                idx === currentSlide ? 'bg-white w-6' : 'bg-white/40 w-2'
+              }`}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

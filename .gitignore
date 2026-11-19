@@ -25,3 +25,6 @@ dist-ssr
 *.sln
 *.sw?
 config.bat
+
+# Local symlink to storage/uploads (created per machine)
+public/uploads

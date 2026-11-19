@@ -54,18 +54,6 @@ const Checkout = () => {
     triggerToast
   } = useApp();
 
-  // If cart is empty, redirect to shop
-  if (cart.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <h2 className="text-xl font-bold mb-4">Your cart is empty</h2>
-        <Link to="/shop" className="px-6 py-3 bg-slate-900 text-white rounded-full font-bold">
-          Go to Shop
-        </Link>
-      </div>
-    );
-  }
-
   // Set default shipping form details (UAE & Dubai default)
   const [shippingDetails, setShippingDetails] = useState({
     fullName: user?.name || '',
@@ -94,6 +82,18 @@ const Checkout = () => {
     cardCvv: ''
   });
 
+
+  // If cart is empty, redirect to shop
+  if (cart.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <h2 className="text-xl font-bold mb-4">Your cart is empty</h2>
+        <Link to="/shop" className="px-6 py-3 bg-slate-900 text-white rounded-full font-bold">
+          Go to Shop
+        </Link>
+      </div>
+    );
+  }
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setShippingDetails((prev) => ({ ...prev, [name]: value }));
@@ -190,6 +190,16 @@ const Checkout = () => {
       <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white text-left mb-2">
         Checkout Shipping & Billing
       </h1>
+
+      {!user && (
+        <p className="text-xs sm:text-sm text-left text-slate-500 dark:text-slate-400 -mt-1">
+          You are ordering as a guest — no account needed.{' '}
+          <Link to="/login?redirect=checkout" className="font-bold text-primary-600 dark:text-primary-400 hover:underline">
+            Log in
+          </Link>{' '}
+          if you already have one.
+        </p>
+      )}
 
       <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-2">
         {/* Left Column: Form Details (8 cols) */}

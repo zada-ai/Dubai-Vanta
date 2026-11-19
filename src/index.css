@@ -15,6 +15,15 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Horizontal rails that scroll by touch without showing a scrollbar */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   background-color: #f8fafc; /* slate-50 */
   color: #0f172a; /* slate-900 */

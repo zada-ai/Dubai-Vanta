@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import RatingComponent from './RatingComponent';
 import { RiHeartLine, RiHeartFill, RiShoppingBagLine, RiHandCoinLine } from 'react-icons/ri';
 
 const ProductCard = ({ product }) => {
-  const { addToCart, wishlist, toggleWishlist, openCodModal } = useApp();
+  const navigate = useNavigate();
+  const { addToCart, wishlist, toggleWishlist } = useApp();
 
   const isWishlisted = wishlist.some((item) => item.id === product.id);
   const discountPrice = product.discountPrice;
@@ -34,7 +35,7 @@ const ProductCard = ({ product }) => {
         {/* Discount Badge */}
         {isDiscounted && (
           <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-rose-500 text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-1 rounded-full shadow-sm z-10">
-            -{product.discountPercentage}%
+            -{product.discountPercentage || Math.round((1 - discountPrice / product.price) * 100)}%
           </span>
         )}
 
@@ -95,30 +96,33 @@ const ProductCard = ({ product }) => {
             )}
           </div>
 
-          {/* Add to Cart button commented out for Direct Cash on Delivery flow */}
-          {/*
-          <button
-            onClick={() => addToCart(product)}
-            className="p-2.5 rounded-xl bg-slate-900 hover:bg-primary-600 dark:bg-slate-800 dark:hover:bg-primary-600 text-white shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer"
-            aria-label="Add to cart"
-            disabled={product.stock === 0}
-          >
-            <RiShoppingBagLine className="w-4 h-4" />
-          </button>
-          */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Quick Add to Cart button */}
+            <button
+              onClick={() => addToCart(product)}
+              className="p-2 sm:p-2.5 rounded-xl bg-slate-900 hover:bg-primary-600 dark:bg-slate-800 dark:hover:bg-primary-600 text-white shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer"
+              aria-label="Add to cart"
+              disabled={product.stock === 0}
+              title="Add to Cart"
+            >
+              <RiShoppingBagLine className="w-4 h-4" />
+            </button>
 
-          {/* Cash on Delivery Direct Order Button */}
-          <button
-            onClick={() => openCodModal(product)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Order with Cash on Delivery"
-            disabled={product.stock === 0}
-            title={product.stock === 0 ? "Out of Stock" : "Quick Order with Cash on Delivery"}
-          >
-            <RiHandCoinLine className="w-4 h-4" />
-            <span className="hidden xs:inline">Cash on Delivery</span>
-            <span className="xs:hidden">COD</span>
-          </button>
+            {/* Direct Cash on Delivery Button - redirects to dedicated checkout page */}
+            <button
+              onClick={() => {
+                addToCart(product);
+                navigate('/checkout');
+              }}
+              className="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Order with Cash on Delivery"
+              disabled={product.stock === 0}
+              title={product.stock === 0 ? "Out of Stock" : "Quick Order with Cash on Delivery"}
+            >
+              <RiHandCoinLine className="w-4 h-4" />
+              <span className="hidden xs:inline">COD</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

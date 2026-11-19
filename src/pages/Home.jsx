@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Hero from '../components/Hero';
@@ -11,8 +11,18 @@ import { RiArrowRightLine } from 'react-icons/ri';
 
 const Home = () => {
   const { productsList, features, categories: appCategories, promoBanner } = useApp();
-  const products = productsList || initialProducts;
-  const categories = appCategories || initialCategories;
+  const products = (productsList && productsList.length > 0) ? productsList : initialProducts;
+  const categories = (appCategories && appCategories.length > 0) ? appCategories : initialCategories;
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
+  // Real number of products in each category
+  const categoryCounts = useMemo(() => {
+    const counts = {};
+    products.forEach((p) => {
+      counts[p.category] = (counts[p.category] || 0) + 1;
+    });
+    return counts;
+  }, [products]);
 
   // Filter products for various sections
   const featuredProducts = products.filter(p => p.isFeatured).slice(0, 4);
@@ -50,12 +60,39 @@ const Home = () => {
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Shop by Category</h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Explore our premium catalog collections</p>
           </div>
+          <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
+            View All <RiArrowRightLine />
+          </Link>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+
+        {/* Mobile: swipeable rail of compact tiles (two rows once there are many categories) */}
+        <div
+          className={`md:hidden grid grid-flow-col auto-cols-[4.75rem] gap-x-3 gap-y-4 overflow-x-auto no-scrollbar snap-x -mx-4 px-4 pb-1 ${
+            categories.length > 6 ? 'grid-rows-2' : 'grid-rows-1'
+          }`}
+        >
           {categories.map((category) => (
-            <CategoryCard key={category.id} category={category} />
+            <div key={category.id} className="snap-start">
+              <CategoryCard category={category} count={categoryCounts[category.id] || 0} variant="compact" />
+            </div>
           ))}
         </div>
+
+        {/* Tablet & desktop: image cards, collapsed to two rows when there are many */}
+        <div className="hidden md:grid md:grid-cols-4 gap-6">
+          {(showAllCategories ? categories : categories.slice(0, 8)).map((category) => (
+            <CategoryCard key={category.id} category={category} count={categoryCounts[category.id] || 0} />
+          ))}
+        </div>
+        {categories.length > 8 && (
+          <button
+            type="button"
+            onClick={() => setShowAllCategories((v) => !v)}
+            className="hidden md:inline-flex self-center px-5 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+          >
+            {showAllCategories ? 'Show fewer categories' : `Show all ${categories.length} categories`}
+          </button>
+        )}
       </section>
 
       {/* Promotional Banner (Admin Managed) */}
@@ -79,22 +116,37 @@ const Home = () => {
                 </span>
               )}
             </div>
-            <Link
-              to={promoBanner.btnLink || '/shop'}
-              className="px-6 py-3 bg-white text-slate-900 font-bold rounded-full hover:bg-primary-50 transition-all shadow-md hover:shadow-xl duration-200 flex items-center gap-2 cursor-pointer"
-            >
-              {promoBanner.btnText || 'Claim Discount'}
-              <RiArrowRightLine className="w-4 h-4 animate-pulse" />
-            </Link>
+            {/* Desktop Button */}
+            <div className="hidden md:block">
+              <Link
+                to={promoBanner.btnLink || '/shop'}
+                className="px-6 py-3 bg-white text-slate-900 font-bold rounded-full hover:bg-primary-50 transition-all shadow-md hover:shadow-xl duration-200 flex items-center gap-2 cursor-pointer"
+              >
+                {promoBanner.btnText || 'Claim Discount'}
+                <RiArrowRightLine className="w-4 h-4 animate-pulse" />
+              </Link>
+            </div>
           </div>
           {promoBanner.image && (
-            <div className="w-full md:w-2/5 flex justify-center relative">
-              <div className="absolute inset-0 bg-white/5 rounded-full filter blur-2xl" />
-              <img
-                src={promoBanner.image}
-                alt={promoBanner.imageAlt || promoBanner.title || 'Promotional Offer'}
-                className="max-h-[160px] md:max-h-[200px] max-w-full object-contain rounded-2xl drop-shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-500 z-10"
-              />
+            <div className="w-full md:w-2/5 flex flex-col items-center justify-center relative z-10">
+              <div className="relative flex justify-center w-full">
+                <div className="absolute inset-0 bg-white/5 rounded-full filter blur-2xl" />
+                <img
+                  src={promoBanner.image}
+                  alt={promoBanner.imageAlt || promoBanner.title || 'Promotional Offer'}
+                  className="max-h-[160px] md:max-h-[200px] max-w-full object-contain rounded-2xl drop-shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-500 z-10"
+                />
+              </div>
+              {/* Mobile Button - placed directly below image */}
+              <div className="md:hidden mt-4 z-20">
+                <Link
+                  to={promoBanner.btnLink || '/shop'}
+                  className="px-6 py-2.5 bg-white text-slate-900 font-bold rounded-full hover:bg-primary-50 transition-all shadow-md duration-200 flex items-center gap-2 cursor-pointer text-sm"
+                >
+                  {promoBanner.btnText || 'Claim Discount'}
+                  <RiArrowRightLine className="w-4 h-4 animate-pulse" />
+                </Link>
+              </div>
             </div>
           )}
         </section>

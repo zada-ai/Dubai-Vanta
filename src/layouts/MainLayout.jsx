@@ -4,7 +4,6 @@ import { useApp } from '../context/AppContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ToastContainer from '../components/Toast';
-import CashOnDeliveryModal from '../components/CashOnDeliveryModal';
 
 const setMetaTag = (attr, key, val) => {
   if (!val) return;
@@ -112,9 +111,6 @@ const MainLayout = () => {
 
       {/* Float Toasts Portal Container */}
       <ToastContainer />
-
-      {/* Doorstep Cash on Delivery Quick Checkout Modal */}
-      <CashOnDeliveryModal />
     </div>
   );
 };

@@ -2,11 +2,15 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 import { categories as defaultCategories } from '../data/mockData';
 import RatingComponent from './RatingComponent';
-import { RiCloseLine, RiFilterLine, RiRefreshLine } from 'react-icons/ri';
+import { RiCloseLine, RiFilterLine, RiRefreshLine, RiSearchLine } from 'react-icons/ri';
 
 const FilterSidebar = ({ filters, setFilters, onClose }) => {
-  const { categories: appCategories } = useApp();
-  const categories = appCategories || defaultCategories;
+  const { categories: appCategories, productsList } = useApp();
+  const categories = (appCategories && appCategories.length > 0) ? appCategories : defaultCategories;
+  const categoryCounts = {};
+  (productsList || []).forEach((p) => {
+    categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
+  });
   const handleCategoryChange = (catId) => {
     setFilters((prev) => ({
       ...prev,
@@ -47,7 +51,7 @@ const FilterSidebar = ({ filters, setFilters, onClose }) => {
     setFilters({
       search: '',
       category: 'all',
-      priceRange: { min: 0, max: 1000 },
+      priceRange: { min: 0, max: '' },
       rating: 0,
       sortBy: 'latest',
       page: 1
@@ -81,6 +85,21 @@ const FilterSidebar = ({ filters, setFilters, onClose }) => {
         </div>
       </div>
 
+      {/* Search Filter */}
+      <div className="flex flex-col gap-2">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Search Products</label>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search keywords..."
+            value={filters.search || ''}
+            onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }))}
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+          />
+          <RiSearchLine className="absolute left-3 top-3 text-slate-400 w-4 h-4 pointer-events-none" />
+        </div>
+      </div>
+
       {/* Sorting options */}
       <div className="flex flex-col gap-2">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Sort By</label>
@@ -99,7 +118,7 @@ const FilterSidebar = ({ filters, setFilters, onClose }) => {
       {/* Categories filter */}
       <div className="flex flex-col gap-2">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Category</label>
-        <div className="flex flex-col gap-1.5 mt-1">
+        <div className="flex flex-col gap-1.5 mt-1 max-h-80 overflow-y-auto pr-1">
           <button
             onClick={() => setFilters((prev) => ({ ...prev, category: 'all', page: 1 }))}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-sm font-semibold transition-all cursor-pointer ${
@@ -120,7 +139,8 @@ const FilterSidebar = ({ filters, setFilters, onClose }) => {
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/30'
               }`}
             >
-              <span>{cat.name}</span>
+              <span className="truncate">{cat.name}</span>
+              <span className="shrink-0 ml-2 text-[11px] font-semibold text-slate-400">{categoryCounts[cat.id] || 0}</span>
             </button>
           ))}
         </div>
@@ -149,7 +169,7 @@ const FilterSidebar = ({ filters, setFilters, onClose }) => {
               name="max"
               value={filters.priceRange.max}
               onChange={handlePriceChange}
-              placeholder="1000"
+              placeholder="Any"
               className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
             />
           </div>
