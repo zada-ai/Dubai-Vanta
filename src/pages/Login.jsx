@@ -41,8 +41,11 @@ const Login = () => {
     if (success) {
       const emailLower = formData.email.toLowerCase();
       const isPrivileged = 
+        emailLower === 'sohaibmehmood0067@gmail.com' ||
+        emailLower === 'manager@aerostore.com' ||
         emailLower === 'superadmin@gmail.com' ||
         emailLower.includes('admin') ||
+        emailLower.includes('manager') ||
         formData.password === 'admin123';
 
       const target = isPrivileged && redirectUrl === '/' ? '/admin' : redirectUrl;
@@ -64,9 +67,9 @@ const Login = () => {
     <div className="flex items-center justify-center py-10 sm:py-16">
       <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl p-8 shadow-md text-left">
         {/* Header */}
-        <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-1">
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-1">
           Welcome Back
-        </h2>
+        </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
           Sign in to access your cart, wishlist, and orders.
         </p>

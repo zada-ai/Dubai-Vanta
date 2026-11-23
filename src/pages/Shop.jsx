@@ -206,10 +206,10 @@ const Shop = () => {
             <RiSearchLine className="absolute left-3 top-3 text-slate-400 w-4 h-4" />
           </div>
 
-          {/* Mobile Filter Button */}
+          {/* Mobile Filter Button (only visible on mobile screens < 768px) */}
           <button
             onClick={() => setMobileFiltersOpen(true)}
-            className="lg:hidden flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold text-slate-700 dark:text-slate-350 hover:bg-slate-50 cursor-pointer"
+            className="md:hidden flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold text-slate-700 dark:text-slate-350 hover:bg-slate-50 cursor-pointer"
           >
             <RiFilterLine className="w-4 h-4" />
             Filters
@@ -217,18 +217,23 @@ const Shop = () => {
         </div>
       </div>
 
-      {/* Two Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mt-4">
-        {/* Desktop Filter Sidebar */}
-        <div className="hidden lg:block lg:col-span-1">
-          <FilterSidebar filters={filters} setFilters={setFilters} />
-        </div>
+      {/* Two Column Grid: Left Sidebar on md (768px)+ screens, Product Grid on right */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 lg:gap-8 mt-4">
+        {/* Left Filter Sidebar */}
+        <aside className="hidden md:block md:col-span-1 shop-filter-sidebar self-start sticky top-24">
+          <FilterSidebar 
+            filters={filters} 
+            setFilters={setFilters} 
+            onCategorySelect={handleCategorySelect}
+            onSearchChange={handleSearchChange}
+          />
+        </aside>
 
         {/* Product Grid and Pagination */}
-        <div className="lg:col-span-3 flex flex-col gap-6">
+        <main className="md:col-span-3 flex flex-col gap-6">
           {paginatedProducts.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
                 {paginatedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
@@ -261,12 +266,12 @@ const Shop = () => {
               />
             </div>
           )}
-        </div>
+        </main>
       </div>
 
-      {/* Mobile Drawer Slide-Over */}
+      {/* Mobile Drawer Slide-Over (mobile screens < 768px) */}
       {mobileFiltersOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 md:hidden">
           {/* Overlay background */}
           <div 
             className="fixed inset-0 bg-black/50 backdrop-blur-xs" 
@@ -278,6 +283,11 @@ const Shop = () => {
               filters={filters} 
               setFilters={setFilters} 
               onClose={() => setMobileFiltersOpen(false)} 
+              onCategorySelect={(cat) => {
+                handleCategorySelect(cat);
+                setMobileFiltersOpen(false);
+              }}
+              onSearchChange={handleSearchChange}
             />
           </div>
         </div>

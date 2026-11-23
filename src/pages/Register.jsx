@@ -58,9 +58,9 @@ const Register = () => {
     <div className="flex items-center justify-center py-10 sm:py-16">
       <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl p-8 shadow-md text-left">
         {/* Header */}
-        <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-1">
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-1">
           Create Account
-        </h2>
+        </h1>
         <p className="text-sm text-slate-450 dark:text-slate-400 mb-8">
           Join us today to manage your preferences and save orders.
         </p>

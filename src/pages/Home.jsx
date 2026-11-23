@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import Hero from '../components/Hero';
 import FeatureIcon from '../components/FeatureIcon';
@@ -7,13 +8,43 @@ import CategoryCard from '../components/CategoryCard';
 import ProductCard from '../components/ProductCard';
 import RatingComponent from '../components/RatingComponent';
 import { categories as initialCategories, products as initialProducts, testimonials } from '../data/mockData';
-import { RiArrowRightLine } from 'react-icons/ri';
+import { 
+  RiArrowRightLine, 
+  RiArrowLeftSLine, 
+  RiArrowRightSLine, 
+  RiArrowUpSLine 
+} from 'react-icons/ri';
 
 const Home = () => {
   const { productsList, features, categories: appCategories, promoBanner } = useApp();
   const products = (productsList && productsList.length > 0) ? productsList : initialProducts;
   const categories = (appCategories && appCategories.length > 0) ? appCategories : initialCategories;
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const categoryRailRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = () => {
+    if (categoryRailRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = categoryRailRef.current;
+      setCanScrollLeft(scrollLeft > 10);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, [categories, showAllCategories]);
+
+  const scrollCategoryRail = (direction) => {
+    if (categoryRailRef.current) {
+      const amount = direction === 'left' ? -260 : 260;
+      categoryRailRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+      setTimeout(checkScroll, 350);
+    }
+  };
 
   // Real number of products in each category
   const categoryCounts = useMemo(() => {
@@ -42,9 +73,9 @@ const Home = () => {
               <FeatureIcon feature={feat} className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
-              <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
+              <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
                 {feat.title}
-              </h4>
+              </p>
               <p className="text-[11px] sm:text-xs leading-snug text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
                 {feat.description}
               </p>
@@ -60,39 +91,70 @@ const Home = () => {
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Shop by Category</h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Explore our premium catalog collections</p>
           </div>
-          <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
-            View All <RiArrowRightLine />
-          </Link>
-        </div>
-
-        {/* Mobile: swipeable rail of compact tiles (two rows once there are many categories) */}
-        <div
-          className={`md:hidden grid grid-flow-col auto-cols-[4.75rem] gap-x-3 gap-y-4 overflow-x-auto no-scrollbar snap-x -mx-4 px-4 pb-1 ${
-            categories.length > 6 ? 'grid-rows-2' : 'grid-rows-1'
-          }`}
-        >
-          {categories.map((category) => (
-            <div key={category.id} className="snap-start">
-              <CategoryCard category={category} count={categoryCounts[category.id] || 0} variant="compact" />
-            </div>
-          ))}
-        </div>
-
-        {/* Tablet & desktop: image cards, collapsed to two rows when there are many */}
-        <div className="hidden md:grid md:grid-cols-4 gap-6">
-          {(showAllCategories ? categories : categories.slice(0, 8)).map((category) => (
-            <CategoryCard key={category.id} category={category} count={categoryCounts[category.id] || 0} />
-          ))}
-        </div>
-        {categories.length > 8 && (
           <button
             type="button"
-            onClick={() => setShowAllCategories((v) => !v)}
-            className="hidden md:inline-flex self-center px-5 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+            onClick={() => setShowAllCategories((prev) => !prev)}
+            className="shrink-0 flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors cursor-pointer bg-primary-50 dark:bg-primary-950/40 px-3.5 py-1.5 rounded-full border border-primary-200/50 dark:border-primary-800/50 shadow-2xs hover:shadow-xs active:scale-95"
+            aria-label={showAllCategories ? "Show fewer categories" : "Show all categories"}
           >
-            {showAllCategories ? 'Show fewer categories' : `Show all ${categories.length} categories`}
+            <span>{showAllCategories ? "View Less" : "View All"}</span>
+            {showAllCategories ? (
+              <RiArrowUpSLine className="w-4 h-4 transition-transform" />
+            ) : (
+              <RiArrowRightLine className="w-4 h-4 transition-transform" />
+            )}
           </button>
-        )}
+        </div>
+
+        <AnimatePresence mode="wait">
+          {!showAllCategories ? (
+            /* Continuous Left-to-Right Animated Marquee with Pause on Hover */
+            <motion.div
+              key="marquee-track"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.25 }}
+              className="relative w-full overflow-hidden py-2 -mx-3 px-3 sm:-mx-4 sm:px-4"
+            >
+              {/* Fade Edges for smooth modern aesthetic */}
+              <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-r from-slate-50 dark:from-slate-950 to-transparent z-10" />
+              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-l from-slate-50 dark:from-slate-950 to-transparent z-10" />
+
+              <div className="animate-marquee-ltr flex items-center gap-4 sm:gap-6 md:gap-8">
+                {/* 4 sets of categories to ensure seamless infinite left-to-right looping */}
+                {[...categories, ...categories, ...categories, ...categories].map((category, idx) => (
+                  <div key={`${category.id}-${idx}`} className="shrink-0">
+                    <CategoryCard
+                      category={category}
+                      count={categoryCounts[category.id] || 0}
+                      index={idx % categories.length}
+                    />
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            /* Expanded Full Grid when user clicks "View All" */
+            <motion.div
+              key="grid"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-5 md:gap-6 py-2 justify-items-center"
+            >
+              {categories.map((category, idx) => (
+                <CategoryCard
+                  key={category.id}
+                  category={category}
+                  count={categoryCounts[category.id] || 0}
+                  index={idx}
+                />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
       {/* Promotional Banner (Admin Managed) */}
@@ -231,7 +293,7 @@ const Home = () => {
                   className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-800"
                 />
                 <div>
-                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">{test.name}</h4>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{test.name}</p>
                   <p className="text-xs text-slate-400">{test.role}</p>
                 </div>
               </div>

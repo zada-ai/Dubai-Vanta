@@ -65,12 +65,130 @@ const dbPath = process.env.DB_PATH || path.join(dataDir, 'store.db');
 export const sqliteDb = new DatabaseSync(dbPath);
 export const db = sqliteDb; // backwards compatibility
 
+// Default Seed Blogs
+export const DEFAULT_BLOGS = [
+  {
+    id: 'b1-aerosound-acoustics',
+    title: 'The Art of Pure Acoustics: Inside AeroSound Max',
+    slug: 'the-art-of-pure-acoustics-inside-aerosound-max',
+    excerpt: 'Discover how custom 40mm titanium drivers and active acoustic tuning create an immersive spatial listening experience in Dubai’s premier audio flagship.',
+    content: `Sound is not merely frequency; it is emotion sculpted in air. With the AeroSound Max, our acoustic engineers sought to bridge the gap between studio-grade master tapes and personal daily listening.
+
+### Precision Engineering Meets Acoustic Artistry
+At the heart of AeroSound Max lies a pair of custom-developed 40mm titanium-diaphragm transducers. Unlike traditional dynamic drivers that suffer from high-frequency modal distortion, titanium maintains structural rigidity across intense excursions, yielding virtually zero harmonic distortion even at peak volumes.
+
+### Neural Noise Cancellation
+Our proprietary Hybrid Active Noise Cancellation utilizes six outward-facing beamforming microphones and dual internal feedback sensors. Sampling ambient acoustic conditions over 380,000 times per second, the digital signal processor creates anti-noise waveforms that dissolve bustling city avenues, flight cabins, and open office reverberations.
+
+### Crafted for Enduring Elegance
+Sculpted with anodized aircraft-grade aluminum, ventilated memory foam cushions, and supple top-grain leather trim, every curve honors both ergonomic luxury and acoustic isolation. Welcome to the new zenith of sound.`,
+    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80',
+    category: 'Acoustics',
+    author: 'Sohaib Mehmood',
+    tags: 'AeroSound, Acoustics, High-Fidelity, Dubai, Luxury',
+    read_time: '4 min read',
+    is_published: 1
+  },
+  {
+    id: 'b2-modern-minimalist-workspaces',
+    title: 'Modern Minimalist Workspaces: Curating Luxury & Productivity',
+    slug: 'modern-minimalist-workspaces-curating-luxury-and-productivity',
+    excerpt: 'Elevate your daily workflow with purposeful aesthetics, ergonomic hardware, and serene Scandinavian-inspired desk setups.',
+    content: `Clutter is the enemy of clarity. In today’s hyper-connected environment, curating an intentional, tranquil workspace is not a luxury—it is an essential catalyst for peak creative output.
+
+### 1. The Monochromatic Foundation
+Begin by establishing a balanced, muted color palette. Matte black, warm walnut, brushed aluminum, and deep slate harmonize to reduce visual fatigue. Keep desktop surfaces pristine by routing all cables underneath using magnetic channels.
+
+### 2. Tactile Ergonomics & Timeless Materials
+Invest in tactile touchpoints. A full-grain leather desk mat offers wrist support while aging gracefully with an organic patina. Couple this with a mechanical keyboard engineered with dampened linear switches for a satisfying, quiet keystroke rhythm.
+
+### 3. Purposeful Illumination
+Avoid harsh overhead glare. Instead, employ warm 2700K indirect LED backlights paired with an asymmetrical monitor light bar. The balanced luminance contrast protects circadian rhythms during late-night creative sprints.`,
+    image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=1200&auto=format&fit=crop&q=80',
+    category: 'Lifestyle',
+    author: 'AeroStore Editorial',
+    tags: 'Workspace, Luxury, Minimalism, Design, Productivity',
+    read_time: '6 min read',
+    is_published: 1
+  },
+  {
+    id: 'b3-anc-demystified',
+    title: 'Active Noise Cancellation Demystified: The Science of Silence',
+    slug: 'active-noise-cancellation-demystified-the-science-of-silence',
+    excerpt: 'An in-depth look at how inverse phase waves, MEMS microphones, and neural noise suppression silence the busiest cityscapes.',
+    content: `Silence is not the absence of sound; it is an active physical countermeasure. To comprehend how ANC works, one must explore destructive wave interference.
+
+### The Physics of Destructive Interference
+Sound travels through air as pressure waves composed of alternating compressions and rarefactions. When an ambient microphone detects a compression crest, an intelligent digital audio processor calculates an exact inverted wave—a rarefaction trough. When the two waves meet at the ear canal, they cancel each other out completely.
+
+### Feedforward vs Feedback Topologies
+Basic noise cancelling systems rely exclusively on feedforward mics placed on the outer earcups. However, ambient wind and varying seal pressure around eyeglasses can degrade efficacy. Dual-topology hybrid systems combine feedforward with feedback microphones placed inside the acoustic cavity to measure what the listener actually hears, continuously fine-tuning cancellation in microsecond intervals.`,
+    image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=1200&auto=format&fit=crop&q=80',
+    category: 'Technology',
+    author: 'Engineering Desk',
+    tags: 'Tech, Noise-Cancellation, Audio-Tech, Innovation',
+    read_time: '5 min read',
+    is_published: 1
+  },
+  {
+    id: 'b4-smart-living-2026',
+    title: 'Smart Living in 2026: Seamless Ambient Intelligence',
+    slug: 'smart-living-in-2026-seamless-ambient-intelligence',
+    excerpt: 'How next-generation connected devices, spatial audio zones, and low-latency wireless protocols redefine the contemporary residence.',
+    content: `The modern residence is shifting from reactive smart gadgets to proactive ambient intelligence. In 2026, home automation blends into the background, responding fluidly to presence, circadian rhythm, and individual preference without requiring manual app intervention.
+
+### Spatial Audio Zones Across Rooms
+Gone are the days of manually pairing Bluetooth speakers. Ultra-Wideband (UWB) tracking allows high-resolution audio streams to follow you gracefully from your study to the kitchen, transitioning with seamless room-calibrated equalizers.
+
+### Effortless Energy Optimization
+Intelligent thermal sensors and automated solar louvers work alongside smart HVAC controllers to slash power consumption while maintaining bespoke microclimate comfort throughout Dubai’s hottest summers. Luxury and environmental stewardship now exist in effortless harmony.`,
+    image: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=1200&auto=format&fit=crop&q=80',
+    category: 'Smart Home',
+    author: 'AeroStore Editorial',
+    tags: 'SmartHome, IoT, AudioZones, Connectivity, Future',
+    read_time: '5 min read',
+    is_published: 1
+  }
+];
+
 /**
  * Initialize Database Tables & Seed Defaults
  */
 export async function initDatabase() {
   if (isMysql) {
     console.log(`[Database] Connected to MySQL (${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 3306} / ${process.env.DB_NAME || 'aerostore_db'})`);
+    
+    // Ensure blogs table exists in MySQL
+    await mysqlPool.query(`
+      CREATE TABLE IF NOT EXISTS blogs (
+        id VARCHAR(64) PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        slug VARCHAR(191) NOT NULL UNIQUE,
+        excerpt TEXT,
+        content LONGTEXT,
+        image VARCHAR(500),
+        category VARCHAR(100) DEFAULT 'Lifestyle',
+        author VARCHAR(100) DEFAULT 'AeroStore Editorial',
+        tags VARCHAR(255) DEFAULT '',
+        read_time VARCHAR(50) DEFAULT '5 min read',
+        is_published TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // Seed default blogs if table is empty
+    const [bRows] = await mysqlPool.query('SELECT COUNT(*) as count FROM blogs');
+    if (bRows[0].count === 0) {
+      for (const blog of DEFAULT_BLOGS) {
+        await mysqlPool.query(`
+          INSERT INTO blogs (id, title, slug, excerpt, content, image, category, author, tags, read_time, is_published)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [blog.id, blog.title, blog.slug, blog.excerpt, blog.content, blog.image, blog.category, blog.author, blog.tags, blog.read_time, blog.is_published]);
+      }
+      console.log(`[Database] Seeded ${DEFAULT_BLOGS.length} default blogs in MySQL`);
+    }
+
     return;
   }
 
@@ -80,6 +198,21 @@ export async function initDatabase() {
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
     sqliteDb.exec(schemaSql);
   }
+
+  // Seed default blogs in SQLite if empty
+  try {
+    const blogCount = sqliteDb.prepare('SELECT COUNT(*) as count FROM blogs').get();
+    if (blogCount && blogCount.count === 0) {
+      const insertBlog = sqliteDb.prepare(`
+        INSERT INTO blogs (id, title, slug, excerpt, content, image, category, author, tags, read_time, is_published)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      for (const blog of DEFAULT_BLOGS) {
+        insertBlog.run(blog.id, blog.title, blog.slug, blog.excerpt, blog.content, blog.image, blog.category, blog.author, blog.tags, blog.read_time, blog.is_published);
+      }
+      console.log(`[Database] Seeded ${DEFAULT_BLOGS.length} default blogs in SQLite`);
+    }
+  } catch (_) {}
 
   const findUser = sqliteDb.prepare('SELECT id, email, role FROM users WHERE LOWER(email) = LOWER(?)');
   const superAdminEmail = (process.env.SUPERADMIN_EMAIL || 'superadmin@gmail.com').toLowerCase();
@@ -212,6 +345,15 @@ export async function updateUserRole(userId, newRole) {
   }
   sqliteDb.prepare('UPDATE users SET role = ? WHERE id = ?').run(newRole, userId);
   return sqliteDb.prepare('SELECT id, name, email, role, phone, avatar FROM users WHERE id = ?').get(userId);
+}
+
+export async function deleteUserInDb(userId) {
+  if (isMysql) {
+    await mysqlPool.query('DELETE FROM users WHERE id = ?', [userId]);
+    return true;
+  }
+  sqliteDb.prepare('DELETE FROM users WHERE id = ?').run(userId);
+  return true;
 }
 
 /**
@@ -587,5 +729,131 @@ export async function deleteCategoryInDb(id) {
     return true;
   }
   sqliteDb.prepare('DELETE FROM categories WHERE id = ?').run(id);
+  return true;
+}
+
+/**
+ * Blog / Article Queries
+ */
+export async function getAllBlogs(includeDrafts = false) {
+  const whereClause = includeDrafts ? '' : 'WHERE is_published = 1';
+  if (isMysql) {
+    const [rows] = await mysqlPool.query(
+      `SELECT id, title, slug, excerpt, content, image, category, author, tags, read_time, is_published, created_at, updated_at 
+       FROM blogs ${whereClause} 
+       ORDER BY created_at DESC`
+    );
+    return rows;
+  }
+  return sqliteDb.prepare(
+    `SELECT id, title, slug, excerpt, content, image, category, author, tags, read_time, is_published, created_at, updated_at 
+     FROM blogs ${whereClause} 
+     ORDER BY created_at DESC`
+  ).all();
+}
+
+export async function getBlogByIdOrSlug(idOrSlug) {
+  if (!idOrSlug) return null;
+  if (isMysql) {
+    const [rows] = await mysqlPool.query(
+      `SELECT id, title, slug, excerpt, content, image, category, author, tags, read_time, is_published, created_at, updated_at 
+       FROM blogs 
+       WHERE id = ? OR slug = ? 
+       LIMIT 1`,
+      [idOrSlug, idOrSlug]
+    );
+    return rows[0] || null;
+  }
+  return sqliteDb.prepare(
+    `SELECT id, title, slug, excerpt, content, image, category, author, tags, read_time, is_published, created_at, updated_at 
+     FROM blogs 
+     WHERE id = ? OR slug = ? 
+     LIMIT 1`
+  ).get(idOrSlug, idOrSlug) || null;
+}
+
+export async function createBlog({
+  id,
+  title,
+  slug,
+  excerpt = '',
+  content = '',
+  image = '',
+  category = 'Lifestyle',
+  author = 'AeroStore Editorial',
+  tags = '',
+  read_time = '5 min read',
+  is_published = 1
+}) {
+  const blogId = id || 'blog_' + crypto.randomUUID();
+  const cleanSlug = (slug || title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || 'article-' + Date.now();
+  const pubVal = is_published ? 1 : 0;
+
+  if (isMysql) {
+    await mysqlPool.query(
+      `INSERT INTO blogs (id, title, slug, excerpt, content, image, category, author, tags, read_time, is_published)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [blogId, title, cleanSlug, excerpt, content, image, category, author, tags, read_time, pubVal]
+    );
+    return getBlogByIdOrSlug(blogId);
+  }
+
+  sqliteDb.prepare(
+    `INSERT INTO blogs (id, title, slug, excerpt, content, image, category, author, tags, read_time, is_published)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(blogId, title, cleanSlug, excerpt, content, image, category, author, tags, read_time, pubVal);
+  return getBlogByIdOrSlug(blogId);
+}
+
+export async function updateBlog(id, {
+  title,
+  slug,
+  excerpt,
+  content,
+  image,
+  category,
+  author,
+  tags,
+  read_time,
+  is_published
+}) {
+  const existing = await getBlogByIdOrSlug(id);
+  if (!existing) return null;
+
+  const newTitle = title !== undefined ? title : existing.title;
+  const newSlug = slug !== undefined ? slug : existing.slug;
+  const newExcerpt = excerpt !== undefined ? excerpt : existing.excerpt;
+  const newContent = content !== undefined ? content : existing.content;
+  const newImage = image !== undefined ? image : existing.image;
+  const newCategory = category !== undefined ? category : existing.category;
+  const newAuthor = author !== undefined ? author : existing.author;
+  const newTags = tags !== undefined ? tags : existing.tags;
+  const newReadTime = read_time !== undefined ? read_time : existing.read_time;
+  const newPublished = is_published !== undefined ? (is_published ? 1 : 0) : existing.is_published;
+
+  if (isMysql) {
+    await mysqlPool.query(
+      `UPDATE blogs 
+       SET title = ?, slug = ?, excerpt = ?, content = ?, image = ?, category = ?, author = ?, tags = ?, read_time = ?, is_published = ?
+       WHERE id = ?`,
+      [newTitle, newSlug, newExcerpt, newContent, newImage, newCategory, newAuthor, newTags, newReadTime, newPublished, id]
+    );
+    return getBlogByIdOrSlug(id);
+  }
+
+  sqliteDb.prepare(
+    `UPDATE blogs 
+     SET title = ?, slug = ?, excerpt = ?, content = ?, image = ?, category = ?, author = ?, tags = ?, read_time = ?, is_published = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE id = ?`
+  ).run(newTitle, newSlug, newExcerpt, newContent, newImage, newCategory, newAuthor, newTags, newReadTime, newPublished, id);
+  return getBlogByIdOrSlug(id);
+}
+
+export async function deleteBlog(id) {
+  if (isMysql) {
+    await mysqlPool.query('DELETE FROM blogs WHERE id = ?', [id]);
+    return true;
+  }
+  sqliteDb.prepare('DELETE FROM blogs WHERE id = ?').run(id);
   return true;
 }

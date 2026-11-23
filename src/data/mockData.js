@@ -5,33 +5,81 @@ export const categories = [
     id: 'electronics',
     name: 'Electronics',
     icon: 'RiSmartphoneLine',
-    image: '',
+    image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400&auto=format&fit=crop&q=80',
     count: 24,
-    description: 'Smartphones, headphones, smartwatches, and more.'
+    description: 'Smartphones, headphones, smartwatches, and audio gear.'
   },
   {
     id: 'fashion',
     name: 'Fashion & Apparel',
     icon: 'RiShirtLine',
-    image: '',
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&auto=format&fit=crop&q=80',
     count: 36,
-    description: 'Premium apparel, shoes, and luxury accessories.'
+    description: 'Premium apparel, dresses, and seasonal wear.'
+  },
+  {
+    id: 'luxury',
+    name: 'Luxury & Bags',
+    icon: 'RiSparkling2Line',
+    image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&auto=format&fit=crop&q=80',
+    count: 19,
+    description: 'Designer leather handbags, accessories, and totes.'
   },
   {
     id: 'home-decor',
     name: 'Home & Living',
     icon: 'RiHome4Line',
-    image: '',
+    image: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=400&auto=format&fit=crop&q=80',
     count: 18,
-    description: 'Designer furniture, ambient lighting, and art.'
+    description: 'Designer furniture, ceramic vases, and ambient decor.'
   },
   {
     id: 'wellness',
     name: 'Fitness & Wellness',
     icon: 'RiHeartPulseLine',
-    image: '',
+    image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&auto=format&fit=crop&q=80',
     count: 15,
     description: 'Activewear, tracking gadgets, and wellness essentials.'
+  },
+  {
+    id: 'beauty',
+    name: 'Health & Beauty',
+    icon: 'RiHeartPulseLine',
+    image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&auto=format&fit=crop&q=80',
+    count: 21,
+    description: 'Organic skincare, perfumes, and cosmetic essentials.'
+  },
+  {
+    id: 'groceries',
+    name: 'Groceries & Gourmet',
+    icon: 'RiShoppingBasketLine',
+    image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&auto=format&fit=crop&q=80',
+    count: 29,
+    description: 'Fresh imported groceries, pantry staples, and snacks.'
+  },
+  {
+    id: 'sneakers',
+    name: 'Sneakers & Shoes',
+    icon: 'RiFootprintLine',
+    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&auto=format&fit=crop&q=80',
+    count: 32,
+    description: 'Limited edition sneakers, footwear, and casual shoes.'
+  },
+  {
+    id: 'watches',
+    name: 'Watches & Jewelry',
+    icon: 'RiSparkling2Line',
+    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop&q=80',
+    count: 14,
+    description: 'Luxury Swiss timepieces, minimalist watches, and jewelry.'
+  },
+  {
+    id: 'gaming-vr',
+    name: 'Gaming & VR',
+    icon: 'RiGamepadLine',
+    image: 'https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?w=400&auto=format&fit=crop&q=80',
+    count: 12,
+    description: 'High performance gaming gear and VR devices.'
   }
 ];
 

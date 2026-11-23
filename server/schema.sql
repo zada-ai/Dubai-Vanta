@@ -70,3 +70,20 @@ CREATE TABLE IF NOT EXISTS categories (
   description TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 6. BLOGS TABLE (Articles & Editorial Posts)
+CREATE TABLE IF NOT EXISTS blogs (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  excerpt TEXT,
+  content TEXT,
+  image TEXT,
+  category TEXT DEFAULT 'Lifestyle',
+  author TEXT DEFAULT 'AeroStore Editorial',
+  tags TEXT DEFAULT '',
+  read_time TEXT DEFAULT '5 min read',
+  is_published INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

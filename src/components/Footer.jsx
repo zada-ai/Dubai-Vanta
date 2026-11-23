@@ -18,6 +18,7 @@ const MotionLink = motion.create(Link);
 const companyLinks = [
   { label: 'About Us', to: '/about' },
   { label: 'Shop All', to: '/shop' },
+  { label: 'Blogs & Journal', to: '/blogs' },
   { label: 'Contact', to: '/contact' },
   { label: 'FAQs', to: '/faq' }
 ];

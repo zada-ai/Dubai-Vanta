@@ -1,22 +1,53 @@
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { categories as defaultCategories } from '../data/mockData';
 import RatingComponent from './RatingComponent';
 import { RiCloseLine, RiFilterLine, RiRefreshLine, RiSearchLine } from 'react-icons/ri';
 
-const FilterSidebar = ({ filters, setFilters, onClose }) => {
+const FilterSidebar = ({ filters, setFilters, onClose, onCategorySelect, onSearchChange }) => {
   const { categories: appCategories, productsList } = useApp();
+  const [searchParams, setSearchParams] = useSearchParams();
   const categories = (appCategories && appCategories.length > 0) ? appCategories : defaultCategories;
   const categoryCounts = {};
   (productsList || []).forEach((p) => {
     categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
   });
+
   const handleCategoryChange = (catId) => {
-    setFilters((prev) => ({
-      ...prev,
-      category: prev.category === catId ? 'all' : catId,
-      page: 1
-    }));
+    const nextCat = filters.category === catId ? 'all' : catId;
+    if (onCategorySelect) {
+      onCategorySelect(nextCat);
+    } else {
+      setFilters((prev) => ({
+        ...prev,
+        category: nextCat,
+        page: 1
+      }));
+      const newParams = new URLSearchParams(searchParams);
+      if (nextCat === 'all') {
+        newParams.delete('category');
+      } else {
+        newParams.set('category', nextCat);
+      }
+      setSearchParams(newParams);
+    }
+  };
+
+  const handleSearchInputChange = (e) => {
+    const val = e.target.value;
+    if (onSearchChange) {
+      onSearchChange(e);
+    } else {
+      setFilters((prev) => ({ ...prev, search: val, page: 1 }));
+      const newParams = new URLSearchParams(searchParams);
+      if (val) {
+        newParams.set('search', val);
+      } else {
+        newParams.delete('search');
+      }
+      setSearchParams(newParams);
+    }
   };
 
   const handlePriceChange = (e) => {
@@ -56,6 +87,7 @@ const FilterSidebar = ({ filters, setFilters, onClose }) => {
       sortBy: 'latest',
       page: 1
     });
+    setSearchParams({});
   };
 
   return (
@@ -77,7 +109,7 @@ const FilterSidebar = ({ filters, setFilters, onClose }) => {
           {onClose && (
             <button
               onClick={onClose}
-              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer"
+              className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer"
             >
               <RiCloseLine className="w-5 h-5" />
             </button>
@@ -93,7 +125,7 @@ const FilterSidebar = ({ filters, setFilters, onClose }) => {
             type="text"
             placeholder="Search keywords..."
             value={filters.search || ''}
-            onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }))}
+            onChange={handleSearchInputChange}
             className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
           />
           <RiSearchLine className="absolute left-3 top-3 text-slate-400 w-4 h-4 pointer-events-none" />

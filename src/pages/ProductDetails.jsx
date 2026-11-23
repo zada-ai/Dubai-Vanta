@@ -29,7 +29,7 @@ const ProductDetails = () => {
   if (!product) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <h2 className="text-2xl font-bold mb-4">Product Not Found</h2>
+        <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
         <Link to="/shop" className="px-6 py-3 bg-slate-900 text-white rounded-full font-bold">
           Back to Shop
         </Link>
@@ -496,9 +496,9 @@ const ProductView = ({ id, product, products }) => {
                       className="p-5 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl shadow-xs"
                     >
                       <div className="flex items-center justify-between gap-4 mb-2.5">
-                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                           {rev.name}
-                        </h4>
+                        </p>
                         <span className="text-xs text-slate-400">{rev.date}</span>
                       </div>
                       <div className="mb-3">

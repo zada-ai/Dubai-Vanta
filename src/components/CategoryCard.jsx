@@ -1,82 +1,78 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RiShoppingBagLine } from 'react-icons/ri';
+import { motion } from 'framer-motion';
+import { 
+  RiHeadphoneLine, 
+  RiShirtLine, 
+  RiHome4Line, 
+  RiHeartPulseLine, 
+  RiGamepadLine, 
+  RiSparkling2Line, 
+  RiShoppingBag3Line,
+  RiShoppingBasketLine,
+  RiFootprintLine
+} from 'react-icons/ri';
 
-const CategoryImage = ({ category, className }) => {
+// Helper to get category icons when image is missing
+const getCategoryIcon = (id = '', name = '') => {
+  const key = `${id} ${name}`.toLowerCase();
+  if (key.includes('elec') || key.includes('audio') || key.includes('gadget') || key.includes('phone')) return RiHeadphoneLine;
+  if (key.includes('fash') || key.includes('cloth') || key.includes('apparel') || key.includes('wear')) return RiShirtLine;
+  if (key.includes('lux') || key.includes('jewel') || key.includes('watch') || key.includes('bag')) return RiSparkling2Line;
+  if (key.includes('home') || key.includes('decor') || key.includes('living') || key.includes('furn')) return RiHome4Line;
+  if (key.includes('well') || key.includes('fit') || key.includes('health') || key.includes('beauty')) return RiHeartPulseLine;
+  if (key.includes('game') || key.includes('vr')) return RiGamepadLine;
+  if (key.includes('groc') || key.includes('food') || key.includes('market')) return RiShoppingBasketLine;
+  if (key.includes('sneak') || key.includes('shoe') || key.includes('foot')) return RiFootprintLine;
+  return RiShoppingBag3Line;
+};
+
+const CategoryCard = ({ category, count, index = 0 }) => {
   const [imgError, setImgError] = useState(false);
   const rawImage = category.image;
   const resolvedImage = rawImage
     ? (rawImage.startsWith('/uploads/') ? rawImage.replace('/uploads/', '/storage/') : rawImage)
     : null;
 
-  if (resolvedImage && !imgError) {
-    return (
-      <img
-        src={resolvedImage}
-        alt={category.name}
-        onError={() => setImgError(true)}
-        className={`w-full h-full object-cover object-center ${className || ''}`}
-        loading="lazy"
-      />
-    );
-  }
-
-  return (
-    <div className="w-full h-full bg-gradient-to-br from-primary-900/40 via-slate-800 to-slate-950 flex flex-col items-center justify-center p-2 text-center">
-      <RiShoppingBagLine className="w-6 h-6 text-primary-400 mb-1 opacity-80" />
-      <span className="font-black text-white/40 uppercase tracking-widest text-xs truncate max-w-[80%]">
-        {category.name?.slice(0, 4)}
-      </span>
-    </div>
-  );
-};
-
-/**
- * variant="card"    – large image card (desktop grids)
- * variant="compact" – small square tile with the name underneath (mobile rails, many categories)
- * `count` overrides category.count with the real number of products.
- */
-const CategoryCard = ({ category, count, variant = 'card' }) => {
-  const productCount = count ?? category.count ?? 0;
   const to = `/shop?category=${encodeURIComponent(category.id)}`;
-
-  if (variant === 'compact') {
-    return (
-      <Link to={to} className="group flex flex-col items-center gap-1.5 text-center min-w-0">
-        <div className="w-full aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800/80 shadow-xs group-active:scale-95 transition-transform text-sm">
-          <CategoryImage category={category} />
-        </div>
-        <div className="w-full min-w-0">
-          <h3 className="text-[11px] leading-tight font-bold text-slate-800 dark:text-slate-100 line-clamp-2">
-            {category.name}
-          </h3>
-          <p className="text-[10px] text-slate-400 mt-0.5">{productCount} items</p>
-        </div>
-      </Link>
-    );
-  }
+  const IconComponent = getCategoryIcon(category.id, category.name);
 
   return (
-    <Link
-      to={to}
-      className="group block relative rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 border border-slate-200/50 dark:border-slate-800/80 bg-white dark:bg-slate-900"
+    <motion.div
+      initial={{ opacity: 0, scale: 0.85, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.3), ease: 'easeOut' }}
+      whileHover={{ scale: 1.06, y: -4 }}
+      whileTap={{ scale: 0.94 }}
+      className="flex flex-col items-center select-none"
     >
-      <div className="aspect-16/10 w-full overflow-hidden bg-slate-100 dark:bg-slate-950 relative text-2xl">
-        <CategoryImage category={category} className="group-hover:scale-105 transition-transform duration-500" />
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-
-        {/* Content overlaid on image */}
-        <div className="absolute bottom-0 inset-x-0 p-3 sm:p-4 text-white">
-          <h3 className="text-sm sm:text-base font-bold tracking-tight mb-1 group-hover:text-primary-300 transition-colors line-clamp-1">
-            {category.name}
-          </h3>
-          <p className="text-xs text-slate-300 line-clamp-1 font-medium">
-            {productCount} Products
-          </p>
+      <Link 
+        to={to} 
+        className="group flex flex-col items-center text-center cursor-pointer focus:outline-hidden"
+      >
+        {/* Circular Avatar Container (Small on mobile, responsive on desktop) */}
+        <div className="relative w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full aspect-square bg-[#F4F6F8] dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/70 shadow-2xs group-hover:shadow-md group-hover:border-primary-400/50 dark:group-hover:border-primary-500/50 transition-all duration-300 flex items-center justify-center overflow-hidden">
+          {resolvedImage && !imgError ? (
+            <img
+              src={resolvedImage}
+              alt={category.name}
+              onError={() => setImgError(true)}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+              <IconComponent className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 transition-transform duration-300 group-hover:scale-110" />
+            </div>
+          )}
         </div>
-      </div>
-    </Link>
+
+        {/* Category Label Underneath */}
+        <span className="mt-2 text-[11px] sm:text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-1 max-w-[4.5rem] sm:max-w-[5.75rem] md:max-w-[7.5rem] tracking-tight text-center">
+          {category.name}
+        </span>
+      </Link>
+    </motion.div>
   );
 };
 

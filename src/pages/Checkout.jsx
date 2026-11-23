@@ -87,7 +87,7 @@ const Checkout = () => {
   if (cart.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <h2 className="text-xl font-bold mb-4">Your cart is empty</h2>
+        <h1 className="text-xl font-bold mb-4">Your cart is empty</h1>
         <Link to="/shop" className="px-6 py-3 bg-slate-900 text-white rounded-full font-bold">
           Go to Shop
         </Link>

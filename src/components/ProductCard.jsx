@@ -67,9 +67,9 @@ const ProductCard = ({ product }) => {
         </div>
 
         {/* Product Title */}
-        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200 mb-1.5 line-clamp-2 min-h-[40px]">
+        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200 mb-1.5 line-clamp-2 min-h-[40px]">
           <Link to={`/product/${product.id}`}>{product.name}</Link>
-        </h4>
+        </h3>
 
         {/* Rating */}
         <div className="flex items-center gap-2 mb-3">

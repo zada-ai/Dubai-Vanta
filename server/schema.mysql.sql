@@ -71,3 +71,20 @@ CREATE TABLE IF NOT EXISTS categories (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 6. BLOGS TABLE (Articles & Editorial Posts)
+CREATE TABLE IF NOT EXISTS blogs (
+  id VARCHAR(64) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  slug VARCHAR(191) NOT NULL UNIQUE,
+  excerpt TEXT,
+  content LONGTEXT,
+  image VARCHAR(500),
+  category VARCHAR(100) DEFAULT 'Lifestyle',
+  author VARCHAR(100) DEFAULT 'AeroStore Editorial',
+  tags VARCHAR(255) DEFAULT '',
+  read_time VARCHAR(50) DEFAULT '5 min read',
+  is_published TINYINT(1) DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

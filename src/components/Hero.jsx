@@ -81,9 +81,9 @@ const Hero = () => {
                   {slide.subtitle}
                 </span>
               )}
-              <h2 className="text-[26px] sm:text-[28px] md:text-5xl lg:text-6xl font-black leading-tight text-white mb-2 md:mb-4">
+              <h1 className="text-[26px] sm:text-[28px] md:text-5xl lg:text-6xl font-black leading-tight text-white mb-2 md:mb-4">
                 {slide.title}
-              </h2>
+              </h1>
               <p className="text-[12px] sm:text-[13px] md:text-base text-slate-200 max-w-md mb-3 md:mb-8 font-medium leading-relaxed line-clamp-2 md:line-clamp-none">
                 {slide.description}
               </p>

@@ -76,3 +76,41 @@ body {
 .animate-pulse-subtle {
   animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* Continuous Left-to-Right Marquee Animation */
+@keyframes marquee-ltr {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0%, 0, 0);
+  }
+}
+
+.animate-marquee-ltr {
+  display: flex;
+  width: max-content;
+  animation: marquee-ltr 32s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-ltr:hover,
+.animate-marquee-ltr:focus-within {
+  animation-play-state: paused;
+}
+
+/* Navbar & Shop Responsive Visibility Guarantees */
+@media (min-width: 768px) {
+  .nav-desktop-links {
+    display: flex !important;
+  }
+  .shop-filter-sidebar {
+    display: block !important;
+  }
+}
+
+@media (min-width: 640px) {
+  .nav-desktop-search {
+    display: flex !important;
+  }
+}

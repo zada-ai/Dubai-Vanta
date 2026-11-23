@@ -16,6 +16,7 @@ import {
   createUser, 
   getAllUsers, 
   updateUserRole,
+  deleteUserInDb,
   getAllProducts,
   createProduct,
   updateProductInDb,
@@ -26,6 +27,11 @@ import {
   getAllCategories,
   createCategoryInDb,
   deleteCategoryInDb,
+  getAllBlogs,
+  getBlogByIdOrSlug,
+  createBlog,
+  updateBlog,
+  deleteBlog,
   getAllSettings, 
   updateSettings, 
   deleteSettingKey 
@@ -341,9 +347,10 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const isSuper = normalizedEmail === (process.env.SUPERADMIN_EMAIL || 'superadmin@gmail.com');
-    const isAdmin = isSuper || normalizedEmail.includes('admin');
-    const role = isSuper ? 'superadmin' : isAdmin ? 'admin' : 'customer';
+    const isSuper = normalizedEmail === (process.env.SUPERADMIN_EMAIL || 'sohaibmehmood0067@gmail.com').toLowerCase();
+    const isSuperManager = normalizedEmail === 'manager@aerostore.com' || normalizedEmail.includes('supermanager');
+    const isAdmin = isSuper || isSuperManager || normalizedEmail.includes('admin');
+    const role = isSuper ? 'superadmin' : isSuperManager ? 'supermanager' : isAdmin ? 'admin' : 'customer';
 
     const newUser = await createUser({
       name,
@@ -495,15 +502,73 @@ app.get('/api/auth/users', async (req, res) => {
   }
 });
 
-// Update User Role (Super Admin Privilege)
+// Helper to extract requester user from token or cookie
+async function getRequesterUser(req) {
+  try {
+    const authHeader = req.headers['authorization'];
+    const bearerToken = authHeader && authHeader.split(' ')[1];
+    if (bearerToken) {
+      try {
+        const decoded = jwt.verify(bearerToken, JWT_ACCESS_SECRET);
+        const user = await getUserById(decoded.id);
+        if (user) return user;
+      } catch (_) {}
+    }
+    const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
+    if (refreshToken) {
+      try {
+        const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+        const user = await getUserById(decoded.id);
+        if (user) return user;
+      } catch (_) {}
+    }
+  } catch (_) {}
+  return null;
+}
+
+// Update User Role (Super Admin & Super Manager Privilege)
 app.put('/api/auth/users/:id/role', async (req, res) => {
   try {
     const { role } = req.body;
-    if (!['superadmin', 'admin', 'customer'].includes(role)) {
-      return res.status(400).json({ success: false, message: 'Role must be superadmin, admin, or customer' });
+    if (!['superadmin', 'supermanager', 'admin', 'customer'].includes(role)) {
+      return res.status(400).json({ success: false, message: 'Role must be superadmin, supermanager, admin, or customer' });
     }
+
+    const requester = await getRequesterUser(req);
+    const targetUser = await getUserById(req.params.id);
+    if (!targetUser) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Super Manager CANNOT modify Super Admin!
+    if (requester && requester.role === 'supermanager' && targetUser.role === 'superadmin') {
+      return res.status(403).json({ success: false, message: 'Super Manager cannot modify Super Admin role' });
+    }
+
     const updated = await updateUserRole(req.params.id, role);
     res.json({ success: true, message: `User role updated to ${role}`, user: updated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Delete User Endpoint (Super Admin & Super Manager Privilege)
+app.delete('/api/auth/users/:id', async (req, res) => {
+  try {
+    const requester = await getRequesterUser(req);
+    const targetUser = await getUserById(req.params.id);
+    if (!targetUser) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Super Manager CANNOT delete Super Admin!
+    if (requester && requester.role === 'supermanager' && targetUser.role === 'superadmin') {
+      return res.status(403).json({ success: false, message: 'Super Manager cannot remove Super Admin' });
+    }
+
+    // Protect Super Admin from being deleted by non-superadmin
+    if (targetUser.role === 'superadmin' && requester?.role !== 'superadmin') {
+      return res.status(403).json({ success: false, message: 'Only Super Admin can remove a Super Admin' });
+    }
+
+    await deleteUserInDb(req.params.id);
+    res.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -613,6 +678,130 @@ app.delete('/api/categories/:id', async (req, res) => {
     cache.del('categories');
     cache.del('sitemap');
     res.json({ success: true, message: 'Category deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// ==========================================
+// Blogs & Articles API (Public View + Admin Full Management)
+// ==========================================
+app.get('/api/blogs', async (req, res) => {
+  try {
+    const wantAll = req.query.all === 'true';
+    let includeDrafts = false;
+
+    if (wantAll) {
+      const requester = await getRequesterUser(req);
+      if (requester && ['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
+        includeDrafts = true;
+      }
+    }
+
+    const cacheKey = includeDrafts ? 'blogs_all' : 'blogs_published';
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cached);
+    }
+
+    const blogs = await getAllBlogs(includeDrafts);
+    const payload = { success: true, count: blogs.length, blogs };
+    cache.set(cacheKey, payload, 180); // 3 mins TTL
+    res.setHeader('X-Cache', 'MISS');
+    res.json(payload);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.get('/api/blogs/:idOrSlug', async (req, res) => {
+  try {
+    const blog = await getBlogByIdOrSlug(req.params.idOrSlug);
+    if (!blog) {
+      return res.status(404).json({ success: false, message: 'Blog article not found' });
+    }
+
+    if (!blog.is_published) {
+      const requester = await getRequesterUser(req);
+      if (!requester || !['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
+        return res.status(404).json({ success: false, message: 'Blog article not found' });
+      }
+    }
+
+    res.json({ success: true, blog });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/api/blogs', async (req, res) => {
+  try {
+    const requester = await getRequesterUser(req);
+    if (!requester || !['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized. Admin access required.' });
+    }
+
+    const { title, slug, excerpt, content, image, category, author, tags, read_time, is_published } = req.body;
+    if (!title || !title.trim()) {
+      return res.status(400).json({ success: false, message: 'Title is required for blog article' });
+    }
+
+    const newBlog = await createBlog({
+      title: title.trim(),
+      slug: slug ? slug.trim() : undefined,
+      excerpt,
+      content,
+      image,
+      category: category || 'Lifestyle',
+      author: author || requester.name || 'AeroStore Editorial',
+      tags: tags || '',
+      read_time: read_time || '5 min read',
+      is_published: is_published !== undefined ? is_published : 1
+    });
+
+    cache.del('blogs_all');
+    cache.del('blogs_published');
+    cache.del('sitemap');
+    res.status(201).json({ success: true, blog: newBlog });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+app.put('/api/blogs/:id', async (req, res) => {
+  try {
+    const requester = await getRequesterUser(req);
+    if (!requester || !['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized. Admin access required.' });
+    }
+
+    const updated = await updateBlog(req.params.id, req.body);
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Blog article not found' });
+    }
+
+    cache.del('blogs_all');
+    cache.del('blogs_published');
+    cache.del('sitemap');
+    res.json({ success: true, blog: updated });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+app.delete('/api/blogs/:id', async (req, res) => {
+  try {
+    const requester = await getRequesterUser(req);
+    if (!requester || !['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized. Admin access required.' });
+    }
+
+    await deleteBlog(req.params.id);
+    cache.del('blogs_all');
+    cache.del('blogs_published');
+    cache.del('sitemap');
+    res.json({ success: true, message: 'Blog article deleted successfully' });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
