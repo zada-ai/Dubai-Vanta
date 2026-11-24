@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ToastContainer from '../components/Toast';
+import OrderChatbot from '../components/OrderChatbot';
 
 const setMetaTag = (attr, key, val) => {
   if (!val) return;
@@ -111,6 +112,9 @@ const MainLayout = () => {
 
       {/* Float Toasts Portal Container */}
       <ToastContainer />
+
+      {/* Floating Order Tracking Chatbot */}
+      <OrderChatbot />
     </div>
   );
 };

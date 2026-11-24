@@ -285,19 +285,54 @@ const Navbar = () => {
 
             {/* User Dropdown / Login */}
             {user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center gap-1 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
-                  aria-label="User account menu"
-                >
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover shadow-xs border border-slate-200 dark:border-slate-700"
-                  />
-                  <RiArrowDownSLine className="w-4 h-4 text-slate-500 hidden sm:block" />
-                </button>
+              <div className="relative flex items-center">
+                {user.role === 'admin' || user.role === 'superadmin' || user.role === 'supermanager' ? (
+                  <>
+                    <Link
+                      to="/admin"
+                      className="flex items-center p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                      title="Admin Dashboard"
+                    >
+                      {user.avatar && !user.avatar.includes('photo-1534528741775-53994a69daeb') ? (
+                        <img
+                          src={user.avatar}
+                          alt={user.name}
+                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover shadow-xs border border-purple-500/40"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 flex items-center justify-center font-bold text-xs shadow-xs">
+                          <RiShieldCheckLine className="w-4 h-4" />
+                        </div>
+                      )}
+                    </Link>
+                    <button
+                      onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                      className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer text-slate-500"
+                      aria-label="User account menu"
+                    >
+                      <RiArrowDownSLine className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center gap-1 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                    aria-label="User account menu"
+                  >
+                    {user.avatar && !user.avatar.includes('photo-1534528741775-53994a69daeb') ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover shadow-xs border border-slate-200 dark:border-slate-700"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800 flex items-center justify-center font-bold text-xs shadow-xs">
+                        <RiUser3Line className="w-4 h-4" />
+                      </div>
+                    )}
+                    <RiArrowDownSLine className="w-4 h-4 text-slate-500 hidden sm:block" />
+                  </button>
+                )}
 
                 {userDropdownOpen && (
                   <>
@@ -567,7 +602,17 @@ const Navbar = () => {
             {user ? (
               <div className="border-t border-slate-100 dark:border-slate-800 pt-4 flex items-center justify-between px-1">
                 <div className="flex items-center gap-3">
-                  <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
+                  {user.avatar && !user.avatar.includes('photo-1534528741775-53994a69daeb') ? (
+                    <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-sm">
+                      {user.role === 'admin' || user.role === 'superadmin' || user.role === 'supermanager' ? (
+                        <RiShieldCheckLine className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                      ) : (
+                        <RiUser3Line className="w-5 h-5" />
+                      )}
+                    </div>
+                  )}
                   <div>
                     <h5 className="text-sm font-bold text-slate-800 dark:text-slate-200">{user.name}</h5>
                     <p className="text-xs text-slate-400 truncate max-w-[150px]">{user.email}</p>

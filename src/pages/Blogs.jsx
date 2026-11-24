@@ -12,11 +12,21 @@ import {
   RiSparklingFill
 } from 'react-icons/ri';
 import { useApp } from '../context/AppContext';
+import { DEFAULT_BLOGS } from '../data/defaultBlogs';
 
 const Blogs = () => {
   const { darkMode } = useApp();
-  const [blogs, setBlogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [blogs, setBlogs] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_blogs');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (_) {}
+    return DEFAULT_BLOGS;
+  });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -25,17 +35,44 @@ const Blogs = () => {
     let isMounted = true;
     async function fetchBlogs() {
       try {
-        setLoading(true);
-        const res = await fetch('/api/blogs');
-        const data = await res.json();
-        if (data.success && isMounted) {
-          setBlogs(data.blogs || []);
+        setError(null);
+        const res = await fetch('/api/blogs', { credentials: 'include' });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const text = await res.text();
+        if (!text || !text.trim()) {
+          throw new Error('Empty response');
+        }
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (_) {
+          throw new Error('Invalid JSON');
+        }
+
+        if (data.success && isMounted && Array.isArray(data.blogs) && data.blogs.length > 0) {
+          setBlogs(data.blogs);
+          try {
+            localStorage.setItem('cached_blogs', JSON.stringify(data.blogs));
+          } catch (e) {}
         } else if (isMounted) {
-          setError(data.message || 'Failed to load blog posts');
+          setBlogs((prev) => (prev && prev.length > 0 ? prev : DEFAULT_BLOGS));
         }
       } catch (err) {
+        console.warn('Live blog fetch notice (using cache/defaults):', err.message);
         if (isMounted) {
-          setError(err.message || 'Network error');
+          setBlogs((prev) => {
+            if (prev && prev.length > 0) return prev;
+            try {
+              const cached = localStorage.getItem('cached_blogs');
+              if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+              }
+            } catch (_) {}
+            return DEFAULT_BLOGS;
+          });
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -259,7 +296,7 @@ const Blogs = () => {
                     </div>
 
                     <span className="inline-flex items-center gap-1 text-xs font-black text-primary-600 dark:text-primary-400 group-hover:translate-x-1 transition-transform">
-                      Read Story <RiArrowRightLine className="w-4 h-4" />
+                      See More <RiArrowRightLine className="w-4 h-4" />
                     </span>
                   </div>
                 </div>
@@ -327,7 +364,7 @@ const Blogs = () => {
                           </span>
 
                           <span className="inline-flex items-center gap-1 text-xs font-bold text-primary-600 dark:text-primary-400 group-hover:translate-x-1 transition-transform">
-                            Read <RiArrowRightLine className="w-3.5 h-3.5" />
+                            See More <RiArrowRightLine className="w-3.5 h-3.5" />
                           </span>
                         </div>
                       </div>

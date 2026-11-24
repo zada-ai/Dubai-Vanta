@@ -10,7 +10,9 @@ import {
   RiLinkedinBoxFill,
   RiMailSendLine,
   RiArrowRightSLine,
-  RiArrowUpLine
+  RiArrowUpLine,
+  RiArrowDownSLine,
+  RiArrowUpSLine
 } from 'react-icons/ri';
 
 const MotionLink = motion.create(Link);
@@ -64,27 +66,24 @@ const pop = {
 };
 
 const FooterLink = ({ to, label }) => (
-  <motion.li variants={item}>
-    <MotionLink
+  <motion.li
+    initial={{ opacity: 0, x: -8 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.25, ease: 'easeOut' }}
+    className="list-none"
+  >
+    <Link
       to={to}
-      initial="rest"
-      whileHover="hover"
-      whileTap="hover"
-      animate="rest"
-      className="group relative inline-flex items-center py-0.5 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+      className="group relative inline-flex items-center py-0.5 text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
     >
-      <motion.span
-        variants={{ rest: { width: 0, opacity: 0 }, hover: { width: 16, opacity: 1 } }}
-        transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="inline-flex overflow-hidden text-primary-500"
-      >
+      <span className="inline-flex overflow-hidden text-primary-500 w-0 group-hover:w-4 transition-all duration-200">
         <RiArrowRightSLine className="w-4 h-4 shrink-0" />
-      </motion.span>
+      </span>
       <span className="relative">
         {label}
         <span className="absolute left-0 -bottom-0.5 h-0.5 w-full origin-left scale-x-0 rounded-full bg-primary-500 transition-transform duration-300 ease-out group-hover:scale-x-100" />
       </span>
-    </MotionLink>
+    </Link>
   </motion.li>
 );
 
@@ -95,9 +94,22 @@ const ColumnTitle = ({ children }) => (
 );
 
 const Footer = () => {
-  const { triggerToast, storeLogo } = useApp();
+  const { triggerToast, storeLogo, categories = [] } = useApp();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
+  // Dynamic category list from AppContext (falls back to default if empty)
+  const allCategoryLinks = categories && categories.length > 0
+    ? categories.map((cat) => ({
+        label: cat.name,
+        to: `/shop?category=${encodeURIComponent(cat.id || cat.name.toLowerCase().replace(/\s+/g, '-'))}`
+      }))
+    : categoryLinks;
+
+  const visibleCategoryLinks = showAllCategories
+    ? allCategoryLinks
+    : allCategoryLinks.slice(0, 4);
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -216,10 +228,29 @@ const Footer = () => {
             <motion.div variants={column} className="flex flex-col items-start text-left">
               <ColumnTitle>Categories</ColumnTitle>
               <ul className="flex flex-col gap-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                {categoryLinks.map((link) => (
+                {visibleCategoryLinks.map((link) => (
                   <FooterLink key={link.label} {...link} />
                 ))}
               </ul>
+              {allCategoryLinks.length > 4 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllCategories(!showAllCategories)}
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline transition-all cursor-pointer"
+                >
+                  {showAllCategories ? (
+                    <>
+                      <span>Show Less</span>
+                      <RiArrowUpSLine className="w-3.5 h-3.5" />
+                    </>
+                  ) : (
+                    <>
+                      <span>See More ({allCategoryLinks.length - 4})</span>
+                      <RiArrowDownSLine className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
+              )}
             </motion.div>
 
             {/* Newsletter */}

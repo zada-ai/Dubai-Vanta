@@ -15,15 +15,26 @@ import {
   RiArrowRightLine
 } from 'react-icons/ri';
 import { useApp } from '../context/AppContext';
+import { DEFAULT_BLOGS } from '../data/defaultBlogs';
 
 const BlogDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { triggerToast } = useApp();
 
-  const [blog, setBlog] = useState(null);
+  const [blog, setBlog] = useState(() => {
+    // Immediate fallback search
+    try {
+      const cached = localStorage.getItem('cached_blogs');
+      const list = cached ? JSON.parse(cached) : DEFAULT_BLOGS;
+      if (Array.isArray(list)) {
+        return list.find((b) => String(b.id) === String(id) || String(b.slug) === String(id)) || null;
+      }
+    } catch (_) {}
+    return null;
+  });
   const [relatedBlogs, setRelatedBlogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
 
@@ -31,30 +42,85 @@ const BlogDetails = () => {
     let isMounted = true;
     async function fetchArticle() {
       try {
-        setLoading(true);
         setError(null);
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        const res = await fetch(`/api/blogs/${encodeURIComponent(id)}`);
-        const data = await res.json();
+        const res = await fetch(`/api/blogs/${encodeURIComponent(id)}`, { credentials: 'include' });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const text = await res.text();
+        if (!text || !text.trim()) {
+          throw new Error('Empty response');
+        }
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (_) {
+          throw new Error('Invalid JSON');
+        }
 
         if (data.success && data.blog && isMounted) {
           setBlog(data.blog);
 
           // Fetch all blogs to get related articles in the same category
-          const allRes = await fetch('/api/blogs');
-          const allData = await allRes.json();
-          if (allData.success && allData.blogs && isMounted) {
-            const others = allData.blogs
-              .filter((b) => b.id !== data.blog.id)
-              .slice(0, 3);
-            setRelatedBlogs(others);
-          }
+          try {
+            const allRes = await fetch('/api/blogs', { credentials: 'include' });
+            if (allRes.ok) {
+              const allText = await allRes.text();
+              const allData = JSON.parse(allText);
+              if (allData.success && allData.blogs && isMounted) {
+                const others = allData.blogs
+                  .filter((b) => b.id !== data.blog.id)
+                  .slice(0, 3);
+                setRelatedBlogs(others);
+              }
+            }
+          } catch (_) {}
         } else if (isMounted) {
-          setError(data.message || 'Article not found');
+          // Check cached / default blogs fallback
+          const fallbackList = (() => {
+            try {
+              const cached = localStorage.getItem('cached_blogs');
+              if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+              }
+            } catch (_) {}
+            return DEFAULT_BLOGS;
+          })();
+
+          const found = fallbackList.find((b) => String(b.id) === String(id) || String(b.slug) === String(id));
+          if (found) {
+            setBlog(found);
+            const others = fallbackList.filter((b) => b.id !== found.id).slice(0, 3);
+            setRelatedBlogs(others);
+            setLoading(false);
+            return;
+          }
+          setError(data?.message || 'Article not found');
         }
       } catch (err) {
         if (isMounted) {
+          const fallbackList = (() => {
+            try {
+              const cached = localStorage.getItem('cached_blogs');
+              if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+              }
+            } catch (_) {}
+            return DEFAULT_BLOGS;
+          })();
+
+          const found = fallbackList.find((b) => String(b.id) === String(id) || String(b.slug) === String(id));
+          if (found) {
+            setBlog(found);
+            const others = fallbackList.filter((b) => b.id !== found.id).slice(0, 3);
+            setRelatedBlogs(others);
+            setLoading(false);
+            return;
+          }
           setError(err.message || 'Failed to load article');
         }
       } finally {

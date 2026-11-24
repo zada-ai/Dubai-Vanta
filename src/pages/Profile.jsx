@@ -9,7 +9,8 @@ import {
   RiLogoutBoxRLine,
   RiMapPin2Line,
   RiSaveLine,
-  RiEditLine
+  RiEditLine,
+  RiShieldCheckLine
 } from 'react-icons/ri';
 
 const Profile = () => {
@@ -55,13 +56,31 @@ const Profile = () => {
           
           {/* Avatar and basic summary */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center">
-            <img
-              src={user.avatar}
-              alt={user.name}
-              className="w-24 h-24 rounded-full object-cover shadow-md border-2 border-primary-500 mb-4"
-            />
+            {user.avatar && !user.avatar.includes('photo-1534528741775-53994a69daeb') ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="w-24 h-24 rounded-full object-cover shadow-md border-2 border-primary-500 mb-4"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-2 border-primary-500/50 mb-4 flex items-center justify-center shadow-md">
+                {user.role === 'admin' || user.role === 'superadmin' || user.role === 'supermanager' ? (
+                  <RiShieldCheckLine className="w-12 h-12 text-purple-600 dark:text-purple-400" />
+                ) : (
+                  <RiUser3Line className="w-12 h-12 text-slate-400" />
+                )}
+              </div>
+            )}
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">{user.name}</h3>
             <p className="text-xs text-slate-450 dark:text-slate-400 mt-0.5">{user.email}</p>
+            {(user.role === 'admin' || user.role === 'superadmin' || user.role === 'supermanager') && (
+              <Link
+                to="/admin"
+                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-200 transition"
+              >
+                <RiShieldCheckLine className="w-3.5 h-3.5" /> Open Admin Dashboard
+              </Link>
+            )}
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-3 bg-slate-50 dark:bg-slate-950 px-2.5 py-1 rounded-full">
               Member since {user.joinedDate}
             </span>
