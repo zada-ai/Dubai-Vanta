@@ -18,7 +18,9 @@ const Login = () => {
 
   // If already logged in, navigate away
   if (user) {
-    setTimeout(() => navigate(redirectUrl), 0);
+    const isPrivileged = user.role === 'admin' || user.role === 'superadmin' || user.role === 'supermanager';
+    const target = isPrivileged && (redirectUrl === '/' || !redirectUrl) ? '/admin' : redirectUrl;
+    setTimeout(() => navigate(target), 0);
     return null;
   }
 

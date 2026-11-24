@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { coupons, products, categories as defaultCategories } from '../data/mockData';
+import { coupons, products, categories as defaultCategories, testimonials as defaultTestimonials } from '../data/mockData';
 
 const AppContext = createContext();
 
@@ -205,7 +205,19 @@ export const AppProvider = ({ children }) => {
   // Auth / User state
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.avatar && parsed.avatar.includes('photo-1534528741775-53994a69daeb')) {
+          parsed.avatar = null;
+          localStorage.setItem('user', JSON.stringify(parsed));
+        }
+        return parsed;
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
   });
   const [accessToken, setAccessToken] = useState(null);
 
@@ -233,78 +245,47 @@ export const AppProvider = ({ children }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const clean = parsed.filter((o) => o.orderId !== 'ORD-752183');
+          if (clean.length > 0) return clean;
+        }
+      } catch (_) {}
+    }
+    return [];
+  });
+
+  // Customer Reviews / Testimonials State
+  const [reviews, setReviews] = useState(() => {
+    const saved = localStorage.getItem('user_reviews');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (_) {}
     }
-    return [
-      {
-        orderId: 'ORD-894210',
-        date: 'November 10, 2026',
-        items: [
-          {
-            id: 1,
-            name: 'AeroSound Max Wireless Headphones',
-            price: 249.99,
-            quantity: 1,
-            color: '#000000',
-            size: 'Standard',
-            image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80'
-          }
-        ],
-        totals: {
-          subtotal: 249.99,
-          discount: 0,
-          shipping: 0,
-          tax: 20.00,
-          total: 269.99
-        },
-        shippingDetails: {
-          firstName: 'Jane',
-          lastName: 'Doe',
-          email: 'jane@example.com',
-          phone: '+1 (555) 019-2834',
-          address: '128 Pine Street, Suite 400',
-          city: 'San Francisco',
-          country: 'United States'
-        },
-        paymentMethod: 'Credit Card',
-        status: 'Shipped'
-      },
-      {
-        orderId: 'ORD-752183',
-        date: 'November 11, 2026',
-        items: [
-          {
-            id: 2,
-            name: 'Apex Runner Pro Athletic Sneakers',
-            price: 139.99,
-            quantity: 2,
-            color: '#1E293B',
-            size: 'US 10',
-            image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=80'
-          }
-        ],
-        totals: {
-          subtotal: 279.98,
-          discount: 25.00,
-          shipping: 0,
-          tax: 20.40,
-          total: 275.38
-        },
-        shippingDetails: {
-          firstName: 'Alex',
-          lastName: 'Morgan',
-          email: 'alex.m@example.com',
-          phone: '+1 (555) 234-5678',
-          address: '452 Broadway Ave',
-          city: 'New York',
-          country: 'United States'
-        },
-        paymentMethod: 'PayPal',
-        status: 'Processing'
-      }
-    ];
+    return defaultTestimonials;
   });
+
+  const addReview = (reviewData) => {
+    const newReview = {
+      id: 'rev-' + Date.now(),
+      name: reviewData.name?.trim() || (user?.name || 'Verified Buyer'),
+      role: reviewData.role?.trim() || 'Verified Buyer',
+      rating: Number(reviewData.rating) || 5,
+      comment: reviewData.comment?.trim() || '',
+      avatar: reviewData.avatar || user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(reviewData.name || 'Buyer')}`,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    };
+    setReviews((prev) => {
+      const updated = [newReview, ...prev];
+      try {
+        localStorage.setItem('user_reviews', JSON.stringify(updated));
+      } catch (_) {}
+      return updated;
+    });
+    triggerToast('Thank you! Your review has been submitted successfully.', 'success');
+    return newReview;
+  };
 
   // Coupons state
   const [activeCoupon, setActiveCoupon] = useState(null);
@@ -444,6 +425,64 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('orders', JSON.stringify(orders));
   }, [orders]);
+
+  // Fetch orders from backend database API & sync
+  const fetchOrdersFromApi = async () => {
+    try {
+      const res = await (authFetch ? authFetch('/api/orders') : fetch('/api/orders', { credentials: 'include' }));
+      if (!res.ok) return;
+      const text = await res.text();
+      if (!text || !text.trim()) return;
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (_) {
+        return;
+      }
+      if (data.success && Array.isArray(data.orders)) {
+        const formattedApiOrders = data.orders.map((ord) => ({
+          ...ord,
+          orderId: ord.orderId || ord.id,
+          totals: ord.totals || {
+            total: Number(ord.totalAmount || 0),
+            subtotal: Number(ord.totalAmount || 0),
+            shipping: 0,
+            discount: 0,
+            tax: 0
+          },
+          shippingDetails: ord.shippingDetails || {
+            fullName: ord.customerName || 'Valued Customer',
+            street: ord.shippingAddress || 'Dubai, UAE',
+            city: 'Dubai',
+            state: 'Dubai',
+            zip: '00000',
+            country: 'United Arab Emirates',
+            email: ord.customerEmail || '',
+            phone: ord.customerPhone || ''
+          },
+          items: ord.items && Array.isArray(ord.items) ? ord.items : []
+        }));
+
+        setOrders(formattedApiOrders);
+        try {
+          localStorage.setItem('orders', JSON.stringify(formattedApiOrders));
+        } catch (_) {}
+        return formattedApiOrders;
+      }
+    } catch (e) {
+      console.warn('Error fetching orders from backend:', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrdersFromApi();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchOrdersFromApi();
+    }
+  }, [user]);
 
   // Sync products
   useEffect(() => {
@@ -1386,10 +1425,21 @@ export const AppProvider = ({ children }) => {
     triggerToast('Product deleted.', 'info');
   };
 
-  const updateOrderStatus = (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus) => {
     setOrders((prev) =>
       prev.map((ord) => (ord.orderId === orderId ? { ...ord, status: newStatus } : ord))
     );
+    try {
+      await (authFetch ? authFetch(`/api/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      }) : fetch(`/api/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      }));
+    } catch (_) {}
     triggerToast(`Order ${orderId} updated to ${newStatus}`, 'success');
   };
 
@@ -1606,7 +1656,7 @@ export const AppProvider = ({ children }) => {
           email: 'superadmin@gmail.com',
           role: 'superadmin',
           phone: '+971 50 123 4567',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+          avatar: null,
           joinedDate: 'January 2026',
           addresses: [
             {
@@ -1637,7 +1687,7 @@ export const AppProvider = ({ children }) => {
           email: 'admin@aerostore.com',
           role: 'admin',
           phone: '+971 4 999 0000',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+          avatar: null,
           joinedDate: 'January 2026',
           addresses: []
         };
@@ -1713,7 +1763,7 @@ export const AppProvider = ({ children }) => {
         password: password,
         role: isSuper ? 'superadmin' : isAdmin ? 'admin' : 'customer',
         phone: phone || '',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+        avatar: null,
         joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
         addresses: []
       };
@@ -1902,7 +1952,10 @@ export const AppProvider = ({ children }) => {
         logout,
         updateProfile,
         orders,
+        fetchOrdersFromApi,
         createOrder,
+        reviews,
+        addReview,
         codModalProduct,
         openCodModal,
         closeCodModal,

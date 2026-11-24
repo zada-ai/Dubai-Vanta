@@ -22,6 +22,7 @@ import {
   updateProductInDb,
   deleteProductInDb,
   getAllOrders,
+  getOrderById,
   createOrderInDb,
   updateOrderStatusInDb,
   getAllCategories,
@@ -747,6 +748,13 @@ app.post('/api/blogs', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Title is required for blog article' });
     }
 
+    if (content) {
+      const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
+      if (wordCount > 1500) {
+        return res.status(400).json({ success: false, message: 'Article content cannot exceed 1500 words' });
+      }
+    }
+
     const newBlog = await createBlog({
       title: title.trim(),
       slug: slug ? slug.trim() : undefined,
@@ -774,6 +782,13 @@ app.put('/api/blogs/:id', async (req, res) => {
     const requester = await getRequesterUser(req);
     if (!requester || !['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
       return res.status(403).json({ success: false, message: 'Unauthorized. Admin access required.' });
+    }
+
+    if (req.body.content) {
+      const wordCount = req.body.content.trim().split(/\s+/).filter(Boolean).length;
+      if (wordCount > 1500) {
+        return res.status(400).json({ success: false, message: 'Article content cannot exceed 1500 words' });
+      }
     }
 
     const updated = await updateBlog(req.params.id, req.body);
@@ -814,6 +829,18 @@ app.get('/api/orders', async (req, res) => {
   try {
     const orders = await getAllOrders();
     res.json({ success: true, count: orders.length, orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.get('/api/orders/:id', async (req, res) => {
+  try {
+    const order = await getOrderById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found with this ID.' });
+    }
+    res.json({ success: true, order });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

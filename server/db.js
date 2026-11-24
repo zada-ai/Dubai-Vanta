@@ -547,20 +547,40 @@ export async function getAllOrders() {
   return rows.map((r) => {
     let items = [];
     try {
-      items = JSON.parse(r.items);
+      items = typeof r.items === 'string' ? JSON.parse(r.items) : (r.items || []);
+    } catch (_) {
+      items = [];
+    }
+
+    let shippingDetails = {
+      fullName: r.customer_name || 'Valued Customer',
+      street: r.shipping_address || 'Dubai, UAE',
+      city: 'Dubai',
+      state: 'Dubai',
+      zip: '00000',
+      country: 'United Arab Emirates',
+      email: r.customer_email || '',
+      phone: r.customer_phone || ''
+    };
+    try {
+      if (r.shipping_address && typeof r.shipping_address === 'string' && r.shipping_address.trim().startsWith('{')) {
+        const parsed = JSON.parse(r.shipping_address);
+        shippingDetails = { ...shippingDetails, ...parsed };
+      }
     } catch (_) {}
 
     return {
       orderId: r.id,
       userId: r.user_id,
-      customerName: r.customer_name,
-      customerEmail: r.customer_email,
-      customerPhone: r.customer_phone,
+      customerName: r.customer_name || shippingDetails.fullName,
+      customerEmail: r.customer_email || shippingDetails.email,
+      customerPhone: r.customer_phone || shippingDetails.phone,
       shippingAddress: r.shipping_address,
+      shippingDetails,
       items,
       totals: {
-        total: Number(r.total_amount),
-        subtotal: Number(r.total_amount),
+        total: Number(r.total_amount || 0),
+        subtotal: Number(r.total_amount || 0),
         shipping: 0,
         discount: 0,
         tax: 0
@@ -574,6 +594,75 @@ export async function getAllOrders() {
       date: r.created_at ? new Date(r.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Today'
     };
   });
+}
+
+export async function getOrderById(orderId) {
+  if (!orderId) return null;
+  const cleanId = String(orderId).trim();
+  const formattedId = cleanId.toUpperCase().startsWith('ORD-') ? cleanId.toUpperCase() : `ORD-${cleanId.toUpperCase()}`;
+  let row = null;
+  if (isMysql) {
+    const [res] = await mysqlPool.query(
+      'SELECT * FROM orders WHERE UPPER(id) = ? OR UPPER(id) = ? OR id LIKE ? LIMIT 1',
+      [cleanId.toUpperCase(), formattedId, `%${cleanId}%`]
+    );
+    row = res[0] || null;
+  } else {
+    row = sqliteDb.prepare(
+      'SELECT * FROM orders WHERE UPPER(id) = ? OR UPPER(id) = ? OR id LIKE ? LIMIT 1'
+    ).get(cleanId.toUpperCase(), formattedId, `%${cleanId}%`) || null;
+  }
+  if (!row) return null;
+
+  let items = [];
+  try {
+    items = typeof row.items === 'string' ? JSON.parse(row.items) : (row.items || []);
+  } catch (_) {
+    items = [];
+  }
+
+  let shippingDetails = {
+    fullName: row.customer_name || 'Valued Customer',
+    street: row.shipping_address || 'Dubai, UAE',
+    city: 'Dubai',
+    state: 'Dubai',
+    zip: '00000',
+    country: 'United Arab Emirates',
+    email: row.customer_email || '',
+    phone: row.customer_phone || ''
+  };
+  try {
+    if (row.shipping_address && typeof row.shipping_address === 'string' && row.shipping_address.trim().startsWith('{')) {
+      const parsed = JSON.parse(row.shipping_address);
+      shippingDetails = { ...shippingDetails, ...parsed };
+    }
+  } catch (_) {}
+
+  return {
+    orderId: row.id,
+    userId: row.user_id,
+    customerName: row.customer_name || shippingDetails.fullName,
+    customerEmail: row.customer_email || shippingDetails.email,
+    customerPhone: row.customer_phone || shippingDetails.phone,
+    shippingAddress: row.shipping_address,
+    shippingDetails,
+    items,
+    totals: {
+      total: Number(row.total_amount || 0),
+      subtotal: Number(row.total_amount || 0),
+      shipping: 0,
+      discount: 0,
+      tax: 0
+    },
+    totalAmount: Number(row.total_amount || 0),
+    currency: row.currency || 'AED',
+    paymentMethod: {
+      method: row.payment_method || 'Cash on Delivery',
+      status: row.payment_status || 'Pending'
+    },
+    status: row.order_status || 'Processing',
+    date: row.created_at ? new Date(row.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Today'
+  };
 }
 
 export async function createOrderInDb({

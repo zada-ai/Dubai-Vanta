@@ -55,9 +55,10 @@ const Admin = () => {
   const { 
     user, 
     login, 
-    orders, 
+    orders = [], 
     updateOrderStatus, 
-    productsList, 
+    fetchOrdersFromApi,
+    productsList = [], 
     addProduct, 
     updateProduct,
     deleteProduct, 
@@ -143,6 +144,13 @@ const Admin = () => {
   };
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'hero' | 'features' | 'seo' | 'products' | 'orders'
+
+  // Sync database orders on mount and tab switch
+  useEffect(() => {
+    if (fetchOrdersFromApi) {
+      fetchOrdersFromApi();
+    }
+  }, [activeTab]);
   const [productSearch, setProductSearch] = useState('');
   const [orderFilter, setOrderFilter] = useState('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -478,6 +486,14 @@ const Admin = () => {
     if (!blogForm.title.trim()) {
       triggerToast('Blog article title is required', 'warning');
       return;
+    }
+
+    if (blogForm.content) {
+      const words = blogForm.content.trim().split(/\s+/).filter(Boolean);
+      if (words.length > 1500) {
+        triggerToast(`Article content cannot exceed 1500 words. (Currently ${words.length} words)`, 'error');
+        return;
+      }
     }
 
     try {
@@ -854,10 +870,10 @@ const Admin = () => {
   }
 
   // Calculations for stats
-  const totalRevenue = orders.reduce((sum, ord) => sum + (ord.totals?.total || 0), 0);
+  const totalRevenue = orders.reduce((sum, ord) => sum + Number(ord.totals?.total ?? ord.totalAmount ?? 0), 0);
   const totalOrdersCount = orders.length;
   const totalProductsCount = productsList?.length || 0;
-  const pendingOrders = orders.filter((o) => o.status === 'Processing').length;
+  const pendingOrders = orders.filter((o) => (o.status || '').toLowerCase() === 'processing').length;
 
   // Counts for home display sections
   const featuredCount = (productsList || []).filter((p) => p.isFeatured).length;
@@ -882,7 +898,9 @@ const Admin = () => {
 
   // Filtered orders
   const filteredOrders =
-    orderFilter === 'All' ? orders : orders.filter((o) => o.status === orderFilter);
+    orderFilter === 'All'
+      ? orders
+      : orders.filter((o) => (o.status || '').toLowerCase() === orderFilter.toLowerCase());
 
   const handleAddProductSubmit = (e) => {
     e.preventDefault();
@@ -1322,16 +1340,19 @@ const Admin = () => {
                     {orders.slice(0, 5).map((ord) => (
                       <tr key={ord.orderId} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                         <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">
-                          {ord.orderId}
+                          {ord.orderId || ord.id}
                         </td>
                         <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
-                          {ord.shippingDetails
-                            ? `${ord.shippingDetails.firstName} ${ord.shippingDetails.lastName}`
-                            : 'Customer'}
+                          {ord.shippingDetails?.fullName || 
+                           (ord.shippingDetails?.firstName ? `${ord.shippingDetails.firstName} ${ord.shippingDetails.lastName || ''}`.trim() : null) || 
+                           ord.customerName || 
+                           'Valued Customer'}
                         </td>
-                        <td className="py-3 px-4 text-slate-500">{ord.date}</td>
+                        <td className="py-3 px-4 text-slate-500">
+                          {ord.date || (ord.created_at ? new Date(ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent')}
+                        </td>
                         <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">
-                          AED {ord.totals?.total?.toFixed(2) || '0.00'}
+                          AED {Number(ord.totals?.total ?? ord.totalAmount ?? 0).toFixed(2)}
                         </td>
                         <td className="py-3 px-4">{getStatusBadge(ord.status)}</td>
                         <td className="py-3 px-4 text-right">
@@ -3158,7 +3179,7 @@ const Admin = () => {
                   key={st}
                   onClick={() => setOrderFilter(st)}
                   className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
-                    orderFilter === st
+                    orderFilter.toLowerCase() === st.toLowerCase()
                       ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
                       : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   }`}
@@ -3167,6 +3188,21 @@ const Admin = () => {
                 </button>
               ))}
             </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                if (fetchOrdersFromApi) {
+                  await fetchOrdersFromApi();
+                  triggerToast('Orders synced with database', 'success');
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer shadow-xs"
+              title="Sync latest store orders from database"
+            >
+              <RiRefreshLine className="w-3.5 h-3.5 text-primary-500" />
+              Refresh Orders
+            </button>
           </div>
 
           <div className="space-y-3">
@@ -3221,7 +3257,7 @@ const Admin = () => {
                     <div className="text-left md:text-right">
                       <p className="text-[10px] uppercase font-bold text-slate-400">Total Amount</p>
                       <p className="text-base font-black text-slate-900 dark:text-white">
-                        AED {ord.totals?.total?.toFixed(2) || '0.00'}
+                        AED {Number(ord.totals?.total ?? ord.totalAmount ?? 0).toFixed(2)}
                       </p>
                     </div>
 
@@ -3619,11 +3655,21 @@ const Admin = () => {
                       <tr key={u.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
-                            <img
-                              src={u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}
-                              alt={u.name}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
+                            {u.avatar && !u.avatar.includes('photo-1534528741775-53994a69daeb') ? (
+                              <img
+                                src={u.avatar}
+                                alt={u.name}
+                                className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center border border-slate-200 dark:border-slate-700 font-bold text-xs">
+                                {u.role === 'superadmin' || u.role === 'supermanager' || u.role === 'admin' ? (
+                                  <RiShieldCheckLine className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                ) : (
+                                  <RiUser3Line className="w-4 h-4" />
+                                )}
+                              </div>
+                            )}
                             <div>
                               <span className="font-bold text-slate-900 dark:text-white block">{u.name}</span>
                               <span className="text-[10px] text-slate-400 font-mono">User #{u.id}</span>
@@ -4011,20 +4057,62 @@ const Admin = () => {
 
               {/* Full Content */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Article Full Content (Markdown Supported)
-                  </label>
-                  <span className="text-[10px] text-slate-400 font-mono">Use ### for headings, - for bullets</span>
-                </div>
-                <textarea
-                  rows="9"
-                  required
-                  value={blogForm.content}
-                  onChange={(e) => setBlogForm({ ...blogForm, content: e.target.value })}
-                  placeholder="Write full article here. Use paragraphs, ### Subheadings, and - bullet points..."
-                  className="w-full px-3.5 py-2.5 text-sm font-sans rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-amber-500 leading-relaxed"
-                />
+                {(() => {
+                  const wordsCount = blogForm.content?.trim() ? blogForm.content.trim().split(/\s+/).filter(Boolean).length : 0;
+                  const isOverLimit = wordsCount > 1500;
+                  return (
+                    <>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                            Article Full Content (Markdown Supported)
+                          </label>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            isOverLimit
+                              ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-300 dark:border-rose-800 animate-pulse'
+                              : wordsCount > 1300
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
+                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                          }`}>
+                            {wordsCount} / 1500 words
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">Use ### for headings, - for bullets</span>
+                      </div>
+                      <textarea
+                        rows="9"
+                        required
+                        value={blogForm.content}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setBlogForm({ ...blogForm, content: val });
+                        }}
+                        placeholder="Write full article here (maximum 1500 words). Use paragraphs, ### Subheadings, and - bullet points..."
+                        className={`w-full px-3.5 py-2.5 text-sm font-sans rounded-xl border ${
+                          isOverLimit
+                            ? 'border-rose-500 focus:ring-rose-500 bg-rose-50/10'
+                            : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-amber-500'
+                        } text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 leading-relaxed`}
+                      />
+                      {isOverLimit && (
+                        <div className="flex items-center justify-between mt-1 text-xs text-rose-600 dark:text-rose-400 font-semibold">
+                          <span>⚠️ Limit exceeded by {wordsCount - 1500} words! Maximum 1500 words allowed.</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const words = blogForm.content.trim().split(/\s+/).filter(Boolean);
+                              setBlogForm({ ...blogForm, content: words.slice(0, 1500).join(' ') });
+                              triggerToast('Trimmed to 1500 words.', 'info');
+                            }}
+                            className="underline font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700 cursor-pointer"
+                          >
+                            Trim to 1500 words
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Tags & Published Checkbox */}
@@ -4066,7 +4154,12 @@ const Admin = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 text-xs font-bold rounded-xl bg-amber-600 hover:bg-amber-500 text-white shadow-md transition cursor-pointer"
+                  disabled={Boolean(blogForm.content && blogForm.content.trim().split(/\s+/).filter(Boolean).length > 1500)}
+                  className={`px-6 py-2.5 text-xs font-bold rounded-xl text-white shadow-md transition cursor-pointer ${
+                    blogForm.content && blogForm.content.trim().split(/\s+/).filter(Boolean).length > 1500
+                      ? 'bg-slate-400 cursor-not-allowed opacity-60'
+                      : 'bg-amber-600 hover:bg-amber-500'
+                  }`}
                 >
                   {editingBlog ? 'Save Changes' : 'Publish Article'}
                 </button>
