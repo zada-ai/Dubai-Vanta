@@ -124,6 +124,9 @@ const ProductView = ({ id, product, products }) => {
   const discountPrice = product.discountPrice;
   const isDiscounted = discountPrice && discountPrice < product.price;
   const activePrice = discountPrice || product.price;
+  const discountPercent = product.discountPercentage 
+    ? Math.round(product.discountPercentage)
+    : (isDiscounted && product.price ? Math.round(((product.price - discountPrice) / product.price) * 100) : 0);
 
   // Dynamic Product Page SEO & Schema.org JSON-LD (Google Rich Results)
   useEffect(() => {
@@ -264,8 +267,8 @@ const ProductView = ({ id, product, products }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mt-2">
         {/* Left Column: Image Gallery (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col gap-4">
-          <div className="aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-900 rounded-3xl border border-slate-200/50 dark:border-slate-800/80">
+        <div className="lg:col-span-5 flex flex-col gap-3 sm:gap-4 w-full">
+          <div className="w-full max-w-[270px] sm:max-w-md lg:max-w-none mx-auto aspect-square overflow-hidden bg-slate-100 dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200/50 dark:border-slate-800/80 shadow-2xs">
             {product.images && product.images[activeImgIdx] ? (
               <img
                 src={product.images[activeImgIdx]}
@@ -281,15 +284,15 @@ const ProductView = ({ id, product, products }) => {
           </div>
           {/* Thumbnails */}
           {product.images.length > 1 && (
-            <div className="grid grid-cols-4 gap-4">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
               {product.images.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveImgIdx(idx)}
-                  className={`aspect-square rounded-xl overflow-hidden border-2 bg-slate-100 dark:bg-slate-900 cursor-pointer ${
+                  className={`w-13 h-13 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 bg-slate-100 dark:bg-slate-900 cursor-pointer transition-all ${
                     idx === activeImgIdx 
-                      ? 'border-primary-600 dark:border-primary-500 shadow-md' 
-                      : 'border-transparent hover:border-slate-300 dark:hover:border-slate-800'
+                      ? 'border-primary-600 dark:border-primary-500 shadow-md ring-2 ring-primary-500/20 scale-105' 
+                      : 'border-transparent opacity-70 hover:opacity-100 hover:border-slate-300 dark:hover:border-slate-800'
                   }`}
                 >
                   <img src={img} alt={`${product.name} - preview ${idx + 1}`} className="w-full h-full object-cover" />
@@ -326,9 +329,9 @@ const ProductView = ({ id, product, products }) => {
               <span className="px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-800 text-white dark:bg-slate-700">
                 Bought 2
               </span>
-              {isDiscounted && (
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                  Save {product.discountPercentage}%
+              {isDiscounted && discountPercent > 0 && (
+                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/80">
+                  Save {discountPercent}%
                 </span>
               )}
             </div>
@@ -425,60 +428,77 @@ const ProductView = ({ id, product, products }) => {
 
             {/* Select Quantity & Order with Cash on Delivery section */}
             {product.stock > 0 ? (
-              <div className="space-y-3 pt-1">
+              <div className="space-y-3 pt-1 w-full">
                 <span className="font-bold text-slate-800 dark:text-slate-200 text-sm block">
                   Select Quantity:
                 </span>
-                <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                  {/* Professional Neutral Stepper */}
-                  <div className="h-11 sm:h-12 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/80 overflow-hidden flex items-center shadow-2xs">
-                    <button
-                      type="button"
-                      onClick={handleQuantityDecrease}
-                      disabled={quantity <= 1}
-                      className="w-10 h-full flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/80 active:bg-slate-300 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                      aria-label="Decrease quantity"
-                    >
-                      <RiSubtractLine className="w-4 h-4" />
-                    </button>
-                    <input
-                      type="number"
-                      min={1}
-                      max={product.stock}
-                      value={quantity}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value);
-                        if (!isNaN(val)) {
-                          if (val < 1) setQuantity(1);
-                          else if (val > product.stock) {
-                            setQuantity(product.stock);
-                            triggerToast(`Only ${product.stock} items currently in stock.`, 'warning');
-                          } else {
-                            setQuantity(val);
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+                  {/* Stepper + Mobile Wishlist Row */}
+                  <div className="flex items-center justify-between sm:justify-start gap-3">
+                    {/* Professional Neutral Stepper */}
+                    <div className="h-11 sm:h-12 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/80 overflow-hidden flex items-center shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={handleQuantityDecrease}
+                        disabled={quantity <= 1}
+                        className="w-10 h-full flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/80 active:bg-slate-300 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label="Decrease quantity"
+                      >
+                        <RiSubtractLine className="w-4 h-4" />
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={product.stock}
+                        value={quantity}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isNaN(val)) {
+                            if (val < 1) setQuantity(1);
+                            else if (val > product.stock) {
+                              setQuantity(product.stock);
+                              triggerToast(`Only ${product.stock} items currently in stock.`, 'warning');
+                            } else {
+                              setQuantity(val);
+                            }
                           }
-                        }
-                      }}
-                      className="w-12 sm:w-14 h-full bg-transparent text-slate-900 dark:text-white font-black text-center text-sm sm:text-base border-x border-slate-200/80 dark:border-slate-700/80 focus:outline-none"
-                    />
+                        }}
+                        className="w-12 sm:w-14 h-full bg-transparent text-slate-900 dark:text-white font-black text-center text-sm sm:text-base border-x border-slate-200/80 dark:border-slate-700/80 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleQuantityIncrease}
+                        disabled={quantity >= product.stock}
+                        className="w-10 h-full flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/80 active:bg-slate-300 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label="Increase quantity"
+                      >
+                        <RiAddLine className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Mobile Wishlist Toggle Button */}
                     <button
                       type="button"
-                      onClick={handleQuantityIncrease}
-                      disabled={quantity >= product.stock}
-                      className="w-10 h-full flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/80 active:bg-slate-300 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                      aria-label="Increase quantity"
+                      onClick={() => toggleWishlist(product)}
+                      className="sm:hidden h-11 w-11 shrink-0 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 hover:text-rose-500 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 transition flex items-center justify-center cursor-pointer shadow-2xs"
+                      aria-label="Add to Wishlist"
                     >
-                      <RiAddLine className="w-4 h-4" />
+                      {isWishlisted ? (
+                        <RiHeartFill className="w-5 h-5 text-rose-500 animate-pulse" />
+                      ) : (
+                        <RiHeartLine className="w-5 h-5" />
+                      )}
                     </button>
                   </div>
 
-                  {/* Direct Cash on Delivery Checkout button - Professional Vanta Luxury Styling */}
+                  {/* Direct Cash on Delivery Checkout button - Full width on mobile, flex-1 on desktop */}
                   <button
                     type="button"
                     onClick={() => {
                       addToCart(product, selectedColor, selectedSize, quantity);
                       navigate('/checkout');
                     }}
-                    className="flex-1 h-11 sm:h-12 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-black text-sm sm:text-base shadow-md hover:shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer group"
+                    className="w-full sm:flex-1 h-12 px-5 sm:px-6 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-black text-sm sm:text-base shadow-md hover:shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer group whitespace-nowrap"
                   >
                     <span className="w-6 h-6 rounded-md bg-emerald-500/20 text-emerald-400 dark:text-emerald-600 flex items-center justify-center shrink-0">
                       <RiHandCoinLine className="w-4 h-4" />
@@ -486,11 +506,11 @@ const ProductView = ({ id, product, products }) => {
                     <span>Order with Cash on Delivery</span>
                   </button>
 
-                  {/* Wishlist toggle button */}
+                  {/* Desktop Wishlist Toggle Button */}
                   <button
                     type="button"
                     onClick={() => toggleWishlist(product)}
-                    className="h-11 sm:h-12 w-11 sm:w-12 shrink-0 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 hover:text-rose-500 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 transition flex items-center justify-center cursor-pointer shadow-2xs"
+                    className="hidden sm:flex h-12 w-12 shrink-0 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 hover:text-rose-500 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 transition items-center justify-center cursor-pointer shadow-2xs"
                     aria-label="Add to Wishlist"
                   >
                     {isWishlisted ? (
@@ -666,20 +686,20 @@ const ProductView = ({ id, product, products }) => {
 
       {/* Related Products Grid */}
       {relatedProducts.length > 0 && (
-        <section className="flex flex-col gap-6 border-t border-slate-200/50 dark:border-slate-800/80 pt-10 mt-8">
+        <section className="flex flex-col gap-4 sm:gap-6 border-t border-slate-200/50 dark:border-slate-800/80 pt-8 sm:pt-10 mt-6 sm:mt-8">
           <div className="flex items-end justify-between">
             <div className="text-left">
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white">Related Products</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Recommended items from the same category</p>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Related Products</h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1">Recommended items from the same category</p>
             </div>
             <Link 
               to={`/shop?category=${product.category}`} 
-              className="text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline"
+              className="text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline"
             >
               View Category <RiArrowRightLine />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-5">
             {relatedProducts.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
