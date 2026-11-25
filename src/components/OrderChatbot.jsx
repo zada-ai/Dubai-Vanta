@@ -28,7 +28,7 @@ const OrderChatbot = () => {
     {
       id: 'welcome-1',
       sender: 'bot',
-      text: 'Salam! 👋 Main AeroStore ka Order Tracking Assistant hoon. Aap apna Order ID (maslan: ORD-628773) yahan likhein, main aapko aapke order ka live status aur complete details bata deta hoon.',
+      text: 'Hello! 👋 I am your AeroStore Order Tracking Assistant. Please enter your Order ID (e.g. ORD-628773) below to check the real-time status and complete details of your order.',
       timestamp: new Date()
     }
   ]);
@@ -74,7 +74,7 @@ const OrderChatbot = () => {
         badge: 'Under Processing',
         color: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800',
         icon: RiTimeLine,
-        desc: 'Aapka order successfully receive ho chuka hai aur currently warehouse mein packing aur preparation ke marhale mein hai.'
+        desc: 'Your order has been received and is currently being packed and prepared at our fulfillment center.'
       };
     }
     if (s === 'SHIPPED') {
@@ -82,7 +82,7 @@ const OrderChatbot = () => {
         badge: 'Shipped & In Transit',
         color: 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-300 dark:border-blue-800',
         icon: RiTruckLine,
-        desc: 'Aapka parcel courier rider ke hawalay kiya ja chuka hai aur delivery ke liye raaste mein hai.'
+        desc: 'Your parcel has been dispatched with our courier partner and is currently on its way to you.'
       };
     }
     if (s === 'DELIVERED') {
@@ -90,7 +90,7 @@ const OrderChatbot = () => {
         badge: 'Delivered',
         color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
         icon: RiCheckDoubleLine,
-        desc: 'Aapka order kamyabi se aapke pate par deliver ho chuka hai. AeroStore par shopping karne ka shukriya!'
+        desc: 'Your order has been successfully delivered to your address. Thank you for shopping with AeroStore!'
       };
     }
     if (s === 'CANCELLED') {
@@ -98,7 +98,7 @@ const OrderChatbot = () => {
         badge: 'Cancelled',
         color: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-300 dark:border-rose-800',
         icon: RiCloseCircleLine,
-        desc: 'Yeh order cancel ho chuka hai. Agar aapko mazeed maloomat chahiye to hamari helpline par rabta karein.'
+        desc: 'This order has been cancelled. For any inquiries or assistance, please reach out to our customer support.'
       };
     }
     return {
@@ -168,7 +168,7 @@ const OrderChatbot = () => {
             {
               id: 'bot-' + Date.now(),
               sender: 'bot',
-              text: 'Wa alaikum assalam! 😊 Barah-e-karam apna Order ID enter karein (e.g. ORD-628773) taake main foran aapke order ka live status check kar sakoon.',
+              text: 'Hello! 😊 Please enter your Order ID (e.g. ORD-628773) so I can instantly check your live order status.',
               timestamp: new Date()
             }
           ]);
@@ -178,7 +178,7 @@ const OrderChatbot = () => {
             {
               id: 'bot-' + Date.now(),
               sender: 'bot',
-              text: 'Order ID aapko checkout complete hone par confirmation screen par aur aapke registered email/phone par milti hai (maslan: ORD-123456).\n\nAap "My Orders" page par ja kar bhi apni Order ID dekh sakte hain.',
+              text: 'You can find your Order ID on the order confirmation screen after checkout, or in your confirmation email/SMS (e.g. ORD-628773).\n\nYou can also find it under your "My Orders" page.',
               timestamp: new Date()
             }
           ]);
@@ -188,7 +188,7 @@ const OrderChatbot = () => {
             {
               id: 'bot-' + Date.now(),
               sender: 'bot',
-              text: 'Mujhe aapka Order ID samajh nahi aaya. Barah-e-karam apna Order ID is tarah enter karein: ORD-628773 (ya sirf 6 digit number).',
+              text: 'I could not recognize that Order ID. Please enter your Order ID in this format: ORD-628773 (or enter your 6-digit order number).',
               timestamp: new Date()
             }
           ]);
@@ -206,7 +206,7 @@ const OrderChatbot = () => {
           {
             id: 'bot-' + Date.now(),
             sender: 'bot',
-            text: `Aapka Order #${order.orderId || order.id} mil gaya hai! Neeche iska live status aur details mulahiza karein:`,
+            text: `Order #${order.orderId || order.id} found! Here is the live status and order details:`,
             orderData: order,
             timestamp: new Date()
           }
@@ -217,7 +217,7 @@ const OrderChatbot = () => {
           {
             id: 'bot-' + Date.now(),
             sender: 'bot',
-            text: `Maazrat! Order ID "${extractedId}" hamare records mein nahi mila. Barah-e-karam Order ID dobara check karein ya apne "My Orders" page par ja kar verify karein.`,
+            text: `Sorry! Order ID "${extractedId}" was not found in our records. Please verify your Order ID or check your "My Orders" page.`,
             timestamp: new Date()
           }
         ]);
@@ -422,7 +422,7 @@ const OrderChatbot = () => {
                   <span className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '0ms' }} />
                   <span className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '150ms' }} />
                   <span className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '300ms' }} />
-                  <span className="text-[11px] text-slate-400 ml-1">Order check ho raha hai...</span>
+                  <span className="text-[11px] text-slate-400 ml-1">Checking order status...</span>
                 </div>
               )}
 
@@ -442,10 +442,10 @@ const OrderChatbot = () => {
               )}
               <button
                 type="button"
-                onClick={() => handleSendMessage('Order ID kahan se milti hai?')}
+                onClick={() => handleSendMessage('Where do I find my Order ID?')}
                 className="px-2.5 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
-                ❓ Order ID Help
+                ❓ Where is my Order ID?
               </button>
             </div>
 
@@ -464,7 +464,7 @@ const OrderChatbot = () => {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Order ID enter karein (e.g. ORD-628773)..."
+                  placeholder="Enter your Order ID (e.g. ORD-628773)..."
                   className="flex-grow px-3.5 py-2.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-violet-500 font-medium"
                 />
                 <button
