@@ -70,6 +70,37 @@ const ProductView = ({ id, product, products }) => {
   const [customReviews, setCustomReviews] = useState(product.reviews || []);
   const [newReview, setNewReview] = useState({ name: '', rating: 5, comment: '' });
 
+  // Safe, complete product specifications calculation
+  const productSpecs = useMemo(() => {
+    let rawSpecs = product.specs;
+    if (typeof rawSpecs === 'string') {
+      try {
+        rawSpecs = JSON.parse(rawSpecs);
+      } catch (_) {
+        rawSpecs = null;
+      }
+    }
+    if (rawSpecs && typeof rawSpecs === 'object' && !Array.isArray(rawSpecs) && Object.keys(rawSpecs).length > 0) {
+      return rawSpecs;
+    }
+
+    const generated = {};
+    if (product.sku) generated['SKU / Model'] = product.sku;
+    if (product.brand) generated['Brand'] = product.brand;
+    if (product.category) generated['Category'] = product.category.charAt(0).toUpperCase() + product.category.slice(1);
+    generated['Availability'] = (product.stock > 0) ? `In Stock (${product.stock} units)` : 'Out of Stock';
+    generated['Authenticity'] = '100% Genuine & Verified';
+    generated['Warranty'] = '1-Year Warranty / 7-Day Replacement Guarantee';
+    generated['Delivery'] = 'Fast Express Shipping Across UAE & GCC';
+    if (product.colors && Array.isArray(product.colors) && product.colors.length > 0) {
+      generated['Colors'] = product.colors.join(', ');
+    }
+    if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0) {
+      generated['Sizes'] = product.sizes.join(', ');
+    }
+    return generated;
+  }, [product]);
+
   useEffect(() => {
     // Scroll window immediately to top when product page loads or changes
     try {
@@ -528,16 +559,16 @@ const ProductView = ({ id, product, products }) => {
             <div className="max-w-2xl border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
               <table className="w-full text-sm">
                 <tbody>
-                  {Object.entries(product.specs).map(([key, val], idx) => (
+                  {Object.entries(productSpecs).map(([key, val], idx) => (
                     <tr 
                       key={key} 
                       className={idx % 2 === 0 ? 'bg-slate-50/50 dark:bg-slate-900/30' : 'bg-transparent'}
                     >
-                      <td className="px-4 py-3 font-bold text-slate-500 dark:text-slate-450 border-r border-slate-200/50 dark:border-slate-850 w-1/3">
+                      <td className="px-4 py-3 font-bold text-slate-500 dark:text-slate-400 border-r border-slate-200/50 dark:border-slate-800 w-1/3">
                         {key}
                       </td>
-                      <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-205">
-                        {val}
+                      <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">
+                        {String(val)}
                       </td>
                     </tr>
                   ))}

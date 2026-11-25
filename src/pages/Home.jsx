@@ -20,35 +20,9 @@ const Home = () => {
   const products = productsList || [];
   const categories = (appCategories && appCategories.length > 0) ? appCategories : initialCategories;
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [homeBlogs, setHomeBlogs] = useState([]);
   const categoryRailRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchHomeBlogs() {
-      try {
-        const res = await fetch('/api/blogs', { credentials: 'include' });
-        const data = await res.json();
-        if (data.success && isMounted && Array.isArray(data.blogs)) {
-          setHomeBlogs(data.blogs.slice(0, 3));
-        } else {
-          const cached = localStorage.getItem('cached_blogs');
-          if (cached && isMounted) {
-            setHomeBlogs(JSON.parse(cached).slice(0, 3));
-          }
-        }
-      } catch (e) {
-        const cached = localStorage.getItem('cached_blogs');
-        if (cached && isMounted) {
-          setHomeBlogs(JSON.parse(cached).slice(0, 3));
-        }
-      }
-    }
-    fetchHomeBlogs();
-    return () => { isMounted = false; };
-  }, []);
 
   const checkScroll = () => {
     if (categoryRailRef.current) {
@@ -335,59 +309,6 @@ const Home = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
             {newArrivals.map((product) => (
               <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Latest Journal & Blogs */}
-      {homeBlogs.length > 0 && (
-        <section className="flex flex-col gap-4 sm:gap-6">
-          <div className="flex items-end justify-between gap-3">
-            <div className="text-left">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">From The Journal</h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Stories of sound, craftsmanship and modern luxury</p>
-            </div>
-            <Link to="/blogs" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
-              See More Blogs <RiArrowRightLine />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-            {homeBlogs.map((blog) => (
-              <Link
-                key={blog.id}
-                to={`/blog/${blog.slug || blog.id}`}
-                className="group flex flex-col bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300"
-              >
-                <div className="relative h-48 overflow-hidden bg-slate-900">
-                  <img
-                    src={blog.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800'}
-                    alt={blog.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-950/80 backdrop-blur-md text-white border border-white/20">
-                      {blog.category || 'Journal'}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-5 flex-1 flex flex-col justify-between text-left">
-                  <div>
-                    <h3 className="text-base font-black text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2 mb-2">
-                      {blog.title}
-                    </h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed mb-4">
-                      {blog.excerpt}
-                    </p>
-                  </div>
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-400 font-medium">{blog.read_time || '5 min read'}</span>
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-primary-600 dark:text-primary-400 group-hover:translate-x-1 transition-transform">
-                      See More <RiArrowRightLine className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </div>
-              </Link>
             ))}
           </div>
         </section>
