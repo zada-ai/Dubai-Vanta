@@ -7,12 +7,10 @@ import FeatureIcon from '../components/FeatureIcon';
 import CategoryCard from '../components/CategoryCard';
 import ProductCard from '../components/ProductCard';
 import RatingComponent from '../components/RatingComponent';
-import WriteReviewModal from '../components/WriteReviewModal';
 import { categories as initialCategories, testimonials } from '../data/mockData';
 import { 
   RiArrowRightLine, 
   RiArrowUpSLine,
-  RiEditLine,
   RiShieldCheckFill,
   RiSparklingFill
 } from 'react-icons/ri';
@@ -23,7 +21,6 @@ const Home = () => {
   const categories = (appCategories && appCategories.length > 0) ? appCategories : initialCategories;
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [homeBlogs, setHomeBlogs] = useState([]);
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const categoryRailRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -94,10 +91,21 @@ const Home = () => {
     });
   }, [categories, categoryCounts]);
 
-  // Filter products for various sections
-  const featuredProducts = products.filter(p => p.isFeatured).slice(0, 4);
-  const bestSellers = products.filter(p => p.isBestSeller).slice(0, 4);
-  const newArrivals = products.filter(p => p.isNewArrival).slice(0, 4);
+  // Filter products for various sections with intelligent fallback for imported catalogs
+  const featuredProducts = useMemo(() => {
+    const explicitlyFeatured = products.filter(p => p.isFeatured);
+    return (explicitlyFeatured.length > 0 ? explicitlyFeatured : products.slice(0, 8)).slice(0, 8);
+  }, [products]);
+
+  const bestSellers = useMemo(() => {
+    const explicitlyBest = products.filter(p => p.isBestSeller);
+    return (explicitlyBest.length > 0 ? explicitlyBest : products.slice(8, 16)).slice(0, 8);
+  }, [products]);
+
+  const newArrivals = useMemo(() => {
+    const explicitlyNew = products.filter(p => p.isNewArrival);
+    return (explicitlyNew.length > 0 ? explicitlyNew : products.slice(16, 24)).slice(0, 8);
+  }, [products]);
 
   // Promo banner claim discount action (redirect to login if unauthenticated)
   const promoTarget = promoBanner?.btnLink || '/shop';
@@ -423,18 +431,6 @@ const Home = () => {
                   </p>
                 </div>
               </div>
-
-              {/* Action Button */}
-              <div className="shrink-0 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsReviewModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 shadow-md shadow-primary-500/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
-                >
-                  <RiEditLine size={16} />
-                  <span>Write a Review</span>
-                </button>
-              </div>
             </div>
 
             {/* Continuous Left-to-Right Marquee Banner */}
@@ -510,24 +506,10 @@ const Home = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Hover on any card to pause scrolling
               </span>
-              <button
-                type="button"
-                onClick={() => setIsReviewModalOpen(true)}
-                className="text-primary-600 dark:text-primary-400 font-semibold hover:underline cursor-pointer"
-              >
-                Have something to say? Share your thoughts &rarr;
-              </button>
             </div>
           </section>
         );
       })()}
-
-      {/* Write Review Modal */}
-      <WriteReviewModal
-        isOpen={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
-        onSubmitReview={addReview}
-      />
     </div>
   );
 };
