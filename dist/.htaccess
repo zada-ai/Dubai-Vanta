@@ -1,0 +1,19 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 1. Direct access to storage & uploads
+  RewriteRule ^uploads/(.*)$ storage/uploads/$1 [L]
+  RewriteRule ^storage/(.*)$ storage/$1 [L]
+
+  # 2. Forward API requests to Node backend via api.php proxy
+  RewriteRule ^api(/.*)?$ api.php [L,QSA]
+
+  # 3. Serve real static files directly
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 4. SPA fallback: Route all frontend page routes to index.html
+  RewriteRule ^ index.html [L]
+</IfModule>
