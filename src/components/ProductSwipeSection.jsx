@@ -1,17 +1,15 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import ProductCard from './ProductCard';
-import { 
-  RiArrowRightLine, 
-  RiArrowLeftSLine, 
-  RiArrowRightSLine 
-} from 'react-icons/ri';
+import SectionHeader from './SectionHeader';
+import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 
-const ProductSwipeSection = ({ 
+const ProductSwipeSection = ({
+  eyebrow,
   title, 
   subtitle, 
   products = [], 
-  viewAllLink = '/shop' 
+  viewAllLink = '/shop',
+  className = '',
 }) => {
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -42,61 +40,32 @@ const ProductSwipeSection = ({
   if (!products || products.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-3 sm:gap-5">
-      {/* Section Header */}
-      <div className="flex items-end justify-between gap-3">
-        <div className="text-left">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-            {title}
-          </h2>
-          {subtitle && (
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {subtitle}
-            </p>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Desktop Left/Right Navigation Arrows */}
-          <div className="hidden sm:flex items-center gap-1.5">
+    <section className={`flex flex-col gap-4 sm:gap-6 ${className}`}>
+      <SectionHeader
+        eyebrow={eyebrow}
+        title={title}
+        subtitle={subtitle}
+        actionLabel="View All"
+        actionTo={viewAllLink}
+      >
+        <div className="hidden sm:flex items-center gap-1.5">
+          {[
+            { dir: 'left', enabled: canScrollLeft, Icon: RiArrowLeftSLine, label: 'Previous products' },
+            { dir: 'right', enabled: canScrollRight, Icon: RiArrowRightSLine, label: 'Next products' },
+          ].map(({ dir, enabled, Icon, label }) => (
             <button
+              key={dir}
               type="button"
-              onClick={() => handleScroll('left')}
-              disabled={!canScrollLeft}
-              className={`p-2 rounded-full border transition-all cursor-pointer ${
-                canScrollLeft
-                  ? 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-600 border-slate-200/50 dark:border-slate-800 cursor-not-allowed opacity-50'
-              }`}
-              aria-label="Previous products"
+              onClick={() => handleScroll(dir)}
+              disabled={!enabled}
+              aria-label={label}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:text-slate-700"
             >
-              <RiArrowLeftSLine className="w-4 h-4" />
+              <Icon className="h-5 w-5" />
             </button>
-            <button
-              type="button"
-              onClick={() => handleScroll('right')}
-              disabled={!canScrollRight}
-              className={`p-2 rounded-full border transition-all cursor-pointer ${
-                canScrollRight
-                  ? 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-600 border-slate-200/50 dark:border-slate-800 cursor-not-allowed opacity-50'
-              }`}
-              aria-label="Next products"
-            >
-              <RiArrowRightSLine className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* View All Button */}
-          <Link
-            to={viewAllLink}
-            className="whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline"
-          >
-            <span>View All</span>
-            <RiArrowRightLine className="w-4 h-4" />
-          </Link>
+          ))}
         </div>
-      </div>
+      </SectionHeader>
 
       {/* Swipeable Horizontal Product Rail */}
       <div className="relative -mx-3 px-3 sm:-mx-4 sm:px-4">

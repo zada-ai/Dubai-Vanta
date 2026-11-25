@@ -1,14 +1,88 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  --color-primary-50: #f5f3ff;
-  --color-primary-100: #ede9fe;
-  --color-primary-200: #ddd6fe;
-  --color-primary-500: #8b5cf6;
-  --color-primary-600: #7c3aed;
-  --color-primary-700: #6d28d9;
-  --color-primary-900: #4c1d95;
+  /* Typography: DM Sans for UI text, Fraunces (serif) for page & section headings */
+  --font-sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+
+  /* Brand: deep "Gulf" teal */
+  --color-primary-50: #f0f8f6;
+  --color-primary-100: #d9eee9;
+  --color-primary-200: #b3ddd3;
+  --color-primary-300: #82c4b6;
+  --color-primary-400: #52a695;
+  --color-primary-500: #33897a;
+  --color-primary-600: #246f63;
+  --color-primary-700: #1e5a51;
+  --color-primary-800: #1b4943;
+  --color-primary-900: #183d38;
+  --color-primary-950: #0a2220;
+
+  /* Warm neutrals replace Tailwind's cool slate everywhere (stone-like) */
+  --color-slate-50: #faf9f7;
+  --color-slate-100: #f4f2ef;
+  --color-slate-200: #e7e4df;
+  --color-slate-300: #d5d0c9;
+  --color-slate-400: #a59f96;
+  --color-slate-500: #77716a;
+  --color-slate-600: #58534d;
+  --color-slate-700: #433f3a;
+  --color-slate-800: #2a2724;
+  --color-slate-900: #1c1a18;
+  --color-slate-950: #0e0d0c;
+
+  /* Calmer corner radii (less "bubbly") */
+  --radius-2xl: 0.875rem;
+  --radius-3xl: 1.125rem;
+}
+
+/* Page and section headings use the serif display face with consistent weight */
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  font-optical-sizing: auto;
+}
+
+/* Small uppercase eyebrow labels that happen to be h2 should stay in the UI face */
+h2.uppercase {
+  font-family: var(--font-sans);
+  letter-spacing: 0.12em;
+}
+
+::selection {
+  background: #b3ddd3;
+  color: #0a2220;
+}
+
+:focus-visible {
+  outline: 2px solid #33897a;
+  outline-offset: 2px;
+}
+
+/* Hero autoplay progress bar */
+@keyframes hero-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.animate-hero-progress {
+  transform-origin: left;
+  animation: hero-progress 6s linear forwards;
+}
+
+/* Subtle dotted texture used on hero / promo panels */
+.bg-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-rtl,
+  .animate-marquee-ltr,
+  .animate-hero-progress {
+    animation: none;
+  }
 }
 
 html,
@@ -33,8 +107,8 @@ html {
 }
 
 body {
-  background-color: #f8fafc; /* slate-50 */
-  color: #0f172a; /* slate-900 */
+  background-color: #faf9f7; /* slate-50 (warm) */
+  color: #1c1a18; /* slate-900 (warm) */
   font-family: var(--font-sans);
   transition-property: color, background-color;
   transition-duration: 200ms;
@@ -44,8 +118,8 @@ body {
 
 /* When dark mode class is applied to html */
 .dark body {
-  background-color: #020617; /* slate-950 */
-  color: #f8fafc; /* slate-50 */
+  background-color: #0e0d0c; /* slate-950 (warm) */
+  color: #faf9f7; /* slate-50 (warm) */
 }
 
 /* Custom styles for Webkit scrollbars */
@@ -59,20 +133,20 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1; /* slate-300 */
+  background: #d5d0c9; /* slate-300 */
   border-radius: 9999px;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #1e293b; /* slate-800 */
+  background: #2a2724; /* slate-800 */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8; /* slate-400 */
+  background: #a59f96; /* slate-400 */
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #334155; /* slate-700 */
+  background: #433f3a; /* slate-700 */
 }
 
 /* Custom CSS helper animations */

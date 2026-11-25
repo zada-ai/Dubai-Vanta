@@ -42,21 +42,21 @@ const MainLayout = () => {
     // 1. Meta Title
     const activeTitle = pageSeo?.metaTitle || (
       pageKey === 'home'
-        ? seoSettings?.metaTitle || 'AeroStore - Handcrafted Luxury & Modern Essentials | Dubai'
+        ? seoSettings?.metaTitle || 'Vanta Dubai - Handcrafted Luxury & Modern Essentials | Dubai'
         : path === '/cart'
-        ? `Shopping Bag | ${storeName || 'AeroStore'}`
+        ? `Shopping Bag | ${storeName || 'Vanta Dubai'}`
         : path === '/checkout'
-        ? `Checkout | ${storeName || 'AeroStore'}`
+        ? `Checkout | ${storeName || 'Vanta Dubai'}`
         : path === '/orders'
-        ? `My Orders | ${storeName || 'AeroStore'}`
+        ? `My Orders | ${storeName || 'Vanta Dubai'}`
         : path === '/admin'
-        ? `Admin Dashboard | ${storeName || 'AeroStore'}`
-        : `${storeName || 'AeroStore'} | Handcrafted Luxury`
+        ? `Admin Dashboard | ${storeName || 'Vanta Dubai'}`
+        : `${storeName || 'Vanta Dubai'} | Handcrafted Luxury`
     );
     document.title = activeTitle;
 
     // 2. Meta Description
-    const activeDesc = pageSeo?.metaDescription || seoSettings?.metaDescription || 'Discover handcrafted luxury and modern essentials at AeroStore Dubai.';
+    const activeDesc = pageSeo?.metaDescription || seoSettings?.metaDescription || 'Discover handcrafted luxury and modern essentials at Vanta Dubai.';
     setMetaTag('name', 'description', activeDesc);
 
     // 3. Meta Keywords

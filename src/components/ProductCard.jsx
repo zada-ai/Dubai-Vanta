@@ -46,7 +46,7 @@ const ProductCard = ({ product }) => {
           aria-label="Add to wishlist"
         >
           {isWishlisted ? (
-            <RiHeartFill className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-rose-500 animate-pulse" />
+            <RiHeartFill className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-rose-500" />
           ) : (
             <RiHeartLine className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
           )}
@@ -103,7 +103,7 @@ const ProductCard = ({ product }) => {
                 addToCart(product);
                 navigate('/checkout');
               }}
-              className="flex items-center gap-0.5 sm:gap-1 px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-[9px] sm:text-xs font-bold shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              className="flex items-center gap-0.5 sm:gap-1 px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-xl bg-primary-700 hover:bg-primary-800 active:scale-95 text-white text-[9px] sm:text-xs font-bold shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               aria-label="Order with Cash on Delivery"
               disabled={product.stock === 0}
               title={product.stock === 0 ? "Out of Stock" : "Quick Order with Cash on Delivery"}

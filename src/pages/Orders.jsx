@@ -238,7 +238,7 @@ const Orders = () => {
         </div>
 
         <div class="footer">
-          Thank you for shopping with AeroStore Dubai! For inquiries or support, please email support@aerostore.com.<br/>
+          Thank you for shopping with Vanta Dubai! For inquiries or support, please email support@aerostore.com.<br/>
           This is an official computer-generated receipt.
         </div>
 
@@ -371,14 +371,14 @@ const Orders = () => {
               Order History
             </h1>
             {isAdmin && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-100 text-primary-700 dark:bg-primary-950/50 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
                 <RiShieldUserLine className="w-3.5 h-3.5" /> Admin View
               </span>
             )}
           </div>
           <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
             {isAdmin 
-              ? 'View and manage all real-time customer orders placed on AeroStore.' 
+              ? 'View and manage all real-time customer orders placed on Vanta Dubai.' 
               : 'Track package statuses, review shipping addresses, and download official invoices.'}
           </p>
         </div>
@@ -392,7 +392,7 @@ const Orders = () => {
                 onClick={() => setAdminViewScope('ALL')}
                 className={`px-3 py-1.5 rounded-lg transition-all ${
                   adminViewScope === 'ALL'
-                    ? 'bg-white dark:bg-slate-900 text-violet-600 dark:text-violet-400 shadow-xs'
+                    ? 'bg-white dark:bg-slate-900 text-primary-600 dark:text-primary-400 shadow-xs'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
@@ -403,7 +403,7 @@ const Orders = () => {
                 onClick={() => setAdminViewScope('MINE')}
                 className={`px-3 py-1.5 rounded-lg transition-all ${
                   adminViewScope === 'MINE'
-                    ? 'bg-white dark:bg-slate-900 text-violet-600 dark:text-violet-400 shadow-xs'
+                    ? 'bg-white dark:bg-slate-900 text-primary-600 dark:text-primary-400 shadow-xs'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
@@ -420,7 +420,7 @@ const Orders = () => {
             className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-xs disabled:opacity-50 cursor-pointer"
             title="Sync with database"
           >
-            <RiRefreshLine className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-violet-600' : ''}`} />
+            <RiRefreshLine className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-primary-600' : ''}`} />
             <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
@@ -460,7 +460,7 @@ const Orders = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by order ID, customer, item..."
-            className="w-full pl-10 pr-4 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-violet-500/40"
+            className="w-full pl-10 pr-4 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500/40"
           />
           {searchTerm && (
             <button
@@ -476,14 +476,14 @@ const Orders = () => {
 
       {/* Active Tracked Order Notification Banner */}
       {queryOrderId && (
-        <div className="flex items-center justify-between p-3.5 px-4 bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800 rounded-2xl text-xs shadow-2xs">
+        <div className="flex items-center justify-between p-3.5 px-4 bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 rounded-2xl text-xs shadow-2xs">
           <div className="flex items-center gap-2.5">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-600"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-600"></span>
             </span>
-            <span className="text-violet-900 dark:text-violet-200 font-semibold">
-              Filtered to Tracked Order: <strong className="font-mono text-violet-700 dark:text-violet-300 font-bold ml-1">{queryOrderId}</strong>
+            <span className="text-primary-900 dark:text-primary-200 font-semibold">
+              Filtered to Tracked Order: <strong className="font-mono text-primary-700 dark:text-primary-300 font-bold ml-1">{queryOrderId}</strong>
             </span>
           </div>
           <button
@@ -492,7 +492,7 @@ const Orders = () => {
               setSearchParams({});
               setSearchTerm('');
             }}
-            className="px-3.5 py-1.5 bg-white dark:bg-slate-900 border border-violet-200 dark:border-violet-700 text-violet-700 dark:text-violet-300 rounded-xl font-bold hover:bg-violet-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs"
+            className="px-3.5 py-1.5 bg-white dark:bg-slate-900 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 rounded-xl font-bold hover:bg-primary-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs"
           >
             Show All Orders
           </button>
@@ -518,7 +518,7 @@ const Orders = () => {
               <button
                 type="button"
                 onClick={() => { setSearchTerm(''); setStatusFilter('ALL'); setSearchParams({}); }}
-                className="mt-2 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+                className="mt-2 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-600 text-white hover:bg-primary-700 transition-colors"
               >
                 Reset Filters
               </button>
@@ -567,7 +567,7 @@ const Orders = () => {
                       </span>
                       {isAdmin && customerName && (
                         <span className="text-[11px] text-slate-500 truncate max-w-[150px]">
-                          👤 {customerName}
+                          {customerName}
                         </span>
                       )}
                     </div>
@@ -608,7 +608,7 @@ const Orders = () => {
                     <button
                       type="button"
                       onClick={(e) => handleDownloadInvoice(order, e)}
-                      className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50/60 dark:hover:bg-violet-950/20 transition-all cursor-pointer"
+                      className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50/60 dark:hover:bg-primary-950/20 transition-all cursor-pointer"
                       title="Download / Print Invoice"
                     >
                       <RiDownload2Line className="w-4 h-4" />
@@ -653,7 +653,7 @@ const Orders = () => {
                                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                                     />
                                   ) : (
-                                    <div className="w-12 h-12 rounded-lg bg-violet-100 dark:bg-violet-950/40 text-violet-600 flex items-center justify-center shrink-0">
+                                    <div className="w-12 h-12 rounded-lg bg-primary-100 dark:bg-primary-950/40 text-primary-600 flex items-center justify-center shrink-0">
                                       <RiShoppingBag3Line className="w-5 h-5" />
                                     </div>
                                   )}
@@ -689,7 +689,7 @@ const Orders = () => {
                         {/* Delivery Address */}
                         <div className="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 p-4 rounded-xl flex flex-col gap-2">
                           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                            <RiMapPinLine className="w-4 h-4 text-violet-500" />
+                            <RiMapPinLine className="w-4 h-4 text-primary-500" />
                             Delivery Information
                           </h4>
                           <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
@@ -698,16 +698,16 @@ const Orders = () => {
                             </div>
                             {customerEmail && (
                               <div className="text-slate-500 text-[11px] mt-0.5">
-                                ✉️ {customerEmail}
+                                {customerEmail}
                               </div>
                             )}
                             {customerPhone && (
                               <div className="text-slate-500 text-[11px]">
-                                📞 {customerPhone}
+                                {customerPhone}
                               </div>
                             )}
                             <div className="text-slate-700 dark:text-slate-300 mt-1.5 text-xs">
-                              📍 {fullAddress}
+                              {fullAddress}
                             </div>
                           </div>
                         </div>
@@ -715,7 +715,7 @@ const Orders = () => {
                         {/* Payment & Breakdown */}
                         <div className="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 p-4 rounded-xl flex flex-col gap-3">
                           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                            <RiBankCardLine className="w-4 h-4 text-violet-500" />
+                            <RiBankCardLine className="w-4 h-4 text-primary-500" />
                             Payment & Totals
                           </h4>
 
@@ -726,7 +726,7 @@ const Orders = () => {
                                 : (order.paymentMethod?.method || 'Cash on Delivery')}
                             </span>
                             <span className="block text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold mt-0.5">
-                              💵 Pay in AED upon delivery in UAE
+                              Pay in AED upon delivery in UAE
                             </span>
                           </div>
 
@@ -764,7 +764,7 @@ const Orders = () => {
 
                             <div className="flex justify-between text-sm font-extrabold text-slate-900 dark:text-white pt-2 border-t border-slate-200/60 dark:border-slate-800 mt-1">
                               <span>Grand Total</span>
-                              <span className="text-violet-600 dark:text-violet-400">
+                              <span className="text-primary-600 dark:text-primary-400">
                                 AED {totalAmount.toFixed(2)}
                               </span>
                             </div>

@@ -133,7 +133,7 @@ const ProductView = ({ id, product, products }) => {
     if (!product) return;
 
     const prevTitle = document.title;
-    document.title = `${product.name} | AeroStore Dubai`;
+    document.title = `${product.name} | Vanta Dubai`;
 
     let descTag = document.querySelector('meta[name="description"]');
     const prevDesc = descTag ? descTag.getAttribute('content') : '';
@@ -142,7 +142,7 @@ const ProductView = ({ id, product, products }) => {
       descTag.setAttribute('name', 'description');
       document.head.appendChild(descTag);
     }
-    descTag.setAttribute('content', product.description ? product.description.slice(0, 160) : `${product.name} available at AeroStore UAE.`);
+    descTag.setAttribute('content', product.description ? product.description.slice(0, 160) : `${product.name} available at Vanta Dubai.`);
 
     // Set Product Schema JSON-LD
     const productSchema = {
@@ -155,7 +155,7 @@ const ProductView = ({ id, product, products }) => {
       "mpn": `AERO-PROD-${product.id}`,
       "brand": {
         "@type": "Brand",
-        "name": product.brand || "AeroStore"
+        "name": product.brand || "Vanta Dubai"
       },
       "offers": {
         "@type": "Offer",
@@ -167,7 +167,7 @@ const ProductView = ({ id, product, products }) => {
         "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
         "seller": {
           "@type": "Organization",
-          "name": "AeroStore"
+          "name": "Vanta Dubai"
         }
       },
       "aggregateRating": {
@@ -484,7 +484,7 @@ const ProductView = ({ id, product, products }) => {
                       aria-label="Add to Wishlist"
                     >
                       {isWishlisted ? (
-                        <RiHeartFill className="w-5 h-5 text-rose-500 animate-pulse" />
+                        <RiHeartFill className="w-5 h-5 text-rose-500" />
                       ) : (
                         <RiHeartLine className="w-5 h-5" />
                       )}
@@ -514,7 +514,7 @@ const ProductView = ({ id, product, products }) => {
                     aria-label="Add to Wishlist"
                   >
                     {isWishlisted ? (
-                      <RiHeartFill className="w-5 h-5 text-rose-500 animate-pulse" />
+                      <RiHeartFill className="w-5 h-5 text-rose-500" />
                     ) : (
                       <RiHeartLine className="w-5 h-5" />
                     )}

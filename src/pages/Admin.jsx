@@ -424,7 +424,7 @@ const Admin = () => {
     title: '',
     slug: '',
     category: 'Lifestyle',
-    author: user?.name || 'AeroStore Editorial',
+    author: user?.name || 'Vanta Dubai Editorial',
     read_time: '5 min read',
     excerpt: '',
     content: '',
@@ -459,7 +459,7 @@ const Admin = () => {
     setEditingBlog(null);
     setBlogForm({
       ...initialBlogForm,
-      author: user?.name || 'AeroStore Editorial'
+      author: user?.name || 'Vanta Dubai Editorial'
     });
     setBlogModalOpen(true);
   };
@@ -470,7 +470,7 @@ const Admin = () => {
       title: blog.title || '',
       slug: blog.slug || '',
       category: blog.category || 'Lifestyle',
-      author: blog.author || user?.name || 'AeroStore Editorial',
+      author: blog.author || user?.name || 'Vanta Dubai Editorial',
       read_time: blog.read_time || '5 min read',
       excerpt: blog.excerpt || '',
       content: blog.content || '',
@@ -894,9 +894,9 @@ const Admin = () => {
           <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-5">
             <RiShieldCheckLine className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2">
             Admin Access Required
-          </h2>
+          </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
             Yeh page sirf Administrator aur Super Admin ke liye hai.
           </p>
@@ -977,7 +977,7 @@ const Admin = () => {
       price: priceNum,
       discountPrice: discountNum,
       stock: parseInt(newProd.stock) >= 0 ? parseInt(newProd.stock) : 50,
-      description: newProd.description || 'Premium quality product curated for AeroStore customers.',
+      description: newProd.description || 'Premium quality product curated for Vanta Dubai customers.',
       image: newProd.image || '',
       images: (newProd.image && newProd.image.trim()) ? [newProd.image.trim()] : [],
       colors: (newProd.colors && newProd.colors.length > 0) ? newProd.colors : ['#000000', '#FFFFFF'],
@@ -1112,7 +1112,7 @@ const Admin = () => {
                 </h3>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Apna SVG ya Image logo upload karein. Jab aap custom logo upload karenge to header mein se extra text (AEROSTORE) khud remove ho jayega aur sirf aapka original logo <strong className="text-slate-700 dark:text-slate-300">exact same height (32px / h-8)</strong> par display hoga.
+                Apna SVG ya Image logo upload karein. Jab aap custom logo upload karenge to header mein se extra text (VANTA DUBAI) khud remove ho jayega aur sirf aapka original logo <strong className="text-slate-700 dark:text-slate-300">exact same height (32px / h-8)</strong> par display hoga.
               </p>
             </div>
 
@@ -1134,7 +1134,7 @@ const Admin = () => {
                       A
                     </span>
                     <span className="text-lg font-black tracking-wider text-slate-900 dark:text-white uppercase">
-                      AEROSTORE
+                      VANTA DUBAI
                     </span>
                   </div>
                 )}
@@ -1171,7 +1171,7 @@ const Admin = () => {
                 type="button"
                 onClick={resetLogo}
                 className="flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition cursor-pointer"
-                title="Reset to default AeroStore logo"
+                title="Reset to default Vanta Dubai logo"
               >
                 <RiRefreshLine className="w-4 h-4" /> Reset to Default
               </button>
@@ -2494,7 +2494,7 @@ const Admin = () => {
                 </h3>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                AeroStore ke har individual page (Home, Shop, About, Contact, FAQ) ka <strong>Meta Title</strong>, <strong>Meta Description</strong>, <strong>Keywords</strong>, <strong>Canonical URL</strong>, aur <strong>OpenGraph / Social Image</strong> yahan se manage karein. Changes live DOM aur browser tabs par dynamic apply hotay hain.
+                Vanta Dubai ke har individual page (Home, Shop, About, Contact, FAQ) ka <strong>Meta Title</strong>, <strong>Meta Description</strong>, <strong>Keywords</strong>, <strong>Canonical URL</strong>, aur <strong>OpenGraph / Social Image</strong> yahan se manage karein. Changes live DOM aur browser tabs par dynamic apply hotay hain.
               </p>
             </div>
           </div>
@@ -2553,7 +2553,7 @@ const Admin = () => {
                       </span>
                     </div>
                     <h4 className="text-base sm:text-lg font-normal text-[#1a0dab] dark:text-[#8ab4f8] hover:underline cursor-pointer leading-snug line-clamp-1">
-                      {pageSeoForm.metaTitle || `${activeSeoPage.toUpperCase()} - AeroStore Dubai`}
+                      {pageSeoForm.metaTitle || `${activeSeoPage.toUpperCase()} - Vanta Dubai`}
                     </h4>
                     <p className="text-xs sm:text-sm text-[#4d5156] dark:text-[#bdc1c6] leading-relaxed line-clamp-2">
                       {pageSeoForm.metaDescription || 'Experience pure acoustic bliss, designer furniture, and timeless apparel.'}
@@ -2566,7 +2566,7 @@ const Admin = () => {
                     </span>
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-t-lg border-t border-x border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 font-medium max-w-sm truncate shadow-2xs">
                       <span className="w-3 h-3 rounded-full bg-primary-600 flex items-center justify-center text-[7px] text-white font-bold">⚡</span>
-                      <span className="truncate">{pageSeoForm.metaTitle || 'AeroStore'}</span>
+                      <span className="truncate">{pageSeoForm.metaTitle || 'Vanta Dubai'}</span>
                       <RiCloseLine className="w-3 h-3 text-slate-400 ml-auto shrink-0" />
                     </div>
                   </div>
@@ -2602,10 +2602,10 @@ const Admin = () => {
                     </div>
                     <div className="p-3.5 space-y-1">
                       <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                        AEROSTORE.COM
+                        VANTA DUBAI.COM
                       </span>
                       <h5 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
-                        {pageSeoForm.ogTitle || pageSeoForm.metaTitle || 'AeroStore Dubai'}
+                        {pageSeoForm.ogTitle || pageSeoForm.metaTitle || 'Vanta Dubai'}
                       </h5>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                         {pageSeoForm.ogDescription || pageSeoForm.metaDescription}
@@ -2650,7 +2650,7 @@ const Admin = () => {
                       required
                       value={pageSeoForm.metaTitle || ''}
                       onChange={(e) => setPageSeoForm({ ...pageSeoForm, metaTitle: e.target.value })}
-                      placeholder="e.g. Shop Luxury Collections | AeroStore Dubai"
+                      placeholder="e.g. Shop Luxury Collections | Vanta Dubai"
                       className="w-full px-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
                     />
                   </div>
@@ -2813,7 +2813,7 @@ const Admin = () => {
                       type="text"
                       value={globalSeoForm.schemaOrgName || ''}
                       onChange={(e) => setGlobalSeoForm({ ...globalSeoForm, schemaOrgName: e.target.value })}
-                      placeholder="e.g. AeroStore UAE"
+                      placeholder="e.g. Vanta Dubai"
                       className="w-full px-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-primary-500"
                     />
                   </div>
@@ -3087,7 +3087,7 @@ const Admin = () => {
                     required
                     value={newSocialAlt}
                     onChange={(e) => setNewSocialAlt(e.target.value)}
-                    placeholder="e.g. Follow AeroStore on Instagram"
+                    placeholder="e.g. Follow Vanta Dubai on Instagram"
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"
                   />
                 </div>
@@ -3236,7 +3236,7 @@ const Admin = () => {
                               );
                               setAdminSocials(next);
                             }}
-                            placeholder="e.g. Follow AeroStore on Facebook"
+                            placeholder="e.g. Follow Vanta Dubai on Facebook"
                             className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
                           />
                         </div>

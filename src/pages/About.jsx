@@ -36,7 +36,7 @@ const About = () => {
             Crafting Essentials That Elevate Everyday Routines
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed leading-normal">
-            Founded in 2026, AEROSTORE was born out of a simple frustration: the trade-off between premium aesthetics and everyday functionality. We set out to bridge this gap, curating lifestyle collections that satisfy both design enthusiasts and practical users alike.
+            Founded in 2026, VANTA DUBAI was born out of a simple frustration: the trade-off between premium aesthetics and everyday functionality. We set out to bridge this gap, curating lifestyle collections that satisfy both design enthusiasts and practical users alike.
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed leading-normal">
             Today, we collaborate with award-winning local and international craftspeople to design items that belong in modern environments. Every item in our catalogue is rigorously inspected to align with our values of pure materials, timeless forms, and long-lasting durability.
@@ -105,7 +105,7 @@ const About = () => {
             MEET THE TEAM
           </span>
           <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white mt-1">
-            The Creative Minds Behind AEROSTORE
+            The Creative Minds Behind VANTA DUBAI
           </h2>
         </div>
 

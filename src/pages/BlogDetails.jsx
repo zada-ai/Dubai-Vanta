@@ -322,7 +322,7 @@ const BlogDetails = () => {
             </div>
             <div>
               <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                {blog.author || 'AeroStore Editorial'}
+                {blog.author || 'Vanta Dubai Editorial'}
               </p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                 Author & Contributor • Dubai Vanta
@@ -376,12 +376,12 @@ const BlogDetails = () => {
 
         {/* Author Bio Footer Box */}
         <div className="mt-12 rounded-3xl p-6 sm:p-8 bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-start gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-black text-2xl flex items-center justify-center shrink-0 shadow-md">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary-600 to-primary-600 text-white font-black text-2xl flex items-center justify-center shrink-0 shadow-md">
             {(blog.author || 'A').charAt(0)}
           </div>
           <div className="text-center sm:text-left">
             <p className="text-base font-bold text-slate-900 dark:text-white mb-1">
-              Published by {blog.author || 'AeroStore Editorial'}
+              Published by {blog.author || 'Vanta Dubai Editorial'}
             </p>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal mb-3">
               Curating luxury essentials, state-of-the-art acoustic innovations, and modern lifestyle aesthetics from the heart of Dubai.

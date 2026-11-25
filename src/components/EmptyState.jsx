@@ -2,7 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { RiShoppingBagLine, RiHeartLine, RiSearchLine, RiFileList3Line } from 'react-icons/ri';
 
-const EmptyState = ({ type = 'cart', title, message, buttonText = 'Go Shopping', buttonLink = '/shop' }) => {
+const EmptyState = ({ type = 'cart', title, message, buttonText = 'Go Shopping', buttonLink = '/shop', headingLevel = 'h3' }) => {
+  const Heading = headingLevel;
   const renderIcon = () => {
     const iconClass = "w-16 h-16 text-slate-300 dark:text-slate-700";
     switch (type) {
@@ -56,7 +57,7 @@ const EmptyState = ({ type = 'cart', title, message, buttonText = 'Go Shopping',
       <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-900/50 flex items-center justify-center mb-6">
         {renderIcon()}
       </div>
-      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">{text.title}</h3>
+      <Heading className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">{text.title}</Heading>
       <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-8">{text.message}</p>
       {buttonText && buttonLink && (
         <Link

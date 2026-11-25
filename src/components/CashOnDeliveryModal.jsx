@@ -177,7 +177,7 @@ const CashOnDeliveryModal = () => {
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+            <div className="p-2 rounded-xl bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400">
               <RiHandCoinLine className="w-5 h-5" />
             </div>
             <div>
@@ -208,11 +208,11 @@ const CashOnDeliveryModal = () => {
             />
           ) : (
             <div className="w-16 h-16 rounded-xl flex items-center justify-center bg-slate-200 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700 shrink-0">
-              <RiHandCoinLine className="w-7 h-7 text-emerald-600 opacity-60" />
+              <RiHandCoinLine className="w-7 h-7 text-primary-600 opacity-60" />
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">
               {codModalProduct.brand || 'VANTA DUBAI'}
             </span>
             <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">
@@ -255,17 +255,17 @@ const CashOnDeliveryModal = () => {
         </div>
 
         {/* COD Benefits Guarantee Bar */}
-        <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-[11px] font-semibold">
+        <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-xl bg-primary-500/10 border border-primary-500/20 text-primary-800 dark:text-primary-300 text-[11px] font-semibold">
           <div className="flex items-center gap-1.5">
-            <RiTruckLine className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <RiTruckLine className="w-4 h-4 shrink-0 text-primary-600 dark:text-primary-400" />
             <span>24-48h UAE Delivery</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <RiHandCoinLine className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <RiHandCoinLine className="w-4 h-4 shrink-0 text-primary-600 dark:text-primary-400" />
             <span>Pay on Doorstep</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <RiShieldCheckLine className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <RiShieldCheckLine className="w-4 h-4 shrink-0 text-primary-600 dark:text-primary-400" />
             <span>Inspect Before Pay</span>
           </div>
         </div>
@@ -286,7 +286,7 @@ const CashOnDeliveryModal = () => {
                 value={formData.fullName}
                 onChange={handleChange}
                 placeholder="e.g. Mohammed Al Mansoori"
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
@@ -304,7 +304,7 @@ const CashOnDeliveryModal = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="+971 50 123 4567"
-                  className="w-full pl-9 pr-3.5 py-2.5 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-bold focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  className="w-full pl-9 pr-3.5 py-2.5 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-bold focus:outline-hidden focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             </div>
@@ -320,7 +320,7 @@ const CashOnDeliveryModal = () => {
                 value={formData.altPhone}
                 onChange={handleChange}
                 placeholder="+971 55 987 6543"
-                className="w-full px-3.5 py-2.5 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3.5 py-2.5 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
@@ -333,7 +333,7 @@ const CashOnDeliveryModal = () => {
                 name="emirate"
                 value={formData.emirate}
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-bold focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-bold focus:outline-hidden focus:ring-2 focus:ring-primary-500"
               >
                 {UAE_EMIRATES.map((em) => (
                   <option key={em} value={em}>
@@ -355,7 +355,7 @@ const CashOnDeliveryModal = () => {
                 value={formData.area}
                 onChange={handleChange}
                 placeholder="e.g. Downtown, Marina, Business Bay, Deira"
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
@@ -371,7 +371,7 @@ const CashOnDeliveryModal = () => {
                 value={formData.street}
                 onChange={handleChange}
                 placeholder="e.g. Marina Gate Tower 1, Flat 1204, Al Marsa Street"
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
@@ -388,7 +388,7 @@ const CashOnDeliveryModal = () => {
                   value={formData.landmark}
                   onChange={handleChange}
                   placeholder="e.g. Opposite Mall, Near Metro"
-                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             </div>
@@ -404,7 +404,7 @@ const CashOnDeliveryModal = () => {
                   name="deliveryTime"
                   value={formData.deliveryTime}
                   onChange={handleChange}
-                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-primary-500"
                 >
                   {DELIVERY_TIMES.map((t) => (
                     <option key={t} value={t}>
@@ -426,7 +426,7 @@ const CashOnDeliveryModal = () => {
                   name="changeNote"
                   value={formData.changeNote}
                   onChange={handleChange}
-                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-primary-500"
                 >
                   {CHANGE_OPTIONS.map((c) => (
                     <option key={c} value={c}>
@@ -448,7 +448,7 @@ const CashOnDeliveryModal = () => {
                 value={formData.instructions}
                 onChange={handleChange}
                 placeholder="e.g. Call before coming, or leave with building security if not answering."
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
@@ -461,13 +461,13 @@ const CashOnDeliveryModal = () => {
             </div>
             <div className="flex items-center justify-between text-xs text-slate-500">
               <span>UAE Delivery (Standard)</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="font-bold text-primary-600 dark:text-primary-400">
                 {shipping === 0 ? 'FREE' : `AED ${shipping.toFixed(2)}`}
               </span>
             </div>
             <div className="flex items-center justify-between text-base font-black text-slate-900 dark:text-white pt-1">
               <span>Total Payable at Doorstep:</span>
-              <span className="text-xl text-emerald-600 dark:text-emerald-400">
+              <span className="text-xl text-primary-600 dark:text-primary-400">
                 AED {finalTotal.toFixed(2)}
               </span>
             </div>
@@ -475,13 +475,13 @@ const CashOnDeliveryModal = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black text-sm sm:text-base shadow-lg hover:shadow-xl transition-all cursor-pointer disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-primary-700 hover:bg-primary-800 active:bg-primary-700 text-white font-black text-sm sm:text-base shadow-lg hover:shadow-xl transition-all cursor-pointer disabled:opacity-50"
             >
               <RiHandCoinLine className="w-5 h-5" />
               {isSubmitting ? 'Placing COD Order...' : `Confirm Cash on Delivery (Pay AED ${finalTotal.toFixed(2)})`}
             </button>
             <p className="text-[11px] text-center text-slate-400 mt-1">
-              🔒 No advance payment needed. 100% Cash on Delivery across Dubai & UAE.
+              No advance payment needed. 100% Cash on Delivery across Dubai & UAE.
             </p>
           </div>
         </form>

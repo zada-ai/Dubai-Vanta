@@ -42,7 +42,7 @@ const CategoryCard = ({ category, count, index = 0 }) => {
       initial={{ opacity: 0, scale: 0.85, y: 10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.3), ease: 'easeOut' }}
-      whileHover={{ scale: 1.06, y: -4 }}
+      whileHover={{ y: -4 }}
       whileTap={{ scale: 0.94 }}
       className="flex flex-col items-center select-none"
     >
@@ -51,7 +51,7 @@ const CategoryCard = ({ category, count, index = 0 }) => {
         className="group flex flex-col items-center text-center cursor-pointer focus:outline-hidden"
       >
         {/* Circular Avatar Container (Small on mobile, responsive on desktop) */}
-        <div className="relative w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full aspect-square bg-[#F4F6F8] dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/70 shadow-2xs group-hover:shadow-md group-hover:border-primary-400/50 dark:group-hover:border-primary-500/50 transition-all duration-300 flex items-center justify-center overflow-hidden">
+        <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full aspect-square bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 ring-offset-4 ring-offset-slate-50 dark:ring-offset-slate-950 shadow-sm group-hover:ring-2 group-hover:ring-primary-500 group-hover:shadow-lg group-hover:shadow-primary-500/15 transition-all duration-300 flex items-center justify-center overflow-hidden">
           {resolvedImage && !imgError ? (
             <img
               src={resolvedImage}
@@ -68,7 +68,7 @@ const CategoryCard = ({ category, count, index = 0 }) => {
         </div>
 
         {/* Category Label Underneath */}
-        <span className="mt-2 text-[11px] sm:text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-1 max-w-[4.5rem] sm:max-w-[5.75rem] md:max-w-[7.5rem] tracking-tight text-center">
+        <span className="mt-3 text-[11px] sm:text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-1 max-w-[4.5rem] sm:max-w-[5.75rem] md:max-w-[7.5rem] tracking-tight text-center">
           {category.name}
         </span>
       </Link>

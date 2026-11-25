@@ -7,8 +7,6 @@ import {
 } from 'react-icons/ri';
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  if (totalPages <= 1) return null;
-
   // Compute smart windowed page numbers with ellipsis
   const pages = useMemo(() => {
     // If 7 or fewer pages, show all of them
@@ -29,6 +27,8 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     // In the middle
     return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
   }, [currentPage, totalPages]);
+
+  if (totalPages <= 1) return null;
 
   return (
     <nav className="flex flex-col items-center gap-2.5 py-6 sm:py-8 select-none max-w-full" aria-label="Pagination">

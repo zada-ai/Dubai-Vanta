@@ -126,7 +126,7 @@ const Blogs = () => {
       
       {/* Editorial Header Hero */}
       <section className="relative overflow-hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-14 sm:py-20">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(124,58,237,0.12),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(124,58,237,0.25),rgba(2,6,23,0))]" />
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(36,111,99,0.12),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(36,111,99,0.25),rgba(2,6,23,0))]" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
@@ -136,7 +136,7 @@ const Blogs = () => {
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-50 dark:bg-primary-950/50 border border-primary-200 dark:border-primary-800/60 text-primary-700 dark:text-primary-300 text-xs font-bold tracking-wide uppercase mb-5"
           >
             <RiSparklingFill className="w-3.5 h-3.5 text-primary-500" />
-            The AeroStore Journal
+            The Vanta Dubai Journal
           </motion.div>
 
           <motion.h1
@@ -237,7 +237,7 @@ const Blogs = () => {
         {!loading && !error && featuredBlog && (
           <div className="mb-14">
             <div className="flex items-center gap-2 mb-4">
-              <span className="w-2.5 h-2.5 rounded-full bg-primary-600 animate-pulse" />
+              <span className="w-2.5 h-2.5 rounded-full bg-primary-600" />
               <h2 className="text-xs uppercase font-extrabold tracking-widest text-primary-600 dark:text-primary-400">
                 Featured Cover Story
               </h2>
@@ -291,7 +291,7 @@ const Blogs = () => {
                         {(featuredBlog.author || 'A').charAt(0)}
                       </div>
                       <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        {featuredBlog.author || 'AeroStore Editorial'}
+                        {featuredBlog.author || 'Vanta Dubai Editorial'}
                       </span>
                     </div>
 
@@ -360,7 +360,7 @@ const Blogs = () => {
 
                         <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
                           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate max-w-[140px]">
-                            {blog.author || 'AeroStore'}
+                            {blog.author || 'Vanta Dubai'}
                           </span>
 
                           <span className="inline-flex items-center gap-1 text-xs font-bold text-primary-600 dark:text-primary-400 group-hover:translate-x-1 transition-transform">
@@ -398,28 +398,28 @@ const Blogs = () => {
         )}
 
         {/* Newsletter CTA Box */}
-        <div className="mt-20 rounded-3xl bg-gradient-to-r from-violet-600 via-indigo-700 to-slate-900 p-8 sm:p-12 text-white relative overflow-hidden shadow-xl">
+        <div className="mt-20 rounded-3xl bg-gradient-to-r from-primary-600 via-primary-700 to-slate-900 p-8 sm:p-12 text-white relative overflow-hidden shadow-xl">
           <div className="absolute -right-10 -bottom-10 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
           <div className="max-w-2xl relative z-10">
             <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20 text-white backdrop-blur-md mb-4 inline-block">
               Stay Informed
             </span>
             <h2 className="text-2xl sm:text-4xl font-black mb-3">
-              Subscribe to The AeroStore Journal
+              Subscribe to The Vanta Dubai Journal
             </h2>
-            <p className="text-sm sm:text-base text-violet-100 mb-6 font-medium">
+            <p className="text-sm sm:text-base text-primary-100 mb-6 font-medium">
               Curated perspectives on luxury design, high-fidelity sound, and architectural minimalism delivered to your inbox monthly.
             </p>
             <div className="flex flex-col sm:flex-row gap-2 max-w-md">
               <input
                 type="email"
                 placeholder="Enter your email address"
-                className="px-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-violet-200 text-sm focus:outline-hidden focus:bg-white/20 flex-1 font-medium"
+                className="px-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-primary-200 text-sm focus:outline-hidden focus:bg-white/20 flex-1 font-medium"
               />
               <button
                 type="button"
-                onClick={() => alert('Thank you for subscribing to The AeroStore Journal!')}
-                className="px-6 py-3 rounded-2xl bg-white text-slate-950 font-bold text-sm hover:bg-violet-50 transition cursor-pointer shadow-md"
+                onClick={() => alert('Thank you for subscribing to The Vanta Dubai Journal!')}
+                className="px-6 py-3 rounded-2xl bg-white text-slate-950 font-bold text-sm hover:bg-primary-50 transition cursor-pointer shadow-md"
               >
                 Subscribe
               </button>

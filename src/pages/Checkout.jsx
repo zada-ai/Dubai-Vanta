@@ -418,7 +418,7 @@ const Checkout = () => {
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-slate-900 dark:text-white">Standard Delivery</span>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/40 border border-primary-500/20 px-2 py-0.5 rounded-full">
                       Default
                     </span>
                   </div>
@@ -457,7 +457,7 @@ const Checkout = () => {
                 <RiWallet3Line className="w-5 h-5 text-primary-600" />
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Payment Method</h3>
               </div>
-              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+              <span className="text-[11px] font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 px-2.5 py-0.5 rounded-full border border-primary-500/20">
                 UAE Doorstep Delivery
               </span>
             </div>
@@ -466,22 +466,22 @@ const Checkout = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Option 1: Cash on Delivery (COD) - Vibrant & Active */}
               <div
-                className="p-4 rounded-2xl border-2 border-emerald-500 dark:border-emerald-400 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/40 dark:from-emerald-950/50 dark:via-slate-900 dark:to-emerald-950/30 shadow-md ring-4 ring-emerald-500/15 text-left flex items-start gap-3.5 transition-all relative overflow-hidden"
+                className="p-4 rounded-2xl border-2 border-primary-500 dark:border-primary-400 bg-gradient-to-br from-primary-50/80 via-white to-primary-50/40 dark:from-primary-950/50 dark:via-slate-900 dark:to-primary-950/30 shadow-md ring-4 ring-primary-500/15 text-left flex items-start gap-3.5 transition-all relative overflow-hidden"
               >
-                <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                <div className="w-5 h-5 rounded-full bg-primary-700 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                   <RiCheckLine className="w-3.5 h-3.5 font-bold" />
                 </div>
                 <div className="flex flex-col flex-grow">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <span className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                      <div className="w-7 h-7 rounded-lg bg-primary-700 text-white flex items-center justify-center shadow-xs">
                         <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                           <path d="M22 6H2C1.44772 6 1 6.44772 1 7V17C1 17.5523 1.44772 18 2 18H22C22.5523 18 23 17.5523 23 17V7C23 6.44772 22.5523 6 22 6ZM21 8.5C19.6193 8.5 18.5 9.61929 18.5 11C18.5 12.3807 19.6193 13.5 21 13.5V16H3V13.5C4.38071 13.5 5.5 12.3807 5.5 11C5.5 9.61929 4.38071 8.5 3 8.5V8H21V8.5ZM12 15C14.2091 15 16 13.2091 16 11C16 8.79086 14.2091 7 12 7C9.79086 7 8 8.79086 8 11C8 13.2091 9.79086 15 12 15ZM12 13C10.8954 13 10 12.1046 10 11C10 9.89543 10.8954 9 12 9C13.1046 9 14 9.89543 14 11C14 12.1046 13.1046 13 12 13Z" />
                         </svg>
                       </div>
                       Cash on Delivery (COD)
                     </span>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-200 bg-emerald-500/20 dark:bg-emerald-400/20 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-primary-800 dark:text-primary-200 bg-primary-500/20 dark:bg-primary-400/20 border border-primary-500/30 px-2 py-0.5 rounded-full">
                       ✓ Recommended
                     </span>
                   </div>
@@ -489,7 +489,7 @@ const Checkout = () => {
                     Pay with cash in AED upon doorstep delivery across UAE.
                   </span>
                   <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                    <span className="text-[11px] font-bold text-primary-700 dark:text-primary-400 flex items-center gap-1">
                       <RiShieldCheckLine className="w-3.5 h-3.5" />
                       Zero Advance Payment Required
                     </span>
@@ -523,12 +523,12 @@ const Checkout = () => {
             </div>
 
             {/* COD Explanation Notice Banner */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-teal-500/10 border border-emerald-500/30 flex items-start gap-3.5 text-left">
-              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-600/30">
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-primary-500/10 via-primary-500/5 to-primary-500/10 border border-primary-500/30 flex items-start gap-3.5 text-left">
+              <div className="w-9 h-9 rounded-xl bg-primary-700 text-white flex items-center justify-center shrink-0 shadow-sm shadow-primary-600/30">
                 <RiMoneyDollarCircleLine className="w-5 h-5" />
               </div>
               <div className="flex flex-col text-xs text-slate-700 dark:text-slate-200">
-                <span className="font-extrabold text-emerald-700 dark:text-emerald-400 text-sm">
+                <span className="font-extrabold text-primary-700 dark:text-primary-400 text-sm">
                   Cash on Delivery is Active across UAE
                 </span>
                 <p className="mt-0.5 text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
@@ -651,7 +651,7 @@ const Checkout = () => {
               </div>
 
               {getCartDiscount() > 0 && (
-                <div className="flex justify-between text-emerald-600 dark:text-emerald-500">
+                <div className="flex justify-between text-primary-600 dark:text-primary-500">
                   <span>Coupon Discount</span>
                   <span>-AED {getCartDiscount().toFixed(2)}</span>
                 </div>
@@ -661,7 +661,7 @@ const Checkout = () => {
                 <span>Shipping</span>
                 <span>
                   {calculateFinalShipping() === 0 ? (
-                    <span className="text-emerald-600 dark:text-emerald-500 font-bold uppercase text-xs">Free</span>
+                    <span className="text-primary-600 dark:text-primary-500 font-bold uppercase text-xs">Free</span>
                   ) : (
                     `AED ${calculateFinalShipping().toFixed(2)}`
                   )}
@@ -675,7 +675,7 @@ const Checkout = () => {
 
               <div className="flex justify-between text-xs pt-1">
                 <span className="text-slate-500">Payment</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span className="font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1">
                   {paymentMethod === 'cod' ? (
                     <>
                       <RiHandCoinLine className="w-3.5 h-3.5" /> Cash on Delivery
@@ -701,7 +701,7 @@ const Checkout = () => {
             {paymentMethod === 'cod' ? (
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold transition-all shadow-md hover:shadow-lg cursor-pointer text-sm"
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-primary-700 hover:bg-primary-800 text-white font-extrabold transition-all shadow-md hover:shadow-lg cursor-pointer text-sm"
               >
                 <RiHandCoinLine className="w-5 h-5" />
                 Place Order (Cash on Delivery)
@@ -719,7 +719,7 @@ const Checkout = () => {
             )}
 
             <p className="text-[11px] text-center text-slate-400 mt-3 flex items-center justify-center gap-1">
-              <RiShieldCheckLine className="w-3.5 h-3.5 text-emerald-500" />
+              <RiShieldCheckLine className="w-3.5 h-3.5 text-primary-500" />
               Safe & Secure Checkout • Dubai, UAE
             </p>
           </div>

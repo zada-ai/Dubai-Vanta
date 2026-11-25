@@ -151,7 +151,7 @@ const Footer = () => {
         />
         <motion.div
           aria-hidden="true"
-          className="pointer-events-none absolute -bottom-32 -right-20 w-80 h-80 rounded-full bg-indigo-500/10 dark:bg-indigo-500/15 blur-3xl"
+          className="pointer-events-none absolute -bottom-32 -right-20 w-80 h-80 rounded-full bg-primary-500/10 dark:bg-primary-500/15 blur-3xl"
           animate={{ x: [0, -50, 0], y: [0, -40, 0], scale: [1, 1.2, 1] }}
           transition={{ duration: 18, ease: 'easeInOut', repeat: Infinity }}
         />
@@ -177,15 +177,11 @@ const Footer = () => {
                     />
                   ) : (
                     <div className="flex items-center gap-2">
-                      <motion.span
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.6, ease: 'easeInOut' }}
-                        className="w-8 h-8 rounded-xl bg-slate-900 dark:bg-white flex items-center justify-center font-black text-white dark:text-slate-950 text-base"
-                      >
-                        A
-                      </motion.span>
-                      <span className="text-lg font-black tracking-wider text-slate-900 dark:text-white uppercase">
-                        AEROSTORE
+                      <span className="w-8 h-8 rounded-xl bg-primary-800 dark:bg-primary-400 flex items-center justify-center font-display font-semibold text-white dark:text-slate-950 text-lg">
+                        V
+                      </span>
+                      <span className="font-display text-xl font-semibold tracking-[0.12em] text-slate-900 dark:text-white uppercase">
+                        VANTA DUBAI
                       </span>
                     </div>
                   )}
@@ -195,7 +191,7 @@ const Footer = () => {
                 variants={item}
                 className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-6 leading-relaxed"
               >
-                We design and curate premium everyday essentials that seamlessly blend aesthetics and functionality. Upgrade your lifestyle with AEROSTORE.
+                We design and curate premium everyday essentials that seamlessly blend aesthetics and functionality. Upgrade your lifestyle with VANTA DUBAI.
               </motion.p>
 
               {/* Social Links */}
@@ -315,7 +311,7 @@ const Footer = () => {
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
-              &copy; {new Date().getFullYear()} AEROSTORE. All rights reserved.
+              &copy; {new Date().getFullYear()} VANTA DUBAI. All rights reserved.
             </p>
             <div className="flex items-center gap-4 text-xs font-semibold text-slate-400 dark:text-slate-500">
               <Link to="/faq" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Privacy Policy</Link>

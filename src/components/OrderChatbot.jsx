@@ -28,7 +28,7 @@ const OrderChatbot = () => {
     {
       id: 'welcome-1',
       sender: 'bot',
-      text: 'Hello! 👋 I am your AeroStore Order Tracking Assistant. Please enter your Order ID (e.g. ORD-628773) below to check the real-time status and complete details of your order.',
+      text: 'Hello! I am your Vanta Dubai Order Tracking Assistant. Please enter your Order ID (e.g. ORD-628773) below to check the real-time status and complete details of your order.',
       timestamp: new Date()
     }
   ]);
@@ -90,7 +90,7 @@ const OrderChatbot = () => {
         badge: 'Delivered',
         color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
         icon: RiCheckDoubleLine,
-        desc: 'Your order has been successfully delivered to your address. Thank you for shopping with AeroStore!'
+        desc: 'Your order has been successfully delivered to your address. Thank you for shopping with Vanta Dubai!'
       };
     }
     if (s === 'CANCELLED') {
@@ -168,7 +168,7 @@ const OrderChatbot = () => {
             {
               id: 'bot-' + Date.now(),
               sender: 'bot',
-              text: 'Hello! 😊 Please enter your Order ID (e.g. ORD-628773) so I can instantly check your live order status.',
+              text: 'Hello! Please enter your Order ID (e.g. ORD-628773) so I can instantly check your live order status.',
               timestamp: new Date()
             }
           ]);
@@ -262,7 +262,7 @@ const OrderChatbot = () => {
               <button
                 type="button"
                 onClick={() => setIsOpen(true)}
-                className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 flex items-center justify-center transition-all duration-200 cursor-pointer focus:outline-hidden ring-4 ring-violet-500/20"
+                className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-primary-600 to-primary-600 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 flex items-center justify-center transition-all duration-200 cursor-pointer focus:outline-hidden ring-4 ring-primary-500/20"
                 aria-label="Open Order Tracking Chatbot"
               >
                 <RiChat1Line className="w-6 h-6 sm:w-7 sm:h-7" />
@@ -284,7 +284,7 @@ const OrderChatbot = () => {
             className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[calc(100vw-32px)] sm:w-[390px] h-[540px] max-h-[85vh] bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden text-left"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-700 p-4 text-white flex items-center justify-between shrink-0 shadow-sm">
+            <div className="bg-gradient-to-r from-primary-600 via-primary-600 to-primary-700 p-4 text-white flex items-center justify-between shrink-0 shadow-sm">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20">
                   <RiRobot2Line className="w-5 h-5 text-white" />
@@ -294,7 +294,7 @@ const OrderChatbot = () => {
                     Order Assistant
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   </h3>
-                  <p className="text-[10px] text-violet-100 font-medium">AeroStore Live Order Tracker</p>
+                  <p className="text-[10px] text-primary-100 font-medium">Vanta Dubai Live Order Tracker</p>
                 </div>
               </div>
 
@@ -321,7 +321,7 @@ const OrderChatbot = () => {
                       className={`max-w-[85%] rounded-2xl p-3 leading-relaxed ${
                         isBot
                           ? 'bg-white dark:bg-slate-850 text-slate-800 dark:text-slate-100 border border-slate-200/60 dark:border-slate-800/80 shadow-xs'
-                          : 'bg-violet-600 text-white shadow-xs rounded-br-xs'
+                          : 'bg-primary-600 text-white shadow-xs rounded-br-xs'
                       }`}
                     >
                       <p className="whitespace-pre-line font-medium text-[12px]">{msg.text}</p>
@@ -358,9 +358,9 @@ const OrderChatbot = () => {
 
                                 {/* Customer & Address details */}
                                 <div className="text-[11px] text-slate-500 space-y-0.5">
-                                  <p>👤 <strong>Customer:</strong> {customerName}</p>
-                                  <p className="truncate">📍 <strong>Address:</strong> {ord.shippingDetails?.street || ord.shippingAddress || 'Dubai, UAE'}</p>
-                                  <p>📅 <strong>Date Placed:</strong> {ord.date || 'Recent'}</p>
+                                  <p><strong>Customer:</strong> {customerName}</p>
+                                  <p className="truncate"><strong>Address:</strong> {ord.shippingDetails?.street || ord.shippingAddress || 'Dubai, UAE'}</p>
+                                  <p><strong>Date Placed:</strong> {ord.date || 'Recent'}</p>
                                 </div>
 
                                 {/* Items mini list */}
@@ -388,7 +388,7 @@ const OrderChatbot = () => {
                                 {/* Grand Total */}
                                 <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/60 dark:border-slate-800/60 font-bold text-xs text-slate-900 dark:text-white">
                                   <span>Total Amount:</span>
-                                  <span className="text-violet-600 dark:text-violet-400">
+                                  <span className="text-primary-600 dark:text-primary-400">
                                     AED {totalAmount.toFixed(2)}
                                   </span>
                                 </div>
@@ -401,7 +401,7 @@ const OrderChatbot = () => {
                                     const targetId = orderId || ord.orderId || ord.id || '';
                                     navigate(targetId ? `/orders?orderId=${encodeURIComponent(targetId)}` : '/orders');
                                   }}
-                                  className="w-full mt-2 inline-flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[11px] font-bold transition-colors cursor-pointer shadow-xs"
+                                  className="w-full mt-2 inline-flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-[11px] font-bold transition-colors cursor-pointer shadow-xs"
                                 >
                                   <span>View in Order History</span>
                                   <RiExternalLinkLine className="w-3.5 h-3.5" />
@@ -419,9 +419,9 @@ const OrderChatbot = () => {
               {/* Typing indicator */}
               {isLoading && (
                 <div className="flex items-center gap-1.5 bg-white dark:bg-slate-850 border border-slate-200/60 dark:border-slate-800/80 p-2.5 rounded-2xl w-fit shadow-xs">
-                  <span className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="w-2 h-2 rounded-full bg-primary-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 rounded-full bg-primary-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 rounded-full bg-primary-500 animate-bounce" style={{ animationDelay: '300ms' }} />
                   <span className="text-[11px] text-slate-400 ml-1">Checking order status...</span>
                 </div>
               )}
@@ -435,9 +435,9 @@ const OrderChatbot = () => {
                 <button
                   type="button"
                   onClick={() => handleSendMessage(sampleOrder.orderId || sampleOrder.id)}
-                  className="px-2.5 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-violet-600 dark:text-violet-400 whitespace-nowrap hover:bg-violet-50 dark:hover:bg-violet-950/40 cursor-pointer shadow-2xs"
+                  className="px-2.5 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-primary-600 dark:text-primary-400 whitespace-nowrap hover:bg-primary-50 dark:hover:bg-primary-950/40 cursor-pointer shadow-2xs"
                 >
-                  🔍 Track #{sampleOrder.orderId || sampleOrder.id}
+                  Track #{sampleOrder.orderId || sampleOrder.id}
                 </button>
               )}
               <button
@@ -445,7 +445,7 @@ const OrderChatbot = () => {
                 onClick={() => handleSendMessage('Where do I find my Order ID?')}
                 className="px-2.5 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
-                ❓ Where is my Order ID?
+                Where is my Order ID?
               </button>
             </div>
 
@@ -465,12 +465,12 @@ const OrderChatbot = () => {
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Enter your Order ID (e.g. ORD-628773)..."
-                  className="flex-grow px-3.5 py-2.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-violet-500 font-medium"
+                  className="flex-grow px-3.5 py-2.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500 font-medium"
                 />
                 <button
                   type="submit"
                   disabled={!inputValue.trim() || isLoading}
-                  className="w-9 h-9 rounded-xl bg-violet-600 hover:bg-violet-700 text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xs shrink-0"
+                  className="w-9 h-9 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xs shrink-0"
                   aria-label="Send Order ID"
                 >
                   <RiSendPlane2Fill className="w-4 h-4" />

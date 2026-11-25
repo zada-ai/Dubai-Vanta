@@ -12,7 +12,7 @@ export const defaultHeroSlides = [
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
     link: '/product/1',
     btnText: 'Shop Collection',
-    bgColor: 'from-violet-600 to-indigo-900',
+    bgColor: 'from-primary-600 to-primary-900',
     textColor: 'text-white'
   },
   {
@@ -57,23 +57,23 @@ export const defaultPromoBanner = {
   btnLink: '/shop',
   image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
   imageAlt: 'Nike red shoe discount promotional graphic',
-  bgGradient: 'from-violet-600 to-indigo-850',
+  bgGradient: 'from-primary-600 to-primary-900',
   isVisible: true
 };
 
 export const defaultSeoSettings = {
-  metaTitle: 'AeroStore - Handcrafted Luxury & Modern Essentials',
+  metaTitle: 'Vanta Dubai - Handcrafted Luxury & Modern Essentials',
   metaDescription: 'Discover handcrafted luxury and modern essentials. Experience pure acoustic bliss, designer furniture, and timeless apparel.',
   metaKeywords: 'ecommerce, electronics, fashion, home living, dubai, luxury, aero store',
   siteUrl: 'https://aerostore.com',
   canonicalUrl: 'https://aerostore.com',
-  ogTitle: 'AeroStore - Handcrafted Luxury & Modern Essentials',
+  ogTitle: 'Vanta Dubai - Handcrafted Luxury & Modern Essentials',
   ogDescription: 'Discover handcrafted luxury and modern essentials. Experience pure acoustic bliss, designer furniture, and timeless apparel.',
   ogImageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80',
-  ogImageAlt: 'AeroStore UAE Luxury Essentials Collection',
+  ogImageAlt: 'Vanta Dubai Luxury Essentials Collection',
   twitterCard: 'summary_large_image',
   robotsDirective: 'index, follow',
-  schemaOrgName: 'AeroStore UAE',
+  schemaOrgName: 'Vanta Dubai',
   schemaCategory: 'OnlineStore',
   schemaCurrency: 'AED',
   schemaPhone: '+971 4 123 4567',
@@ -84,55 +84,55 @@ export const defaultSeoSettings = {
     home: {
       name: 'Home',
       path: '/',
-      metaTitle: 'AeroStore - Handcrafted Luxury & Modern Essentials | Dubai, UAE',
+      metaTitle: 'Vanta Dubai - Handcrafted Luxury & Modern Essentials | Dubai, UAE',
       metaDescription: 'Shop premium acoustic headphones, handcrafted furniture, and luxury essentials in Dubai with fast UAE delivery.',
       metaKeywords: 'ecommerce, dubai luxury, electronics dubai, lifestyle, aerostore, uae',
       canonicalUrl: 'https://aerostore.com/',
-      ogTitle: 'AeroStore - Handcrafted Luxury & Modern Essentials',
+      ogTitle: 'Vanta Dubai - Handcrafted Luxury & Modern Essentials',
       ogDescription: 'Shop premium acoustic headphones, handcrafted furniture, and luxury essentials in Dubai with fast UAE delivery.',
       ogImageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80'
     },
     shop: {
       name: 'Shop',
       path: '/shop',
-      metaTitle: 'Shop All Products & Luxury Collections | AeroStore Dubai',
+      metaTitle: 'Shop All Products & Luxury Collections | Vanta Dubai',
       metaDescription: 'Explore our complete catalogue of premium headphones, smart watches, luxury fashion, and designer living essentials.',
       metaKeywords: 'online shopping dubai, buy electronics uae, luxury apparel, fast delivery uae',
       canonicalUrl: 'https://aerostore.com/shop',
-      ogTitle: 'Shop All Collections | AeroStore Dubai',
+      ogTitle: 'Shop All Collections | Vanta Dubai',
       ogDescription: 'Explore our complete catalogue of premium electronics, fashion, and designer living essentials.',
       ogImageUrl: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200&auto=format&fit=crop&q=80'
     },
     about: {
       name: 'About Us',
       path: '/about',
-      metaTitle: 'About AeroStore - Craftsmanship & Design Philosophy | Dubai',
+      metaTitle: 'About Vanta Dubai - Craftsmanship & Design Philosophy | Dubai',
       metaDescription: 'Learn about our heritage in Dubai, commitment to acoustic excellence, sustainable materials, and uncompromising luxury design.',
       metaKeywords: 'about aerostore, dubai design studio, luxury brand heritage, uae ecommerce story',
       canonicalUrl: 'https://aerostore.com/about',
-      ogTitle: 'About AeroStore | Dubai Luxury Heritage',
+      ogTitle: 'About Vanta Dubai | Dubai Luxury Heritage',
       ogDescription: 'Learn about our heritage in Dubai, acoustic excellence, and uncompromising luxury design.',
       ogImageUrl: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=1200&auto=format&fit=crop&q=80'
     },
     contact: {
       name: 'Contact',
       path: '/contact',
-      metaTitle: 'Contact Us & Concierge Support | AeroStore Dubai',
+      metaTitle: 'Contact Us & Concierge Support | Vanta Dubai',
       metaDescription: 'Get in touch with our Dubai concierge team for product assistance, orders, corporate inquiries, or store visits.',
       metaKeywords: 'contact aerostore, customer support dubai, help center, uae concierge',
       canonicalUrl: 'https://aerostore.com/contact',
-      ogTitle: 'Contact AeroStore Concierge | Dubai',
+      ogTitle: 'Contact Vanta Dubai Concierge | Dubai',
       ogDescription: 'Get in touch with our Dubai concierge team for product assistance, orders, or store visits.',
       ogImageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1200&auto=format&fit=crop&q=80'
     },
     faq: {
       name: 'FAQ',
       path: '/faq',
-      metaTitle: 'Frequently Asked Questions (FAQ) | AeroStore UAE',
+      metaTitle: 'Frequently Asked Questions (FAQ) | Vanta Dubai',
       metaDescription: 'Find answers about order tracking, Cash on Delivery in UAE, returns, warranties, and international shipping.',
       metaKeywords: 'faq, questions, shipping uae, cash on delivery, returns policy',
       canonicalUrl: 'https://aerostore.com/faq',
-      ogTitle: 'Frequently Asked Questions | AeroStore UAE',
+      ogTitle: 'Frequently Asked Questions | Vanta Dubai',
       ogDescription: 'Find answers about order tracking, Cash on Delivery in UAE, returns, and warranties.',
       ogImageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80'
     }
@@ -526,7 +526,7 @@ export const AppProvider = ({ children }) => {
   });
 
   const [storeName, setStoreName] = useState(() => {
-    return localStorage.getItem('storeName') || 'AEROSTORE';
+    return localStorage.getItem('storeName') || 'VANTA DUBAI';
   });
 
   const [showLogoText, setShowLogoText] = useState(() => {
@@ -614,7 +614,7 @@ export const AppProvider = ({ children }) => {
     const effectiveOgImg = seoSettings.ogImageUrl || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80';
 
     setMetaTag('property', 'og:type', 'website');
-    setMetaTag('property', 'og:site_name', seoSettings.schemaOrgName || storeName || 'AeroStore');
+    setMetaTag('property', 'og:site_name', seoSettings.schemaOrgName || storeName || 'Vanta Dubai');
     setMetaTag('property', 'og:title', effectiveOgTitle);
     setMetaTag('property', 'og:description', effectiveOgDesc);
     setMetaTag('property', 'og:url', effectiveCanonical);
@@ -644,7 +644,7 @@ export const AppProvider = ({ children }) => {
           "@type": "WebSite",
           "@id": `${effectiveSiteUrl}/#website`,
           "url": effectiveSiteUrl,
-          "name": seoSettings.schemaOrgName || storeName || "AeroStore",
+          "name": seoSettings.schemaOrgName || storeName || "Vanta Dubai",
           "description": seoSettings.metaDescription,
           "potentialAction": {
             "@type": "SearchAction",
@@ -655,7 +655,7 @@ export const AppProvider = ({ children }) => {
         {
           "@type": seoSettings.schemaCategory || "OnlineStore",
           "@id": `${effectiveSiteUrl}/#organization`,
-          "name": seoSettings.schemaOrgName || storeName || "AeroStore",
+          "name": seoSettings.schemaOrgName || storeName || "Vanta Dubai",
           "url": effectiveSiteUrl,
           "logo": storeLogo || `${effectiveSiteUrl}/favicon.svg`,
           "image": effectiveOgImg,
@@ -1068,7 +1068,7 @@ export const AppProvider = ({ children }) => {
       image: newSlide.image || '',
       link: newSlide.link || '/shop',
       btnText: newSlide.btnText || 'Shop Collection',
-      bgColor: newSlide.bgColor || 'from-violet-600 to-indigo-900',
+      bgColor: newSlide.bgColor || 'from-primary-600 to-primary-900',
       textColor: 'text-white'
     };
     setHeroSlides((prev) => {

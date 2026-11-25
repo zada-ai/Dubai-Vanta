@@ -32,11 +32,11 @@ const AVATAR_PRESETS = [
 ];
 
 const RATING_LABELS = {
-  5: '⭐⭐⭐⭐⭐ Excellent (5/5) — Exceeded Expectations!',
-  4: '⭐⭐⭐⭐ Very Good (4/5) — Highly Satisfied',
-  3: '⭐⭐⭐ Average (3/5) — Meets Expectations',
-  2: '⭐⭐ Fair (2/5) — Could Be Better',
-  1: '⭐ Poor (1/5) — Disappointed'
+  5: 'Excellent (5/5) — Exceeded Expectations!',
+  4: 'Very Good (4/5) — Highly Satisfied',
+  3: 'Average (3/5) — Meets Expectations',
+  2: 'Fair (2/5) — Could Be Better',
+  1: 'Poor (1/5) — Disappointed'
 };
 
 const WriteReviewModal = ({ isOpen, onClose, onSubmitReview }) => {
@@ -357,7 +357,7 @@ const WriteReviewModal = ({ isOpen, onClose, onSubmitReview }) => {
               <button
                 type="submit"
                 disabled={isSubmitting || !name.trim() || comment.trim().length < 10}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 shadow-md shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-primary-600 hover:from-primary-700 hover:to-primary-700 shadow-md shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95"
               >
                 <RiSendPlaneFill size={15} />
                 {isSubmitting ? 'Submitting...' : 'Post Review'}

@@ -125,7 +125,7 @@ const Contact = () => {
               allowFullScreen=""
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="AEROSTORE HQ Map Location"
+              title="VANTA DUBAI HQ Map Location"
             />
           </div>
         </div>

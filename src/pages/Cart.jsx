@@ -49,7 +49,7 @@ const Cart = () => {
       <div className="py-4">
         <Breadcrumb items={[{ name: 'Cart', path: '/cart' }]} />
         <div className="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl p-8 mt-2">
-          <EmptyState type="cart" buttonLink="/shop" />
+          <EmptyState type="cart" buttonLink="/shop" headingLevel="h1" />
         </div>
       </div>
     );
