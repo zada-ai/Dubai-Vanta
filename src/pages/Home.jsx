@@ -6,6 +6,7 @@ import Hero from '../components/Hero';
 import FeatureIcon from '../components/FeatureIcon';
 import CategoryCard from '../components/CategoryCard';
 import ProductCard from '../components/ProductCard';
+import ProductSwipeSection from '../components/ProductSwipeSection';
 import RatingComponent from '../components/RatingComponent';
 import { categories as initialCategories, testimonials } from '../data/mockData';
 import { 
@@ -68,17 +69,17 @@ const Home = () => {
   // Filter products for various sections with intelligent fallback for imported catalogs
   const featuredProducts = useMemo(() => {
     const explicitlyFeatured = products.filter(p => p.isFeatured);
-    return (explicitlyFeatured.length > 0 ? explicitlyFeatured : products.slice(0, 8)).slice(0, 8);
+    return (explicitlyFeatured.length > 0 ? explicitlyFeatured : products).slice(0, 16);
   }, [products]);
 
   const bestSellers = useMemo(() => {
     const explicitlyBest = products.filter(p => p.isBestSeller);
-    return (explicitlyBest.length > 0 ? explicitlyBest : products.slice(8, 16)).slice(0, 8);
+    return (explicitlyBest.length > 0 ? explicitlyBest : products.slice(16)).slice(0, 16);
   }, [products]);
 
   const newArrivals = useMemo(() => {
     const explicitlyNew = products.filter(p => p.isNewArrival);
-    return (explicitlyNew.length > 0 ? explicitlyNew : products.slice(16, 24)).slice(0, 8);
+    return (explicitlyNew.length > 0 ? explicitlyNew : products.slice(32)).slice(0, 16);
   }, [products]);
 
   // Promo banner claim discount action (redirect to login if unauthenticated)
@@ -254,65 +255,29 @@ const Home = () => {
         </section>
       )}
 
-      {/* Featured Products */}
-      {featuredProducts.length > 0 && (
-        <section className="flex flex-col gap-4 sm:gap-6">
-          <div className="flex items-end justify-between gap-3">
-            <div className="text-left">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Featured Products</h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Our handpicked design highlights of the season</p>
-            </div>
-            <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
-              View All <RiArrowRightLine />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Featured Products (Swipeable Horizontal Rail) */}
+      <ProductSwipeSection
+        title="Featured Products"
+        subtitle="Our handpicked design highlights of the season"
+        products={featuredProducts}
+        viewAllLink="/shop"
+      />
 
-      {/* Best Sellers */}
-      {bestSellers.length > 0 && (
-        <section className="flex flex-col gap-4 sm:gap-6">
-          <div className="flex items-end justify-between gap-3">
-            <div className="text-left">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Best Selling Products</h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Top-voted favorites by our community</p>
-            </div>
-            <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
-              View All <RiArrowRightLine />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-            {bestSellers.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Best Sellers (Swipeable Horizontal Rail) */}
+      <ProductSwipeSection
+        title="Best Selling Products"
+        subtitle="Top-voted favorites by our community"
+        products={bestSellers}
+        viewAllLink="/shop"
+      />
 
-      {/* New Arrivals */}
-      {newArrivals.length > 0 && (
-        <section className="flex flex-col gap-4 sm:gap-6">
-          <div className="flex items-end justify-between gap-3">
-            <div className="text-left">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">New Arrivals</h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Fresh drop additions to upgrade your space</p>
-            </div>
-            <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
-              View All <RiArrowRightLine />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-            {newArrivals.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* New Arrivals (Swipeable Horizontal Rail) */}
+      <ProductSwipeSection
+        title="New Arrivals"
+        subtitle="Fresh drop additions to upgrade your space"
+        products={newArrivals}
+        viewAllLink="/shop"
+      />
 
       {/* Customer Testimonials & Reviews Marquee */}
       {(() => {
