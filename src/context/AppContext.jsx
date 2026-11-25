@@ -327,13 +327,26 @@ export const AppProvider = ({ children }) => {
   // Toast notifications state
   const [toasts, setToasts] = useState([]);
 
-  // Toast trigger function
+  const removeToast = (id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  // Toast trigger function with duplicate suppression and auto-trimming
   const triggerToast = (message, type = 'success') => {
+    if (!message) return;
     const id = Date.now() + Math.random().toString(36).substr(2, 9);
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => {
+      // If identical message is already active, do not duplicate it
+      if (prev.some((t) => t.message === message)) {
+        return prev;
+      }
+      // Keep maximum 2 toasts at any time so it never covers mobile screens
+      const trimmed = prev.length >= 2 ? prev.slice(prev.length - 1) : prev;
+      return [...trimmed, { id, message, type }];
+    });
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3000);
+    }, 2800);
   };
 
   // Sync theme
@@ -1538,31 +1551,30 @@ export const AppProvider = ({ children }) => {
   };
 
   // Cart operations
-  const addToCart = (product, color, size, quantity = 1) => {
+  const addToCart = (product, color, size, quantity = 1, showToast = true) => {
     const selectedColor = color || (product.colors && product.colors[0]) || 'Standard';
     const selectedSize = size || (product.sizes && product.sizes[0]) || 'Standard';
     const cartItemId = `${product.id}-${selectedColor}-${selectedSize}`;
+
+    const existingItem = cart.find((item) => item.cartItemId === cartItemId);
+    const currentQty = existingItem ? existingItem.quantity : 0;
+    const newQty = currentQty + quantity;
+
+    if (newQty > product.stock) {
+      triggerToast(`Cannot add more. Only ${product.stock} items in stock.`, 'warning');
+      return;
+    }
 
     setCart((prevCart) => {
       const existingItemIndex = prevCart.findIndex((item) => item.cartItemId === cartItemId);
       if (existingItemIndex > -1) {
         const updatedCart = [...prevCart];
-        const newQuantity = updatedCart[existingItemIndex].quantity + quantity;
-        
-        if (newQuantity > product.stock) {
-          triggerToast(`Cannot add more. Only ${product.stock} items in stock.`, 'warning');
-          return prevCart;
-        }
-
-        updatedCart[existingItemIndex].quantity = newQuantity;
-        triggerToast(`Updated ${product.name} quantity in your cart!`, 'success');
+        updatedCart[existingItemIndex] = {
+          ...updatedCart[existingItemIndex],
+          quantity: updatedCart[existingItemIndex].quantity + quantity
+        };
         return updatedCart;
       } else {
-        if (quantity > product.stock) {
-          triggerToast(`Only ${product.stock} items in stock.`, 'warning');
-          return prevCart;
-        }
-        triggerToast(`${product.name} added to your cart!`, 'success');
         return [...prevCart, {
           cartItemId,
           id: product.id,
@@ -1570,7 +1582,7 @@ export const AppProvider = ({ children }) => {
           brand: product.brand,
           price: product.price,
           discountPrice: product.discountPrice,
-          image: product.images[0],
+          image: product.images && product.images[0] ? product.images[0] : '',
           color: selectedColor,
           size: selectedSize,
           quantity,
@@ -1578,16 +1590,22 @@ export const AppProvider = ({ children }) => {
         }];
       }
     });
+
+    if (showToast) {
+      if (existingItem) {
+        triggerToast(`Updated ${product.name} quantity in your cart!`, 'success');
+      } else {
+        triggerToast(`${product.name} added to your cart!`, 'success');
+      }
+    }
   };
 
   const removeFromCart = (cartItemId) => {
-    setCart((prevCart) => {
-      const item = prevCart.find((i) => i.cartItemId === cartItemId);
-      if (item) {
-        triggerToast(`${item.name} removed from your cart.`, 'info');
-      }
-      return prevCart.filter((i) => i.cartItemId !== cartItemId);
-    });
+    const item = cart.find((i) => i.cartItemId === cartItemId);
+    if (item) {
+      triggerToast(`${item.name} removed from your cart.`, 'info');
+    }
+    setCart((prevCart) => prevCart.filter((i) => i.cartItemId !== cartItemId));
   };
 
   const updateQuantity = (cartItemId, newQuantity) => {
@@ -2061,6 +2079,7 @@ export const AppProvider = ({ children }) => {
         closeCodModal,
         toasts,
         triggerToast,
+        removeToast,
         activeCoupon,
         applyCoupon,
         removeCoupon,
