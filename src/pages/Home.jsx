@@ -160,7 +160,7 @@ const Home = () => {
               <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-r from-slate-50 dark:from-slate-950 to-transparent z-10" />
               <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-l from-slate-50 dark:from-slate-950 to-transparent z-10" />
 
-              <div className="animate-marquee-ltr flex items-center gap-4 sm:gap-6 md:gap-8">
+              <div className="animate-marquee-rtl flex items-center gap-4 sm:gap-6 md:gap-8">
                 {/* 4 sets of categories to ensure seamless infinite left-to-right looping */}
                 {[...activeCategories, ...activeCategories, ...activeCategories, ...activeCategories].map((category, idx) => (
                   <div key={`${category.id}-${idx}`} className="shrink-0">
@@ -325,8 +325,8 @@ const Home = () => {
               <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 sm:w-32 z-10 bg-gradient-to-r from-slate-50 dark:from-slate-950 to-transparent" />
               <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-32 z-10 bg-gradient-to-l from-slate-50 dark:from-slate-950 to-transparent" />
 
-              {/* Marquee Track moving Left to Right (animate-marquee-ltr) */}
-              <div className="animate-marquee-ltr flex gap-4 sm:gap-6 py-2">
+              {/* Marquee Track moving Right to Left (animate-marquee-rtl) */}
+              <div className="animate-marquee-rtl flex gap-4 sm:gap-6 py-2">
                 {marqueeReviews.map((test, index) => (
                   <div
                     key={`${test.id}-${index}`}

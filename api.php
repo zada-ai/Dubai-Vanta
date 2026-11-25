@@ -281,7 +281,74 @@ if ($method === 'GET' && preg_match('#^/api/settings/?$#', $path)) {
     }
 }
 
-// 5. GET /api/orders/:id (For OrderChatbot tracking)
+// 5. GET /api/orders (List all orders for Super Admin & syncing)
+if ($method === 'GET' && preg_match('#^/api/orders/?$#', $path)) {
+    try {
+        $stmt = $pdo->query("SELECT * FROM orders ORDER BY created_at DESC");
+        $rows = $stmt->fetchAll();
+        $orders = [];
+        foreach ($rows as $r) {
+            $items = [];
+            if (!empty($r['items'])) {
+                $items = json_decode($r['items'], true) ?: [];
+            }
+            $shippingDetails = [
+                'fullName' => $r['customer_name'] ?? 'Valued Customer',
+                'street' => $r['shipping_address'] ?? 'Dubai, UAE',
+                'city' => 'Dubai',
+                'state' => 'Dubai',
+                'zip' => '00000',
+                'country' => 'United Arab Emirates',
+                'email' => $r['customer_email'] ?? '',
+                'phone' => $r['customer_phone'] ?? ''
+            ];
+            if (!empty($r['shipping_address']) && is_string($r['shipping_address']) && str_starts_with(trim($r['shipping_address']), '{')) {
+                $parsedShip = json_decode($r['shipping_address'], true);
+                if (is_array($parsedShip)) {
+                    $shippingDetails = array_merge($shippingDetails, $parsedShip);
+                }
+            }
+            $orders[] = [
+                'id' => $r['id'],
+                'orderId' => $r['id'],
+                'userId' => $r['user_id'] ?? null,
+                'customerName' => $r['customer_name'] ?? $shippingDetails['fullName'],
+                'customerEmail' => $r['customer_email'] ?? $shippingDetails['email'],
+                'customerPhone' => $r['customer_phone'] ?? $shippingDetails['phone'],
+                'shippingAddress' => $r['shipping_address'],
+                'shippingDetails' => $shippingDetails,
+                'items' => $items,
+                'totals' => [
+                    'total' => (float)($r['total_amount'] ?? 0),
+                    'subtotal' => (float)($r['total_amount'] ?? 0),
+                    'shipping' => 0,
+                    'discount' => 0,
+                    'tax' => 0
+                ],
+                'totalAmount' => (float)($r['total_amount'] ?? 0),
+                'currency' => $r['currency'] ?? 'AED',
+                'paymentMethod' => $r['payment_method'] ?? 'Cash on Delivery',
+                'paymentStatus' => $r['payment_status'] ?? 'Pending',
+                'status' => $r['order_status'] ?? 'Processing',
+                'orderStatus' => $r['order_status'] ?? 'Processing',
+                'date' => !empty($r['created_at']) ? date('M j, Y', strtotime($r['created_at'])) : date('M j, Y'),
+                'createdAt' => $r['created_at'] ?? date('Y-m-d H:i:s')
+            ];
+        }
+        echo json_encode([
+            'success' => true,
+            'count' => count($orders),
+            'orders' => $orders
+        ]);
+        exit;
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        exit;
+    }
+}
+
+// 6. GET /api/orders/:id (For OrderChatbot tracking)
 if ($method === 'GET' && preg_match('#^/api/orders/([^/]+)$#', $path, $matches)) {
     $orderId = urldecode($matches[1]);
     $cleanId = preg_replace('/^ORD-/i', '', $orderId);
@@ -326,7 +393,7 @@ if ($method === 'GET' && preg_match('#^/api/orders/([^/]+)$#', $path, $matches))
     }
 }
 
-// 6. POST /api/orders (Cash on Delivery checkout)
+// 7. POST /api/orders (Cash on Delivery checkout)
 if ($method === 'POST' && preg_match('#^/api/orders/?$#', $path)) {
     $body = json_decode($input, true) ?: [];
     try {
@@ -340,10 +407,12 @@ if ($method === 'POST' && preg_match('#^/api/orders/?$#', $path)) {
         $items = !empty($body['items']) ? json_encode($body['items']) : '[]';
         $totalAmount = (float)($body['totalAmount'] ?? ($body['totals']['total'] ?? 0));
         $payMethod = is_string($body['paymentMethod'] ?? null) ? $body['paymentMethod'] : 'Cash on Delivery';
+        $orderStatus = $body['orderStatus'] ?? 'Processing';
+        $paymentStatus = $body['paymentStatus'] ?? ($payMethod === 'Cash on Delivery' ? 'Pending (Pay upon arrival)' : 'Paid');
 
         $stmt = $pdo->prepare("
             INSERT INTO orders (id, user_id, customer_name, customer_email, customer_phone, shipping_address, items, total_amount, currency, payment_method, payment_status, order_status)
-            VALUES (:id, :user_id, :customer_name, :customer_email, :customer_phone, :shipping_address, :items, :total_amount, 'AED', :payment_method, 'Pending', 'Processing')
+            VALUES (:id, :user_id, :customer_name, :customer_email, :customer_phone, :shipping_address, :items, :total_amount, 'AED', :payment_method, :payment_status, :order_status)
         ");
         $stmt->execute([
             ':id' => $orderId,
@@ -354,7 +423,9 @@ if ($method === 'POST' && preg_match('#^/api/orders/?$#', $path)) {
             ':shipping_address' => $shippingAddress,
             ':items' => $items,
             ':total_amount' => $totalAmount,
-            ':payment_method' => $payMethod
+            ':payment_method' => $payMethod,
+            ':payment_status' => $paymentStatus,
+            ':order_status' => $orderStatus
         ]);
 
         http_response_code(201);
@@ -365,6 +436,29 @@ if ($method === 'POST' && preg_match('#^/api/orders/?$#', $path)) {
                 'id' => $orderId
             ]
         ]);
+        exit;
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        exit;
+    }
+}
+
+// 8. PUT /api/orders/:id/status (Super Admin update order status)
+if (($method === 'PUT' || $method === 'PATCH') && preg_match('#^/api/orders/([^/]+)/status/?$#', $path, $matches)) {
+    $orderId = urldecode($matches[1]);
+    $cleanId = preg_replace('/^ORD-/i', '', $orderId);
+    $body = json_decode($input, true) ?: [];
+    $status = $body['status'] ?? 'Processing';
+    try {
+        $stmt = $pdo->prepare("UPDATE orders SET order_status = :status WHERE id = :id OR id = :prefixed OR id = :clean");
+        $stmt->execute([
+            ':status' => $status,
+            ':id' => $orderId,
+            ':prefixed' => 'ORD-' . $cleanId,
+            ':clean' => $cleanId
+        ]);
+        echo json_encode(['success' => true, 'message' => "Order status updated to {$status}"]);
         exit;
     } catch (Exception $e) {
         http_response_code(500);
