@@ -97,7 +97,8 @@ const ProductCard = ({ product }) => {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Quick Add to Cart button */}
+            {/* Quick Add to Cart button - Commented out per user request */}
+            {/* 
             <button
               onClick={() => addToCart(product)}
               className="p-2 sm:p-2.5 rounded-xl bg-slate-900 hover:bg-primary-600 dark:bg-slate-800 dark:hover:bg-primary-600 text-white shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer"
@@ -106,7 +107,8 @@ const ProductCard = ({ product }) => {
               title="Add to Cart"
             >
               <RiShoppingBagLine className="w-4 h-4" />
-            </button>
+            </button> 
+            */}
 
             {/* Direct Cash on Delivery Button - redirects to dedicated checkout page */}
             <button
@@ -114,13 +116,13 @@ const ProductCard = ({ product }) => {
                 addToCart(product);
                 navigate('/checkout');
               }}
-              className="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Order with Cash on Delivery"
               disabled={product.stock === 0}
               title={product.stock === 0 ? "Out of Stock" : "Quick Order with Cash on Delivery"}
             >
               <RiHandCoinLine className="w-4 h-4" />
-              <span className="hidden xs:inline">COD</span>
+              <span>COD</span>
             </button>
           </div>
         </div>

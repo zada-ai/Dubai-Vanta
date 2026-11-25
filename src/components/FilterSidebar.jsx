@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { categories as defaultCategories } from '../data/mockData';
@@ -8,11 +8,18 @@ import { RiCloseLine, RiFilterLine, RiRefreshLine, RiSearchLine } from 'react-ic
 const FilterSidebar = ({ filters, setFilters, onClose, onCategorySelect, onSearchChange }) => {
   const { categories: appCategories, productsList } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
-  const categories = (appCategories && appCategories.length > 0) ? appCategories : defaultCategories;
-  const categoryCounts = {};
-  (productsList || []).forEach((p) => {
-    categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
-  });
+  const rawCategories = (appCategories && appCategories.length > 0) ? appCategories : defaultCategories;
+  const categoryCounts = useMemo(() => {
+    const counts = {};
+    (productsList || []).forEach((p) => {
+      counts[p.category] = (counts[p.category] || 0) + 1;
+    });
+    return counts;
+  }, [productsList]);
+
+  const categories = useMemo(() => {
+    return rawCategories.filter(c => c && !['groceries', 'sneakers', 'gaming-vr'].includes(c.id) && (categoryCounts[c.id] > 0 || Number(c.count) > 0));
+  }, [rawCategories, categoryCounts]);
 
   const handleCategoryChange = (catId) => {
     const nextCat = filters.category === catId ? 'all' : catId;

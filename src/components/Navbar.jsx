@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { categories as defaultCategories } from '../data/mockData';
 import { 
@@ -32,20 +32,132 @@ const Navbar = () => {
   } = useApp();
   
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCategory, setSearchCategory] = useState('all');
+  const [showSearch, setShowSearch] = useState(false);
   const [categoriesDropdownOpen, setCategoriesDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCatOpen, setMobileCatOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
-  const categories = (appCategories && appCategories.length > 0) ? appCategories : defaultCategories;
+  // References for outside click and hover handling
+  const mobileMenuRef = useRef(null);
+  const mobileMenuButtonRef = useRef(null);
+  const searchBarRef = useRef(null);
+  const searchButtonRef = useRef(null);
+  const categoriesDropdownRef = useRef(null);
+  const mouseLeaveTimeoutRef = useRef(null);
+
+  const rawCategories = (appCategories && appCategories.length > 0) ? appCategories : defaultCategories;
+  const categories = useMemo(() => {
+    return rawCategories.filter(c => c && !['groceries', 'sneakers', 'gaming-vr'].includes(c.id) && (c.count === undefined || Number(c.count) > 0));
+  }, [rawCategories]);
 
   // Reset logo error when storeLogo changes
   useEffect(() => {
     setLogoError(false);
   }, [storeLogo]);
+
+  // Auto-close all menus and drawers on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setShowSearch(false);
+    setCategoriesDropdownOpen(false);
+    setUserDropdownOpen(false);
+    setMobileCatOpen(false);
+  }, [location.pathname, location.search]);
+
+  // Outside click & Escape key listener for Mobile Menu Drawer
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const handleOutsideClick = (e) => {
+      // Don't close if clicked inside the drawer or toggle button
+      if (
+        mobileMenuRef.current?.contains(e.target) ||
+        mobileMenuButtonRef.current?.contains(e.target)
+      ) {
+        return;
+      }
+      setMobileMenuOpen(false);
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick, { passive: true });
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+      window.removeEventListener('keydown', handleKeyDown);
+      if (mouseLeaveTimeoutRef.current) {
+        clearTimeout(mouseLeaveTimeoutRef.current);
+      }
+    };
+  }, [mobileMenuOpen]);
+
+  // Smooth hover-out / mouse-leave handlers for mobile menu drawer
+  const handleDrawerMouseEnter = () => {
+    if (mouseLeaveTimeoutRef.current) {
+      clearTimeout(mouseLeaveTimeoutRef.current);
+      mouseLeaveTimeoutRef.current = null;
+    }
+  };
+
+  const handleDrawerMouseLeave = () => {
+    if (mouseLeaveTimeoutRef.current) {
+      clearTimeout(mouseLeaveTimeoutRef.current);
+    }
+    mouseLeaveTimeoutRef.current = setTimeout(() => {
+      setMobileMenuOpen(false);
+    }, 200);
+  };
+
+  // Outside click listener for mobile search bar
+  useEffect(() => {
+    if (!showSearch) return;
+
+    const handleSearchOutsideClick = (e) => {
+      if (
+        searchBarRef.current?.contains(e.target) ||
+        searchButtonRef.current?.contains(e.target)
+      ) {
+        return;
+      }
+      setShowSearch(false);
+    };
+
+    document.addEventListener('mousedown', handleSearchOutsideClick);
+    document.addEventListener('touchstart', handleSearchOutsideClick, { passive: true });
+
+    return () => {
+      document.removeEventListener('mousedown', handleSearchOutsideClick);
+      document.removeEventListener('touchstart', handleSearchOutsideClick);
+    };
+  }, [showSearch]);
+
+  // Outside click for categories dropdown
+  useEffect(() => {
+    if (!categoriesDropdownOpen) return;
+
+    const handleCatOutsideClick = (e) => {
+      if (categoriesDropdownRef.current?.contains(e.target)) return;
+      setCategoriesDropdownOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleCatOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleCatOutsideClick);
+    };
+  }, [categoriesDropdownOpen]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -59,6 +171,7 @@ const Navbar = () => {
     const qs = params.toString();
     navigate(qs ? `/shop?${qs}` : '/shop');
     setSearchQuery('');
+    setShowSearch(false);
     setMobileMenuOpen(false);
   };
 
@@ -106,6 +219,7 @@ const Navbar = () => {
 
             {/* Categories Dropdown Menu */}
             <div 
+              ref={categoriesDropdownRef}
               className="relative"
               onMouseEnter={() => setCategoriesDropdownOpen(true)}
               onMouseLeave={() => setCategoriesDropdownOpen(false)}
@@ -246,10 +360,29 @@ const Navbar = () => {
 
           {/* Action Icons */}
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Theme Toggle */}
+            {/* Search SVG Toggle Icon Button (Visible on mobile screens) */}
+            <button
+              ref={searchButtonRef}
+              type="button"
+              onClick={() => {
+                setShowSearch((prev) => !prev);
+                if (mobileMenuOpen) setMobileMenuOpen(false);
+              }}
+              className={`p-2 sm:p-2.5 rounded-full transition-all sm:hidden cursor-pointer ${
+                showSearch
+                  ? 'bg-primary-500/15 text-primary-600 dark:text-primary-400'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+              aria-label="Toggle search"
+              title="Search products"
+            >
+              {showSearch ? <RiCloseLine className="w-5 h-5" /> : <RiSearchLine className="w-5 h-5" />}
+            </button>
+
+            {/* Theme Toggle (Hidden on mobile) */}
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 sm:p-2.5 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+              className="hidden sm:flex p-2 sm:p-2.5 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer items-center justify-center"
               aria-label="Toggle theme"
             >
               {darkMode ? <RiSunLine className="w-5 h-5" /> : <RiMoonLine className="w-5 h-5" />}
@@ -283,9 +416,9 @@ const Navbar = () => {
               )}
             </Link>
 
-            {/* User Dropdown / Login */}
+            {/* User Dropdown / Login (Hidden on mobile) */}
             {user ? (
-              <div className="relative flex items-center">
+              <div className="hidden sm:flex relative items-center">
                 {user.role === 'admin' || user.role === 'superadmin' || user.role === 'supermanager' ? (
                   <>
                     <Link
@@ -399,7 +532,7 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="flex p-2 sm:p-2.5 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all items-center"
+                className="hidden sm:flex p-2 sm:p-2.5 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all items-center"
                 aria-label="Login"
                 title="Sign In"
               >
@@ -409,6 +542,7 @@ const Navbar = () => {
 
             {/* Mobile Menu Toggle Button */}
             <button
+              ref={mobileMenuButtonRef}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 sm:p-2.5 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all md:hidden cursor-pointer"
               aria-label="Toggle mobile menu"
@@ -420,96 +554,73 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Search Bar (Visible on mobile screens < sm) */}
-      <div className="sm:hidden px-3 pb-2.5 pt-0.5">
-        <form onSubmit={handleSearchSubmit} className="flex items-center w-full">
-          <div className="flex items-center w-full h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 focus-within:bg-white dark:focus-within:bg-slate-950 transition-all overflow-hidden shadow-2xs">
-            <div className="relative shrink-0 border-r border-slate-200 dark:border-slate-800 h-full flex items-center">
-              <select
-                value={searchCategory}
-                onChange={(e) => setSearchCategory(e.target.value)}
-                style={{
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                  MozAppearance: 'none',
-                  backgroundImage: 'none'
-                }}
-                className="h-full pl-2.5 pr-6 text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-transparent focus:outline-hidden cursor-pointer max-w-[95px] truncate leading-9 py-0"
-                aria-label="Filter category"
-              >
-                <option value="all">All</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-              <RiArrowDownSLine className="absolute right-1 text-slate-400 pointer-events-none w-3 h-3" />
-            </div>
-            <div className="relative flex-1 flex items-center h-full">
-              <RiSearchLine className="absolute left-2.5 text-slate-400 w-3.5 h-3.5 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search products, brands..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-full pl-8 pr-2 text-xs bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden font-medium"
-              />
-            </div>
-            <button
-              type="submit"
-              className="px-3 h-full bg-slate-900 hover:bg-slate-800 dark:bg-primary-600 dark:hover:bg-primary-500 text-white font-bold text-xs flex items-center justify-center transition-colors cursor-pointer shrink-0"
-              title="Search"
-            >
-              Search
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Mobile Drawer Menu */}
-      {mobileMenuOpen && (
-        <>
-          <div 
-            className="fixed inset-0 top-[108px] bg-black/60 backdrop-blur-xs z-30 md:hidden" 
-            onClick={() => setMobileMenuOpen(false)}
-          />
-          <div className="absolute top-[108px] inset-x-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-2xl py-6 px-5 flex flex-col gap-5 z-40 md:hidden animate-fade-in max-h-[calc(100vh-6.75rem)] overflow-y-auto">
-            
-            {/* Mobile Search with Category Selector */}
-            <form onSubmit={handleSearchSubmit} className="flex flex-col gap-2">
-              <div className="flex gap-2">
+      {/* Mobile Search Bar (Only visible when clicking the Search SVG icon) */}
+      {showSearch && (
+        <div 
+          ref={searchBarRef}
+          className="sm:hidden px-3 pb-2.5 pt-1 border-t border-slate-100 dark:border-slate-800/80 animate-fade-in bg-white dark:bg-slate-950"
+        >
+          <form onSubmit={handleSearchSubmit} className="flex items-center w-full">
+            <div className="flex items-center w-full h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 focus-within:bg-white dark:focus-within:bg-slate-950 transition-all overflow-hidden shadow-2xs">
+              <div className="relative shrink-0 border-r border-slate-200 dark:border-slate-800 h-full flex items-center">
                 <select
                   value={searchCategory}
                   onChange={(e) => setSearchCategory(e.target.value)}
-                  className="px-3 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-hidden"
+                  style={{
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'none',
+                    backgroundImage: 'none'
+                  }}
+                  className="h-full pl-2.5 pr-6 text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-transparent focus:outline-hidden cursor-pointer max-w-[95px] truncate leading-9 py-0"
+                  aria-label="Filter category"
                 >
-                  <option value="all">All Categories</option>
+                  <option value="all">All</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
                     </option>
                   ))}
                 </select>
-                <div className="relative flex-1">
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
-                  />
-                  <RiSearchLine className="absolute left-3 top-3.5 text-slate-400 w-4 h-4" />
-                </div>
+                <RiArrowDownSLine className="absolute right-1 text-slate-400 pointer-events-none w-3 h-3" />
+              </div>
+              <div className="relative flex-1 flex items-center h-full">
+                <RiSearchLine className="absolute left-2.5 text-slate-400 w-3.5 h-3.5 pointer-events-none" />
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Search products, brands..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-full pl-8 pr-2 text-xs bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden font-medium"
+                />
               </div>
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs shadow-xs"
+                className="px-3 h-full bg-slate-900 hover:bg-slate-800 dark:bg-primary-600 dark:hover:bg-primary-500 text-white font-bold text-xs flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                title="Search"
               >
-                Search Products
+                Search
               </button>
-            </form>
+            </div>
+          </form>
+        </div>
+      )}
 
+      {/* Mobile Drawer Menu */}
+      {mobileMenuOpen && (
+        <>
+          <div 
+            className="fixed inset-0 top-16 bg-black/60 backdrop-blur-xs z-30 md:hidden" 
+            onClick={() => setMobileMenuOpen(false)}
+            onMouseEnter={() => setMobileMenuOpen(false)}
+          />
+          <div 
+            ref={mobileMenuRef}
+            onMouseEnter={handleDrawerMouseEnter}
+            onMouseLeave={handleDrawerMouseLeave}
+            className="absolute top-16 inset-x-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-2xl py-6 px-5 flex flex-col gap-5 z-40 md:hidden animate-fade-in max-h-[calc(100vh-4rem)] overflow-y-auto"
+          >
             {/* Navigation Links */}
             <div className="flex flex-col gap-1 font-semibold text-slate-700 dark:text-slate-200">
               <Link 
@@ -650,6 +761,21 @@ const Navbar = () => {
                 </Link>
               </div>
             )}
+
+            {/* Mobile Menu Theme Mode Toggle */}
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-3 px-1 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                {darkMode ? <RiSunLine className="w-4 h-4 text-amber-500" /> : <RiMoonLine className="w-4 h-4 text-indigo-500" />}
+                {darkMode ? 'Dark Theme' : 'Light Theme'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setDarkMode(!darkMode)}
+                className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer"
+              >
+                {darkMode ? 'Switch to Light' : 'Switch to Dark'}
+              </button>
+            </div>
           </div>
         </>
       )}

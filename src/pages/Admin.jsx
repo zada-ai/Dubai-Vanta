@@ -48,8 +48,26 @@ import {
   RiPencilLine,
   RiDeleteBin6Line,
   RiGridFill,
-  RiMailLine
+  RiMailLine,
+  RiFacebookFill,
+  RiTiktokFill,
+  RiWhatsappFill,
+  RiLinkedinBoxFill,
+  RiInstagramFill,
+  RiYoutubeFill
 } from 'react-icons/ri';
+
+export const PRESET_PRODUCT_COLORS = [
+  { name: 'Black', hex: '#000000' },
+  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Blue', hex: '#2563EB' },
+  { name: 'Green', hex: '#16A34A' },
+  { name: 'Red', hex: '#DC2626' },
+  { name: 'Grey', hex: '#64748B' },
+  { name: 'Gold/Amber', hex: '#D97706' },
+  { name: 'Purple', hex: '#9333EA' },
+  { name: 'Rose', hex: '#E11D48' }
+];
 
 const Admin = () => {
   const { 
@@ -62,6 +80,7 @@ const Admin = () => {
     addProduct, 
     updateProduct,
     deleteProduct, 
+    clearAllProducts,
     toggleProductBadge,
     uploadProductImage,
     triggerToast,
@@ -95,8 +114,26 @@ const Admin = () => {
     contactInfo,
     updateContactInfo,
     contactMessages,
-    deleteContactMessage
+    deleteContactMessage,
+    socialLinks = [],
+    updateSocialLinks,
+    resetSocialLinks,
+    defaultSocialLinks = []
   } = useApp();
+
+  // Social Links Management State
+  const [adminSocials, setAdminSocials] = useState(socialLinks || []);
+  const [newSocialPlatform, setNewSocialPlatform] = useState('instagram');
+  const [newSocialLabel, setNewSocialLabel] = useState('Instagram');
+  const [newSocialHref, setNewSocialHref] = useState('https://instagram.com/');
+  const [newSocialAlt, setNewSocialAlt] = useState('Follow us on Instagram');
+  const [isAddingSocial, setIsAddingSocial] = useState(false);
+
+  useEffect(() => {
+    if (socialLinks && socialLinks.length > 0) {
+      setAdminSocials(socialLinks);
+    }
+  }, [socialLinks]);
 
   const [editingContactInfo, setEditingContactInfo] = useState({
     supportEmail: '',
@@ -735,6 +772,9 @@ const Admin = () => {
   };
 
   // New product form state
+  const [addColorInput, setAddColorInput] = useState('#2563EB');
+  const [editColorInput, setEditColorInput] = useState('#2563EB');
+
   const [newProd, setNewProd] = useState({
     name: '',
     sku: '',
@@ -742,7 +782,8 @@ const Admin = () => {
     category: 'electronics',
     price: '',
     discountPrice: '',
-    stock: 20,
+    stock: 50,
+    colors: ['#000000', '#FFFFFF', '#2563EB', '#16A34A', '#DC2626'],
     image: '',
     description: '',
     isFeatured: false,
@@ -793,9 +834,24 @@ const Admin = () => {
   };
 
   const handleOpenEditProduct = (prod) => {
+    let prodColors = ['#000000', '#FFFFFF'];
+    if (Array.isArray(prod.colors) && prod.colors.length > 0) {
+      prodColors = prod.colors;
+    } else if (typeof prod.colors === 'string' && prod.colors.trim()) {
+      try {
+        const parsed = JSON.parse(prod.colors);
+        if (Array.isArray(parsed)) prodColors = parsed;
+        else prodColors = prod.colors.split(',').map((c) => c.trim()).filter(Boolean);
+      } catch {
+        prodColors = prod.colors.split(',').map((c) => c.trim()).filter(Boolean);
+      }
+    }
+
     setEditingProduct({
       ...prod,
       sku: prod.sku || '',
+      stock: prod.stock !== undefined ? prod.stock : 20,
+      colors: prodColors,
       image: prod.image || (prod.images && prod.images[0]) || '',
       isFeatured: !!prod.isFeatured,
       isBestSeller: !!prod.isBestSeller,
@@ -817,7 +873,8 @@ const Admin = () => {
       category: editingProduct.category,
       price: priceNum,
       discountPrice: discountNum,
-      stock: parseInt(editingProduct.stock) || 0,
+      stock: parseInt(editingProduct.stock) >= 0 ? parseInt(editingProduct.stock) : 0,
+      colors: Array.isArray(editingProduct.colors) ? editingProduct.colors : ['#000000', '#FFFFFF'],
       description: editingProduct.description || '',
       image: editingProduct.image || '',
       images: editingProduct.image ? [editingProduct.image] : editingProduct.images || [],
@@ -919,11 +976,11 @@ const Admin = () => {
       category: newProd.category,
       price: priceNum,
       discountPrice: discountNum,
-      stock: parseInt(newProd.stock) || 10,
+      stock: parseInt(newProd.stock) >= 0 ? parseInt(newProd.stock) : 50,
       description: newProd.description || 'Premium quality product curated for AeroStore customers.',
       image: newProd.image || '',
       images: (newProd.image && newProd.image.trim()) ? [newProd.image.trim()] : [],
-      colors: ['#000000', '#FFFFFF'],
+      colors: (newProd.colors && newProd.colors.length > 0) ? newProd.colors : ['#000000', '#FFFFFF'],
       sizes: ['Standard'],
       isFeatured: !!newProd.isFeatured,
       isBestSeller: !!newProd.isBestSeller,
@@ -937,7 +994,8 @@ const Admin = () => {
       category: 'electronics',
       price: '',
       discountPrice: '',
-      stock: 20,
+      stock: 50,
+      colors: ['#000000', '#FFFFFF', '#2563EB', '#16A34A', '#DC2626'],
       image: '',
       description: '',
       isFeatured: false,
@@ -1242,6 +1300,16 @@ const Admin = () => {
           }`}
         >
           <RiGlobalLine className="w-4 h-4" /> SEO & Meta Tags
+        </button>
+        <button
+          onClick={() => setActiveTab('social')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+            activeTab === 'social'
+              ? 'bg-primary-600 text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <RiShareLine className="w-4 h-4 text-sky-500" /> Social Links ({adminSocials.filter(s => s.enabled !== false).length})
         </button>
         <button
           onClick={() => setActiveTab('products')}
@@ -2893,6 +2961,356 @@ const Admin = () => {
         </div>
       )}
 
+      {/* TAB CONTENT: SOCIAL MEDIA LINKS */}
+      {activeTab === 'social' && (
+        <div className="space-y-6 text-left">
+          {/* Header Card */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                  <RiShareLine className="w-4 h-4" />
+                </span>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                  Footer Social Media Profiles & Links Management
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
+                Control website footer social icons. Set custom destination URLs (<code className="text-primary-600 font-bold">href</code>), accessible hover titles & SEO alt labels (<code className="text-primary-600 font-bold">alt / aria-label</code>), toggle visibility, or add new platforms. Twitter is disabled.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <button
+                type="button"
+                onClick={resetSocialLinks}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                <RiRefreshLine className="w-3.5 h-3.5" /> Reset Defaults
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsAddingSocial(!isAddingSocial)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-primary-600 hover:bg-primary-700 text-white shadow-xs transition cursor-pointer"
+              >
+                <RiAddLine className="w-4 h-4" /> {isAddingSocial ? 'Close Form' : '+ Add Social Link'}
+              </button>
+            </div>
+          </div>
+
+          {/* Inline Add Social Form */}
+          {isAddingSocial && (
+            <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-primary-500/40 rounded-3xl p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <RiAddLine className="w-4 h-4 text-primary-600" /> Add New Social Media Profile
+                </h4>
+                <span className="text-xs text-slate-400">Configure URL & Alt tag</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Platform / Type
+                  </label>
+                  <select
+                    value={newSocialPlatform}
+                    onChange={(e) => {
+                      const p = e.target.value;
+                      setNewSocialPlatform(p);
+                      const presets = {
+                        facebook: { label: 'Facebook', href: 'https://facebook.com/', alt: 'Follow us on Facebook' },
+                        tiktok: { label: 'TikTok', href: 'https://tiktok.com/@', alt: 'Follow us on TikTok' },
+                        whatsapp: { label: 'WhatsApp', href: 'https://wa.me/971XXXXXXXX', alt: 'Chat with us on WhatsApp' },
+                        linkedin: { label: 'LinkedIn', href: 'https://linkedin.com/company/', alt: 'Connect on LinkedIn' },
+                        instagram: { label: 'Instagram', href: 'https://instagram.com/', alt: 'Follow us on Instagram' },
+                        youtube: { label: 'YouTube', href: 'https://youtube.com/@', alt: 'Subscribe on YouTube' },
+                        snapchat: { label: 'Snapchat', href: 'https://snapchat.com/add/', alt: 'Add us on Snapchat' },
+                        pinterest: { label: 'Pinterest', href: 'https://pinterest.com/', alt: 'Follow us on Pinterest' },
+                        other: { label: 'Custom Platform', href: 'https://', alt: 'Visit our social profile' }
+                      };
+                      if (presets[p]) {
+                        setNewSocialLabel(presets[p].label);
+                        setNewSocialHref(presets[p].href);
+                        setNewSocialAlt(presets[p].alt);
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+                  >
+                    <option value="instagram">Instagram</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="tiktok">TikTok</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="snapchat">Snapchat</option>
+                    <option value="pinterest">Pinterest</option>
+                    <option value="other">Other / Custom</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Display Label *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newSocialLabel}
+                    onChange={(e) => setNewSocialLabel(e.target.value)}
+                    placeholder="e.g. Instagram"
+                    className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Target URL (href) *
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    value={newSocialHref}
+                    onChange={(e) => setNewSocialHref(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Alt Text / SEO Title (alt / aria-label) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newSocialAlt}
+                    onChange={(e) => setNewSocialAlt(e.target.value)}
+                    placeholder="e.g. Follow AeroStore on Instagram"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddingSocial(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!newSocialHref.trim()) {
+                      triggerToast('Please provide a valid URL for the social link', 'warning');
+                      return;
+                    }
+                    const newItem = {
+                      id: `${newSocialPlatform}-${Date.now()}`,
+                      platform: newSocialPlatform,
+                      label: newSocialLabel.trim() || newSocialPlatform,
+                      href: newSocialHref.trim(),
+                      altText: newSocialAlt.trim() || `Visit our ${newSocialLabel} page`,
+                      enabled: true
+                    };
+                    const updated = [...adminSocials, newItem];
+                    setAdminSocials(updated);
+                    updateSocialLinks(updated);
+                    setIsAddingSocial(false);
+                  }}
+                  className="px-5 py-2 rounded-xl text-xs font-bold bg-primary-600 hover:bg-primary-700 text-white shadow-xs cursor-pointer"
+                >
+                  + Save & Add to Footer
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Social Links List */}
+          <div className="space-y-3">
+            {adminSocials
+              .filter((s) => s.platform !== 'twitter' && s.id !== 'twitter')
+              .map((item, idx) => {
+                const getPlatformColor = (p) => {
+                  switch (p?.toLowerCase()) {
+                    case 'facebook': return 'bg-blue-600 text-white';
+                    case 'tiktok': return 'bg-slate-950 text-white';
+                    case 'whatsapp': return 'bg-emerald-600 text-white';
+                    case 'linkedin': return 'bg-sky-700 text-white';
+                    case 'instagram': return 'bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white';
+                    case 'youtube': return 'bg-red-600 text-white';
+                    default: return 'bg-primary-600 text-white';
+                  }
+                };
+
+                const renderPlatformIcon = (p) => {
+                  switch (p?.toLowerCase()) {
+                    case 'facebook': return <RiFacebookFill className="w-5 h-5" />;
+                    case 'tiktok': return <RiTiktokFill className="w-5 h-5" />;
+                    case 'whatsapp': return <RiWhatsappFill className="w-5 h-5" />;
+                    case 'linkedin': return <RiLinkedinBoxFill className="w-5 h-5" />;
+                    case 'instagram': return <RiInstagramFill className="w-5 h-5" />;
+                    case 'youtube': return <RiYoutubeFill className="w-5 h-5" />;
+                    default: return <RiGlobalLine className="w-5 h-5" />;
+                  }
+                };
+
+                return (
+                  <div
+                    key={item.id || idx}
+                    className={`bg-white dark:bg-slate-900 border rounded-2xl p-4 sm:p-5 shadow-xs transition-all ${
+                      item.enabled !== false
+                        ? 'border-slate-200/90 dark:border-slate-800'
+                        : 'border-slate-200/50 dark:border-slate-800/50 opacity-60 bg-slate-50/50 dark:bg-slate-950/30'
+                    }`}
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      {/* Left: Icon, Platform & Enable toggle */}
+                      <div className="flex items-center gap-3.5 min-w-[200px]">
+                        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${getPlatformColor(item.platform)}`}>
+                          {renderPlatformIcon(item.platform)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-black text-slate-900 dark:text-white capitalize">
+                              {item.label || item.platform}
+                            </span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              item.enabled !== false
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                            }`}>
+                              {item.enabled !== false ? 'Active' : 'Hidden'}
+                            </span>
+                          </div>
+                          <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={item.enabled !== false}
+                              onChange={(e) => {
+                                const next = adminSocials.map((s, i) =>
+                                  (s.id === item.id || i === idx) ? { ...s, enabled: e.target.checked } : s
+                                );
+                                setAdminSocials(next);
+                              }}
+                              className="rounded text-primary-600 focus:ring-primary-500"
+                            />
+                            <span>Show in Footer</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Middle: Editable Fields (href, altText, label) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-1">
+                        <div>
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                            Link URL (href)
+                          </label>
+                          <input
+                            type="url"
+                            value={item.href || ''}
+                            onChange={(e) => {
+                              const next = adminSocials.map((s, i) =>
+                                (s.id === item.id || i === idx) ? { ...s, href: e.target.value } : s
+                              );
+                              setAdminSocials(next);
+                            }}
+                            placeholder="https://..."
+                            className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                            Alt Text / Tooltip (alt / aria-label)
+                          </label>
+                          <input
+                            type="text"
+                            value={item.altText || ''}
+                            onChange={(e) => {
+                              const next = adminSocials.map((s, i) =>
+                                (s.id === item.id || i === idx) ? { ...s, altText: e.target.value } : s
+                              );
+                              setAdminSocials(next);
+                            }}
+                            placeholder="e.g. Follow AeroStore on Facebook"
+                            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                            Display Label
+                          </label>
+                          <input
+                            type="text"
+                            value={item.label || ''}
+                            onChange={(e) => {
+                              const next = adminSocials.map((s, i) =>
+                                (s.id === item.id || i === idx) ? { ...s, label: e.target.value } : s
+                              );
+                              setAdminSocials(next);
+                            }}
+                            placeholder="e.g. Facebook"
+                            className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Right: Actions */}
+                      <div className="flex items-center justify-end gap-2 shrink-0">
+                        {item.href && (
+                          <a
+                            href={item.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                            title="Test Link in New Tab"
+                          >
+                            <RiExternalLinkLine className="w-4 h-4" />
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = adminSocials.filter((s, i) => s.id !== item.id && i !== idx);
+                            setAdminSocials(next);
+                          }}
+                          className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                          title="Delete Social Profile"
+                        >
+                          <RiDeleteBinLine className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+
+          {/* Bottom Save Bar */}
+          <div className="sticky bottom-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-lg flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>
+                <strong>{adminSocials.filter((s) => s.enabled !== false).length}</strong> social profiles enabled for footer
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => updateSocialLinks(adminSocials)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 active:scale-98 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition cursor-pointer"
+            >
+              <RiSaveLine className="w-4 h-4" /> Save All Social Links
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* TAB CONTENT: PRODUCTS */}
       {activeTab === 'products' && (
         <div className="space-y-6 text-left">
@@ -2913,7 +3331,20 @@ const Admin = () => {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                {productsList.length > 0 && (
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Kya aap waqai tamam dummy products delete karna chahte hain?')) {
+                        clearAllProducts();
+                      }
+                    }}
+                    className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold text-xs rounded-2xl hover:bg-rose-500/20 transition cursor-pointer border border-rose-500/20"
+                    title="Purge all dummy products"
+                  >
+                    <RiDeleteBin6Line className="w-4 h-4" /> Clear All Products
+                  </button>
+                )}
                 <button
                   onClick={() => setIsCategoryModalOpen(true)}
                   className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold text-xs rounded-2xl hover:bg-primary-500/20 transition cursor-pointer border border-primary-500/20"
@@ -3054,6 +3485,21 @@ const Admin = () => {
                                   UUID: {String(p.id).slice(0, 8)}...
                                 </span>
                               </div>
+                              {Array.isArray(p.colors) && p.colors.length > 0 && (
+                                <div className="flex items-center gap-1 mt-1.5">
+                                  {p.colors.slice(0, 6).map((c, i) => (
+                                    <span
+                                      key={i}
+                                      className="w-2.5 h-2.5 rounded-full border border-black/20 inline-block shadow-2xs"
+                                      style={{ backgroundColor: c }}
+                                      title={c}
+                                    />
+                                  ))}
+                                  {p.colors.length > 6 && (
+                                    <span className="text-[10px] text-slate-400 font-medium">+{p.colors.length - 6}</span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -4351,6 +4797,113 @@ const Admin = () => {
                 )}
               </div>
 
+              {/* Product Available Colors Manager */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Available Colors ({newProd.colors?.length || 0})
+                  </label>
+                  <span className="text-[10px] text-slate-400">Click preset to add / remove</span>
+                </div>
+
+                {/* Preset Quick Swatches */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {PRESET_PRODUCT_COLORS.map((pColor) => {
+                    const isSelected = newProd.colors?.includes(pColor.hex);
+                    return (
+                      <button
+                        type="button"
+                        key={pColor.hex}
+                        onClick={() => {
+                          const current = newProd.colors || [];
+                          if (isSelected) {
+                            setNewProd({ ...newProd, colors: current.filter((c) => c !== pColor.hex) });
+                          } else {
+                            setNewProd({ ...newProd, colors: [...current, pColor.hex] });
+                          }
+                        }}
+                        className={`group relative flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition cursor-pointer ${
+                          isSelected
+                            ? 'border-primary-500 bg-primary-500/10 text-primary-700 dark:text-primary-300 ring-2 ring-primary-500/30'
+                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-400'
+                        }`}
+                      >
+                        <span
+                          className="w-3.5 h-3.5 rounded-full border border-black/10 inline-block shrink-0"
+                          style={{ backgroundColor: pColor.hex }}
+                        />
+                        <span>{pColor.name}</span>
+                        {isSelected && <span className="text-[10px] font-black">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Color Input */}
+                <div className="flex items-center gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-800">
+                  <input
+                    type="color"
+                    value={addColorInput}
+                    onChange={(e) => setAddColorInput(e.target.value)}
+                    className="w-8 h-8 rounded-lg cursor-pointer border border-slate-300 dark:border-slate-700 p-0.5 bg-transparent"
+                    title="Choose custom color"
+                  />
+                  <input
+                    type="text"
+                    value={addColorInput}
+                    onChange={(e) => setAddColorInput(e.target.value)}
+                    placeholder="#HEX or Color name"
+                    className="w-32 px-2.5 py-1 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!addColorInput || !addColorInput.trim()) return;
+                      const c = addColorInput.trim();
+                      const current = newProd.colors || [];
+                      if (!current.includes(c)) {
+                        setNewProd({ ...newProd, colors: [...current, c] });
+                      }
+                    }}
+                    className="px-3 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold rounded-lg hover:opacity-90 transition cursor-pointer"
+                  >
+                    + Add Color
+                  </button>
+                </div>
+
+                {/* Currently Selected Swatches Display */}
+                {newProd.colors && newProd.colors.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap pt-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Selected:</span>
+                    {newProd.colors.map((c, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs"
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full border border-black/10 inline-block"
+                          style={{ backgroundColor: c }}
+                        />
+                        <span>{c}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewProd({
+                              ...newProd,
+                              colors: (newProd.colors || []).filter((_, i) => i !== idx)
+                            });
+                          }}
+                          className="text-slate-400 hover:text-rose-500 font-bold ml-0.5 cursor-pointer"
+                          title="Remove color"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Home Page Showcase Section Access Badges */}
               <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-2.5">
                 <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
@@ -4626,6 +5179,113 @@ const Admin = () => {
                       <p className="text-[11px] text-slate-500 truncate">{editingProduct.image}</p>
                       <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">✓ Active Image</span>
                     </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Product Available Colors Manager */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Available Colors ({editingProduct.colors?.length || 0})
+                  </label>
+                  <span className="text-[10px] text-slate-400">Click preset to add / remove</span>
+                </div>
+
+                {/* Preset Quick Swatches */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {PRESET_PRODUCT_COLORS.map((pColor) => {
+                    const isSelected = editingProduct.colors?.includes(pColor.hex);
+                    return (
+                      <button
+                        type="button"
+                        key={pColor.hex}
+                        onClick={() => {
+                          const current = editingProduct.colors || [];
+                          if (isSelected) {
+                            setEditingProduct({ ...editingProduct, colors: current.filter((c) => c !== pColor.hex) });
+                          } else {
+                            setEditingProduct({ ...editingProduct, colors: [...current, pColor.hex] });
+                          }
+                        }}
+                        className={`group relative flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition cursor-pointer ${
+                          isSelected
+                            ? 'border-primary-500 bg-primary-500/10 text-primary-700 dark:text-primary-300 ring-2 ring-primary-500/30'
+                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-400'
+                        }`}
+                      >
+                        <span
+                          className="w-3.5 h-3.5 rounded-full border border-black/10 inline-block shrink-0"
+                          style={{ backgroundColor: pColor.hex }}
+                        />
+                        <span>{pColor.name}</span>
+                        {isSelected && <span className="text-[10px] font-black">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Color Input */}
+                <div className="flex items-center gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-800">
+                  <input
+                    type="color"
+                    value={editColorInput}
+                    onChange={(e) => setEditColorInput(e.target.value)}
+                    className="w-8 h-8 rounded-lg cursor-pointer border border-slate-300 dark:border-slate-700 p-0.5 bg-transparent"
+                    title="Choose custom color"
+                  />
+                  <input
+                    type="text"
+                    value={editColorInput}
+                    onChange={(e) => setEditColorInput(e.target.value)}
+                    placeholder="#HEX or Color name"
+                    className="w-32 px-2.5 py-1 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!editColorInput || !editColorInput.trim()) return;
+                      const c = editColorInput.trim();
+                      const current = editingProduct.colors || [];
+                      if (!current.includes(c)) {
+                        setEditingProduct({ ...editingProduct, colors: [...current, c] });
+                      }
+                    }}
+                    className="px-3 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold rounded-lg hover:opacity-90 transition cursor-pointer"
+                  >
+                    + Add Color
+                  </button>
+                </div>
+
+                {/* Currently Selected Swatches Display */}
+                {editingProduct.colors && editingProduct.colors.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap pt-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Selected:</span>
+                    {editingProduct.colors.map((c, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs"
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full border border-black/10 inline-block"
+                          style={{ backgroundColor: c }}
+                        />
+                        <span>{c}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingProduct({
+                              ...editingProduct,
+                              colors: (editingProduct.colors || []).filter((_, i) => i !== idx)
+                            });
+                          }}
+                          className="text-slate-400 hover:text-rose-500 font-bold ml-0.5 cursor-pointer"
+                          title="Remove color"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
                   </div>
                 )}
               </div>

@@ -393,12 +393,13 @@ const OrderChatbot = () => {
                                   </span>
                                 </div>
 
-                                {/* Link to Orders page */}
+                                {/* Link to Orders page with specific Order ID */}
                                 <button
                                   type="button"
                                   onClick={() => {
                                     setIsOpen(false);
-                                    navigate('/orders');
+                                    const targetId = orderId || ord.orderId || ord.id || '';
+                                    navigate(targetId ? `/orders?orderId=${encodeURIComponent(targetId)}` : '/orders');
                                   }}
                                   className="w-full mt-2 inline-flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[11px] font-bold transition-colors cursor-pointer shadow-xs"
                                 >

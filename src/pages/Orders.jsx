@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import EmptyState from '../components/EmptyState';
 import Breadcrumb from '../components/Breadcrumb';
@@ -22,11 +23,15 @@ import {
 
 const Orders = () => {
   const { orders = [], user, fetchOrdersFromApi, triggerToast } = useApp();
-  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryOrderId = (searchParams.get('orderId') || searchParams.get('id') || searchParams.get('search') || '').trim();
+
+  const [expandedOrderId, setExpandedOrderId] = useState(queryOrderId || null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(queryOrderId);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [adminViewScope, setAdminViewScope] = useState('ALL'); // 'ALL' = all store orders, 'MINE' = only current admin's orders
+  const [fetchedDirectOrder, setFetchedDirectOrder] = useState(null);
 
   const isAdmin = useMemo(() => {
     if (!user) return false;
@@ -40,6 +45,33 @@ const Orders = () => {
       fetchOrdersFromApi();
     }
   }, []);
+
+  // Sync state if URL query contains order ID
+  useEffect(() => {
+    if (queryOrderId) {
+      setSearchTerm(queryOrderId);
+      setStatusFilter('ALL');
+      setExpandedOrderId(queryOrderId);
+
+      // Check if order exists in local state; if not, fetch directly from API
+      const alreadyInList = orders.some((o) => 
+        (o.orderId && o.orderId.toLowerCase() === queryOrderId.toLowerCase()) ||
+        (o.id && String(o.id).toLowerCase() === queryOrderId.toLowerCase())
+      );
+
+      if (!alreadyInList) {
+        fetch(`/api/orders/${encodeURIComponent(queryOrderId)}`, { credentials: 'include' })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.order) {
+              setFetchedDirectOrder(data.order);
+              setExpandedOrderId(data.order.orderId || data.order.id);
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }, [queryOrderId, orders]);
 
   const handleManualRefresh = async () => {
     if (!fetchOrdersFromApi) return;
@@ -234,6 +266,24 @@ const Orders = () => {
   // Filter orders based on user role, search, and status
   const visibleOrders = useMemo(() => {
     let list = Array.isArray(orders) ? [...orders] : [];
+    if (fetchedDirectOrder) {
+      const exists = list.some((o) => (o.orderId || o.id) === (fetchedDirectOrder.orderId || fetchedDirectOrder.id));
+      if (!exists) {
+        list = [fetchedDirectOrder, ...list];
+      }
+    }
+
+    // If specific order was requested via URL query, show ONLY that exact order!
+    if (queryOrderId) {
+      const q = queryOrderId.toLowerCase();
+      const matched = list.filter((o) => {
+        const oId = (o.orderId || o.id || '').toLowerCase();
+        return oId === q || oId.includes(q);
+      });
+      if (matched.length > 0) {
+        return matched;
+      }
+    }
 
     // Filter by user role scope
     if (!isAdmin) {
@@ -275,7 +325,7 @@ const Orders = () => {
     }
 
     return list;
-  }, [orders, user, isAdmin, adminViewScope, statusFilter, searchTerm]);
+  }, [orders, user, isAdmin, adminViewScope, statusFilter, searchTerm, queryOrderId, fetchedDirectOrder]);
 
   // Helper for status badge colors
   const getStatusBadge = (status) => {
@@ -424,6 +474,31 @@ const Orders = () => {
         </div>
       </div>
 
+      {/* Active Tracked Order Notification Banner */}
+      {queryOrderId && (
+        <div className="flex items-center justify-between p-3.5 px-4 bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800 rounded-2xl text-xs shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-600"></span>
+            </span>
+            <span className="text-violet-900 dark:text-violet-200 font-semibold">
+              Filtered to Tracked Order: <strong className="font-mono text-violet-700 dark:text-violet-300 font-bold ml-1">{queryOrderId}</strong>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchParams({});
+              setSearchTerm('');
+            }}
+            className="px-3.5 py-1.5 bg-white dark:bg-slate-900 border border-violet-200 dark:border-violet-700 text-violet-700 dark:text-violet-300 rounded-xl font-bold hover:bg-violet-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs"
+          >
+            Show All Orders
+          </button>
+        </div>
+      )}
+
       {/* Orders List Rendering */}
       {visibleOrders.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-3xl p-10 text-center shadow-xs">
@@ -442,7 +517,7 @@ const Orders = () => {
               </p>
               <button
                 type="button"
-                onClick={() => { setSearchTerm(''); setStatusFilter('ALL'); }}
+                onClick={() => { setSearchTerm(''); setStatusFilter('ALL'); setSearchParams({}); }}
                 className="mt-2 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-colors"
               >
                 Reset Filters
@@ -454,7 +529,7 @@ const Orders = () => {
         <div className="flex flex-col gap-4 text-left">
           {visibleOrders.map((order) => {
             const orderId = order.orderId || order.id || 'ORD-UNKNOWN';
-            const isExpanded = expandedOrderId === orderId;
+            const isExpanded = expandedOrderId === orderId || (queryOrderId && (orderId.toLowerCase() === queryOrderId.toLowerCase()));
             const items = Array.isArray(order.items) ? order.items : [];
             const totalItemsCount = items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
             const totalAmount = Number(order.totals?.total ?? order.totalAmount ?? 0);

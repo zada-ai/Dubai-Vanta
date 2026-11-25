@@ -21,39 +21,13 @@ import {
 
 const Home = () => {
   const { productsList, features, categories: appCategories, promoBanner, user, triggerToast, reviews, addReview } = useApp();
-  const products = (productsList && productsList.length > 0) ? productsList : initialProducts;
+  const products = productsList || [];
   const categories = (appCategories && appCategories.length > 0) ? appCategories : initialCategories;
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [homeBlogs, setHomeBlogs] = useState([]);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const categoryRailRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchHomeBlogs() {
-      try {
-        const res = await fetch('/api/blogs', { credentials: 'include' });
-        const data = await res.json();
-        if (data.success && isMounted && Array.isArray(data.blogs)) {
-          setHomeBlogs(data.blogs.slice(0, 3));
-        } else {
-          const cached = localStorage.getItem('cached_blogs');
-          if (cached && isMounted) {
-            setHomeBlogs(JSON.parse(cached).slice(0, 3));
-          }
-        }
-      } catch (e) {
-        const cached = localStorage.getItem('cached_blogs');
-        if (cached && isMounted) {
-          setHomeBlogs(JSON.parse(cached).slice(0, 3));
-        }
-      }
-    }
-    fetchHomeBlogs();
-    return () => { isMounted = false; };
-  }, []);
 
   const checkScroll = () => {
     if (categoryRailRef.current) {
@@ -86,6 +60,16 @@ const Home = () => {
     return counts;
   }, [products]);
 
+  // Filter active categories that actually have products (and exclude dummy categories)
+  const activeCategories = useMemo(() => {
+    return categories.filter((c) => {
+      if (!c) return false;
+      if (['groceries', 'sneakers', 'gaming-vr'].includes(c.id)) return false;
+      const count = categoryCounts[c.id] ?? c.count ?? 0;
+      return count > 0;
+    });
+  }, [categories, categoryCounts]);
+
   // Filter products for various sections
   const featuredProducts = products.filter(p => p.isFeatured).slice(0, 4);
   const bestSellers = products.filter(p => p.isBestSeller).slice(0, 4);
@@ -114,7 +98,7 @@ const Home = () => {
       <Hero />
 
       {/* Brand Value Grid */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-5 sm:gap-6 p-4 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl sm:rounded-3xl shadow-xs">
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-5 sm:gap-6 py-2 sm:py-3">
         {(features && features.length > 0 ? features : []).map((feat) => (
           <div key={feat.id} className="flex items-center gap-2.5 sm:gap-4 text-left min-w-0">
             <div className="shrink-0 p-2 sm:p-3 bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400 rounded-xl sm:rounded-2xl flex items-center justify-center">
@@ -142,10 +126,10 @@ const Home = () => {
           <button
             type="button"
             onClick={() => setShowAllCategories((prev) => !prev)}
-            className="shrink-0 flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors cursor-pointer bg-primary-50 dark:bg-primary-950/40 px-3.5 py-1.5 rounded-full border border-primary-200/50 dark:border-primary-800/50 shadow-2xs hover:shadow-xs active:scale-95"
+            className="shrink-0 flex items-center gap-1 text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline transition-colors cursor-pointer"
             aria-label={showAllCategories ? "Show fewer categories" : "See more categories"}
           >
-            <span>{showAllCategories ? "View Less" : `See More (${categories.length})`}</span>
+            <span>{showAllCategories ? "View Less" : "See More"}</span>
             {showAllCategories ? (
               <RiArrowUpSLine className="w-4 h-4 transition-transform" />
             ) : (
@@ -171,12 +155,12 @@ const Home = () => {
 
               <div className="animate-marquee-ltr flex items-center gap-4 sm:gap-6 md:gap-8">
                 {/* 4 sets of categories to ensure seamless infinite left-to-right looping */}
-                {[...categories, ...categories, ...categories, ...categories].map((category, idx) => (
+                {[...activeCategories, ...activeCategories, ...activeCategories, ...activeCategories].map((category, idx) => (
                   <div key={`${category.id}-${idx}`} className="shrink-0">
                     <CategoryCard
                       category={category}
                       count={categoryCounts[category.id] || 0}
-                      index={idx % categories.length}
+                      index={idx % activeCategories.length}
                     />
                   </div>
                 ))}
@@ -192,7 +176,7 @@ const Home = () => {
               transition={{ duration: 0.25, ease: 'easeOut' }}
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-4 sm:gap-6 py-4 justify-items-center w-full bg-slate-50/60 dark:bg-slate-900/40 p-4 sm:p-6 rounded-3xl border border-slate-200/60 dark:border-slate-800/60"
             >
-              {categories.map((category, idx) => (
+              {activeCategories.map((category, idx) => (
                 <CategoryCard
                   key={category.id}
                   category={category}
@@ -265,107 +249,60 @@ const Home = () => {
       )}
 
       {/* Featured Products */}
-      <section className="flex flex-col gap-4 sm:gap-6">
-        <div className="flex items-end justify-between gap-3">
-          <div className="text-left">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Featured Products</h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Our handpicked design highlights of the season</p>
-          </div>
-          <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
-            View All <RiArrowRightLine />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
-
-      {/* Best Sellers */}
-      <section className="flex flex-col gap-4 sm:gap-6">
-        <div className="flex items-end justify-between gap-3">
-          <div className="text-left">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Best Selling Products</h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Top-voted favorites by our community</p>
-          </div>
-          <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
-            View All <RiArrowRightLine />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-          {bestSellers.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
-
-      {/* New Arrivals */}
-      <section className="flex flex-col gap-4 sm:gap-6">
-        <div className="flex items-end justify-between gap-3">
-          <div className="text-left">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">New Arrivals</h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Fresh drop additions to upgrade your space</p>
-          </div>
-          <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
-            View All <RiArrowRightLine />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-          {newArrivals.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
-
-      {/* Latest Journal & Blogs */}
-      {homeBlogs.length > 0 && (
+      {featuredProducts.length > 0 && (
         <section className="flex flex-col gap-4 sm:gap-6">
           <div className="flex items-end justify-between gap-3">
             <div className="text-left">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">From The Journal</h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Stories of sound, craftsmanship and modern luxury</p>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Featured Products</h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Our handpicked design highlights of the season</p>
             </div>
-            <Link to="/blogs" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
-              See More Blogs <RiArrowRightLine />
+            <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
+              View All <RiArrowRightLine />
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-            {homeBlogs.map((blog) => (
-              <Link
-                key={blog.id}
-                to={`/blog/${blog.slug || blog.id}`}
-                className="group flex flex-col bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300"
-              >
-                <div className="relative h-48 overflow-hidden bg-slate-900">
-                  <img
-                    src={blog.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800'}
-                    alt={blog.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-950/80 backdrop-blur-md text-white border border-white/20">
-                      {blog.category || 'Journal'}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-5 flex-1 flex flex-col justify-between text-left">
-                  <div>
-                    <h3 className="text-base font-black text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2 mb-2">
-                      {blog.title}
-                    </h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed mb-4">
-                      {blog.excerpt}
-                    </p>
-                  </div>
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-400 font-medium">{blog.read_time || '5 min read'}</span>
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-primary-600 dark:text-primary-400 group-hover:translate-x-1 transition-transform">
-                      See More <RiArrowRightLine className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </div>
-              </Link>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Best Sellers */}
+      {bestSellers.length > 0 && (
+        <section className="flex flex-col gap-4 sm:gap-6">
+          <div className="flex items-end justify-between gap-3">
+            <div className="text-left">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Best Selling Products</h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Top-voted favorites by our community</p>
+            </div>
+            <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
+              View All <RiArrowRightLine />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+            {bestSellers.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* New Arrivals */}
+      {newArrivals.length > 0 && (
+        <section className="flex flex-col gap-4 sm:gap-6">
+          <div className="flex items-end justify-between gap-3">
+            <div className="text-left">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">New Arrivals</h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Fresh drop additions to upgrade your space</p>
+            </div>
+            <Link to="/shop" className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline">
+              View All <RiArrowRightLine />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+            {newArrivals.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </section>
@@ -386,13 +323,10 @@ const Home = () => {
 
         return (
           <section className="flex flex-col gap-6 py-6 border-t border-slate-100 dark:border-slate-800/80">
-            {/* Header with Title and "Write a Review" button */}
+            {/* Header with Title */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 mb-2">
-                  <RiSparklingFill size={13} className="text-amber-500" />
-                  Verified Customer Stories
-                </div>
+                
                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                   What Our Customers Say
                 </h2>
@@ -408,18 +342,6 @@ const Home = () => {
                     Based on {activeReviews.length} real reviews from verified buyers across UAE
                   </p>
                 </div>
-              </div>
-
-              {/* Action Button */}
-              <div className="shrink-0 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsReviewModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 shadow-md shadow-primary-500/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
-                >
-                  <RiEditLine size={16} />
-                  <span>Write a Review</span>
-                </button>
               </div>
             </div>
 
@@ -491,19 +413,7 @@ const Home = () => {
             </div>
 
             {/* Micro Helper */}
-            <div className="flex items-center justify-between text-xs text-slate-400 px-1 -mt-2">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Hover on any card to pause scrolling
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsReviewModalOpen(true)}
-                className="text-primary-600 dark:text-primary-400 font-semibold hover:underline cursor-pointer"
-              >
-                Have something to say? Share your thoughts &rarr;
-              </button>
-            </div>
+           
           </section>
         );
       })()}

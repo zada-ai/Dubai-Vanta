@@ -9,7 +9,9 @@ import {
   RiHeartLine, 
   RiHeartFill, 
   RiShoppingBag3Line, 
+  RiShoppingCartLine,
   RiCheckLine,
+  RiCheckboxCircleFill,
   RiAddLine,
   RiSubtractLine,
   RiShieldCheckLine,
@@ -44,9 +46,22 @@ const ProductView = ({ id, product, products }) => {
   const navigate = useNavigate();
   const { addToCart, wishlist, toggleWishlist, triggerToast, openCodModal } = useApp();
 
+  const availableColors = useMemo(() => {
+    if (Array.isArray(product.colors) && product.colors.length > 0) return product.colors;
+    if (typeof product.colors === 'string' && product.colors.trim()) {
+      try {
+        const parsed = JSON.parse(product.colors);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+      const splitted = product.colors.split(',').map((c) => c.trim()).filter(Boolean);
+      if (splitted.length > 0) return splitted;
+    }
+    return ['#000000', '#FFFFFF', '#2563EB', '#16A34A', '#DC2626'];
+  }, [product.colors]);
+
   // Gallery, options and review states
   const [activeImgIdx, setActiveImgIdx] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || '');
+  const [selectedColor, setSelectedColor] = useState(availableColors[0] || '#000000');
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || '');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
@@ -56,14 +71,23 @@ const ProductView = ({ id, product, products }) => {
   const [newReview, setNewReview] = useState({ name: '', rating: 5, comment: '' });
 
   useEffect(() => {
+    // Scroll window immediately to top when product page loads or changes
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    } catch (_) {
+      window.scrollTo(0, 0);
+    }
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+
     // Reset states when product changes
     setActiveImgIdx(0);
-    setSelectedColor(product.colors?.[0] || '');
+    setSelectedColor(availableColors[0] || '#000000');
     setSelectedSize(product.sizes?.[0] || '');
     setQuantity(1);
     setCustomReviews(product.reviews || []);
     setNewReview({ name: '', rating: 5, comment: '' });
-  }, [id, product]);
+  }, [id, product, availableColors]);
 
   const isWishlisted = wishlist.some((item) => item.id === product.id);
   const discountPrice = product.discountPrice;
@@ -245,101 +269,118 @@ const ProductView = ({ id, product, products }) => {
         </div>
 
         {/* Right Column: Product Actions & Selector (7 cols) */}
-        <div className="lg:col-span-7 flex flex-col items-start text-left">
-          {/* Brand, SKU & Stock Status */}
-          <div className="flex items-center gap-3 mb-2 flex-wrap">
-            <span className="text-xs tracking-wider uppercase font-black text-primary-600 dark:text-primary-400">
-              {product.brand}
-            </span>
-            {product.sku && (
-              <>
-                <span className="text-slate-300 dark:text-slate-700">|</span>
-                <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
-                  SKU: {product.sku}
-                </span>
-              </>
-            )}
-            <span className="text-slate-300 dark:text-slate-700">|</span>
-            {product.stock > 0 ? (
-              <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-500">
-                <RiCheckLine className="w-4 h-4" /> In Stock ({product.stock} available)
+        <div className="lg:col-span-7 flex flex-col items-start text-left w-full">
+          {/* Card / Box style matching reference design */}
+          <div className="w-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-7 shadow-xs space-y-4 mb-6">
+            {/* Title & Brand */}
+            <div>
+              <span className="text-xs uppercase tracking-wider font-extrabold text-slate-400 block mb-1">
+                {product.brand || 'VANTA DUBAI'}
               </span>
-            ) : (
-              <span className="text-xs font-bold text-rose-500">Out of Stock</span>
-            )}
-          </div>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                {product.name}
+              </h1>
+            </div>
 
-          {/* Title */}
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white mb-3">
-            {product.name}
-          </h1>
-
-          {/* Rating */}
-          <div className="flex items-center gap-3 mb-6">
-            <RatingComponent rating={product.rating} size={15} />
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
-              {product.rating} stars ({customReviews.length} customer reviews)
-            </span>
-          </div>
-
-          {/* Price details */}
-          <div className="flex items-baseline gap-4 mb-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl w-full">
-            {isDiscounted ? (
-              <>
-                <span className="text-2xl md:text-3xl font-black text-slate-950 dark:text-white">
-                  AED {discountPrice.toFixed(2)}
-                </span>
-                <span className="text-sm font-semibold text-slate-400 line-through">
+            {/* Price & Bought badge */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                AED {(discountPrice || product.price).toFixed(2)}
+              </span>
+              {isDiscounted && (
+                <span className="text-sm sm:text-base font-semibold text-slate-400 dark:text-slate-500 line-through">
                   AED {product.price.toFixed(2)}
                 </span>
-                <span className="text-xs font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/20 px-2.5 py-1 rounded-full">
+              )}
+              <span className="px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-800 text-white dark:bg-slate-700">
+                Bought 2
+              </span>
+              {isDiscounted && (
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                   Save {product.discountPercentage}%
                 </span>
-              </>
-            ) : (
-              <span className="text-2xl md:text-3xl font-black text-slate-950 dark:text-white">
-                AED {product.price.toFixed(2)}
-              </span>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Option Selector Fields */}
-          <div className="flex flex-col gap-5 w-full mb-8">
-            {/* Color selector */}
-            {product.colors && product.colors.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Color</span>
-                <div className="flex items-center gap-2">
-                  {product.colors.map((color) => (
+            {/* Rating Component */}
+            <div className="flex items-center gap-2 pt-1">
+              <RatingComponent rating={product.rating || 4.8} size={15} />
+              <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+                ({customReviews.length} reviews)
+              </span>
+            </div>
+
+            <hr className="border-slate-200 dark:border-slate-800" />
+
+            {/* Sku & In Stock status */}
+            <div className="flex items-center justify-between flex-wrap gap-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-800 dark:text-slate-200">Sku:</span>
+                <span className="text-slate-700 dark:text-slate-300 font-mono font-bold tracking-wide">
+                  {product.sku || `SKU-${product.id}`}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200">
+                <span>In Stock</span>
+                <RiCheckboxCircleFill className="w-4 h-4 text-emerald-500" />
+                <span className="text-xs text-slate-400 font-normal">({product.stock || 0} available)</span>
+              </div>
+            </div>
+
+            {/* Country */}
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-bold text-slate-800 dark:text-slate-200">Country:</span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                <span>🇦🇪</span> United Arab Emirates
+              </span>
+            </div>
+
+            {/* Color selector with circular swatches and active checkmark */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">Color :</span>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {availableColors.map((color) => {
+                  const isSelected = selectedColor === color;
+                  const isLight = color.toLowerCase() === '#ffffff' || color.toLowerCase() === 'white' || color.toLowerCase() === '#fff';
+                  return (
                     <button
                       key={color}
+                      type="button"
                       onClick={() => setSelectedColor(color)}
-                      className={`w-7 h-7 rounded-full border-2 cursor-pointer transition-all ${
-                        selectedColor === color 
-                          ? 'border-slate-900 dark:border-white scale-110 shadow-md' 
-                          : 'border-transparent hover:scale-105'
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full cursor-pointer transition-all flex items-center justify-center relative ${
+                        isSelected
+                          ? 'ring-2 ring-emerald-500 ring-offset-2 scale-110 shadow-md'
+                          : 'border border-slate-300 dark:border-slate-600 hover:scale-105'
                       }`}
                       style={{ backgroundColor: color }}
                       title={color}
-                    />
-                  ))}
-                </div>
+                    >
+                      {isSelected && (
+                        <RiCheckLine
+                          className={`w-4 h-4 font-black ${isLight ? 'text-emerald-600' : 'text-white'}`}
+                          style={{ filter: isLight ? 'none' : 'drop-shadow(0 1px 1px rgba(0,0,0,0.6))' }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
 
-            {/* Size selector */}
+            {/* Optional Size selector */}
             {product.sizes && product.sizes.length > 0 && product.sizes[0] !== 'Standard' && (
-              <div className="flex flex-col gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Size</span>
-                <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3 flex-wrap pt-1">
+                <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">Size :</span>
+                <div className="flex items-center gap-2">
                   {product.sizes.map((size) => (
                     <button
                       key={size}
+                      type="button"
                       onClick={() => setSelectedSize(size)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-lg text-xs font-bold border transition cursor-pointer ${
                         selectedSize === size
-                          ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-slate-950'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800'
+                          ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-slate-900'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
                       }`}
                     >
                       {size}
@@ -349,74 +390,94 @@ const ProductView = ({ id, product, products }) => {
               </div>
             )}
 
-            {/* Quantity Selector */}
-            {product.stock > 0 && (
-              <div className="flex flex-col gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Quantity</span>
-                <div className="flex items-center gap-1.5 w-[120px] rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1">
+            <hr className="border-slate-200 dark:border-slate-800" />
+
+            {/* Select Quantity & Order with Cash on Delivery section */}
+            {product.stock > 0 ? (
+              <div className="space-y-3 pt-1">
+                <span className="font-bold text-slate-800 dark:text-slate-200 text-sm block">
+                  Select Quantity:
+                </span>
+                <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                  {/* Professional Neutral Stepper */}
+                  <div className="h-11 sm:h-12 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/80 overflow-hidden flex items-center shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={handleQuantityDecrease}
+                      disabled={quantity <= 1}
+                      className="w-10 h-full flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/80 active:bg-slate-300 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                      aria-label="Decrease quantity"
+                    >
+                      <RiSubtractLine className="w-4 h-4" />
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={product.stock}
+                      value={quantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val)) {
+                          if (val < 1) setQuantity(1);
+                          else if (val > product.stock) {
+                            setQuantity(product.stock);
+                            triggerToast(`Only ${product.stock} items currently in stock.`, 'warning');
+                          } else {
+                            setQuantity(val);
+                          }
+                        }
+                      }}
+                      className="w-12 sm:w-14 h-full bg-transparent text-slate-900 dark:text-white font-black text-center text-sm sm:text-base border-x border-slate-200/80 dark:border-slate-700/80 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleQuantityIncrease}
+                      disabled={quantity >= product.stock}
+                      className="w-10 h-full flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/80 active:bg-slate-300 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                      aria-label="Increase quantity"
+                    >
+                      <RiAddLine className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Direct Cash on Delivery Checkout button - Professional Vanta Luxury Styling */}
                   <button
-                    onClick={handleQuantityDecrease}
-                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
+                    type="button"
+                    onClick={() => {
+                      addToCart(product, selectedColor, selectedSize, quantity);
+                      navigate('/checkout');
+                    }}
+                    className="flex-1 h-11 sm:h-12 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-black text-sm sm:text-base shadow-md hover:shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer group"
                   >
-                    <RiSubtractLine className="w-4 h-4" />
+                    <span className="w-6 h-6 rounded-md bg-emerald-500/20 text-emerald-400 dark:text-emerald-600 flex items-center justify-center shrink-0">
+                      <RiHandCoinLine className="w-4 h-4" />
+                    </span>
+                    <span>Order with Cash on Delivery</span>
                   </button>
-                  <span className="flex-grow text-center text-sm font-bold text-slate-800 dark:text-slate-200">
-                    {quantity}
-                  </span>
+
+                  {/* Wishlist toggle button */}
                   <button
-                    onClick={handleQuantityIncrease}
-                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
+                    type="button"
+                    onClick={() => toggleWishlist(product)}
+                    className="h-11 sm:h-12 w-11 sm:w-12 shrink-0 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 hover:text-rose-500 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 transition flex items-center justify-center cursor-pointer shadow-2xs"
+                    aria-label="Add to Wishlist"
                   >
-                    <RiAddLine className="w-4 h-4" />
+                    {isWishlisted ? (
+                      <RiHeartFill className="w-5 h-5 text-rose-500 animate-pulse" />
+                    ) : (
+                      <RiHeartLine className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
+            ) : (
+              <div className="w-full p-4 border border-rose-100 dark:border-rose-950/20 bg-rose-50/50 dark:bg-rose-950/5 rounded-xl">
+                <p className="text-sm font-bold text-rose-600 dark:text-rose-400 text-center">
+                  This item is currently sold out ({product.stock || 0} in stock).
+                </p>
+              </div>
             )}
           </div>
-
-          {/* Action Buttons */}
-          {product.stock > 0 ? (
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full mb-8">
-              {/* Add to Cart button */}
-              <button
-                onClick={() => addToCart(product, selectedColor, selectedSize, quantity)}
-                className="flex-grow flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold transition-all shadow-md cursor-pointer"
-              >
-                <RiShoppingBag3Line className="w-5 h-5" />
-                Add to Cart
-              </button>
-
-              {/* Primary Direct Cash on Delivery Button - opens dedicated checkout page without modal popup */}
-              <button
-                onClick={() => {
-                  addToCart(product, selectedColor, selectedSize, quantity);
-                  navigate('/checkout');
-                }}
-                className="flex-grow flex items-center justify-center gap-2.5 px-6 sm:px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-sm sm:text-base font-extrabold shadow-lg hover:shadow-xl transition-all cursor-pointer"
-              >
-                <RiHandCoinLine className="w-5 h-5" />
-                <span>Cash on Delivery (Checkout)</span>
-              </button>
-
-              <button
-                onClick={() => toggleWishlist(product)}
-                className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-650 hover:text-rose-500 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer flex items-center justify-center"
-                aria-label="Add to Wishlist"
-              >
-                {isWishlisted ? (
-                  <RiHeartFill className="w-5 h-5 text-rose-500 animate-pulse" />
-                ) : (
-                  <RiHeartLine className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          ) : (
-            <div className="w-full p-4 border border-rose-100 dark:border-rose-950/20 bg-rose-50/50 dark:bg-rose-950/5 rounded-2xl mb-8">
-              <p className="text-sm font-bold text-rose-600 dark:text-rose-455 text-center">
-                This item is currently sold out. Check back later or explore related options below.
-              </p>
-            </div>
-          )}
 
           {/* Small Trust Guarantees */}
           <div className="grid grid-cols-2 gap-4 w-full border-t border-slate-200/50 dark:border-slate-800/80 pt-6">

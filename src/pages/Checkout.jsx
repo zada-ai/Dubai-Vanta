@@ -404,57 +404,47 @@ const Checkout = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Standard */}
+              {/* Standard Delivery - Active */}
               <button
                 type="button"
                 onClick={() => setDeliveryMethod('standard')}
-                className={`p-4 rounded-2xl border text-left flex items-start gap-3.5 transition-all cursor-pointer ${
-                  deliveryMethod === 'standard'
-                    ? 'border-slate-900 bg-slate-50/50 dark:border-white dark:bg-slate-900'
-                    : 'border-slate-200 hover:border-slate-300 dark:border-slate-800 bg-transparent'
-                }`}
+                className="p-4 rounded-2xl border-2 border-slate-900 bg-slate-50/70 dark:border-white dark:bg-slate-900/60 shadow-xs text-left flex items-start gap-3.5 transition-all cursor-pointer"
               >
-                <input
-                  type="radio"
-                  name="delivery"
-                  checked={deliveryMethod === 'standard'}
-                  onChange={() => {}}
-                  className="mt-1 cursor-pointer accent-slate-950 dark:accent-white"
-                />
+                <div className="w-5 h-5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                  <RiCheckLine className="w-3.5 h-3.5" />
+                </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Standard Delivery</span>
-                  <span className="text-xs text-slate-400 mt-0.5">3-5 Business Days</span>
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-250 mt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">Standard Delivery</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                      Default
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">3-5 Business Days</span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-2 font-mono">
                     {getShippingCost() === 0 ? 'Free' : `AED ${getShippingCost().toFixed(2)}`}
                   </span>
                 </div>
               </button>
 
-              {/* Express */}
-              <button
-                type="button"
-                onClick={() => setDeliveryMethod('express')}
-                className={`p-4 rounded-2xl border text-left flex items-start gap-3.5 transition-all cursor-pointer ${
-                  deliveryMethod === 'express'
-                    ? 'border-slate-900 bg-slate-50/50 dark:border-white dark:bg-slate-900'
-                    : 'border-slate-200 hover:border-slate-300 dark:border-slate-800 bg-transparent'
-                }`}
+              {/* Express Delivery - Coming Soon */}
+              <div
+                className="p-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/40 dark:bg-slate-950/40 text-left flex items-start gap-3.5 transition-all opacity-65 select-none cursor-not-allowed relative"
               >
-                <input
-                  type="radio"
-                  name="delivery"
-                  checked={deliveryMethod === 'express'}
-                  onChange={() => {}}
-                  className="mt-1 cursor-pointer accent-slate-950 dark:accent-white"
-                />
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Express Delivery</span>
-                  <span className="text-xs text-slate-400 mt-0.5">1-2 Business Days</span>
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-250 mt-2">
+                <div className="w-5 h-5 rounded-full border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 mt-0.5" />
+                <div className="flex flex-col flex-grow">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Express Delivery</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-500/15 dark:bg-amber-500/20 border border-amber-500/30 px-2.5 py-0.5 rounded-full">
+                      Coming Soon
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-400 mt-0.5">1-2 Business Days across UAE</span>
+                  <span className="text-xs font-semibold text-slate-400 mt-2">
                     + AED 25.00
                   </span>
                 </div>
-              </button>
+              </div>
             </div>
           </div>
 
@@ -466,97 +456,84 @@ const Checkout = () => {
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Payment Method</h3>
               </div>
               <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                UAE Delivery Available
+                UAE Doorstep Delivery
               </span>
             </div>
 
             {/* Payment Method Selection Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Option 1: Cash on Delivery (COD) */}
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('cod')}
-                className={`p-4 rounded-2xl border text-left flex items-start gap-3.5 transition-all cursor-pointer relative overflow-hidden ${
-                  paymentMethod === 'cod'
-                    ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-950/20 ring-2 ring-emerald-500/30'
-                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-transparent'
-                }`}
+              {/* Option 1: Cash on Delivery (COD) - Vibrant & Active */}
+              <div
+                className="p-4 rounded-2xl border-2 border-emerald-500 dark:border-emerald-400 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/40 dark:from-emerald-950/50 dark:via-slate-900 dark:to-emerald-950/30 shadow-md ring-4 ring-emerald-500/15 text-left flex items-start gap-3.5 transition-all relative overflow-hidden"
               >
-                <div className="mt-1">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    checked={paymentMethod === 'cod'}
-                    onChange={() => setPaymentMethod('cod')}
-                    className="accent-emerald-600 cursor-pointer w-4 h-4"
-                  />
+                <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                  <RiCheckLine className="w-3.5 h-3.5 font-bold" />
                 </div>
                 <div className="flex flex-col flex-grow">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <RiHandCoinLine className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                          <path d="M22 6H2C1.44772 6 1 6.44772 1 7V17C1 17.5523 1.44772 18 2 18H22C22.5523 18 23 17.5523 23 17V7C23 6.44772 22.5523 6 22 6ZM21 8.5C19.6193 8.5 18.5 9.61929 18.5 11C18.5 12.3807 19.6193 13.5 21 13.5V16H3V13.5C4.38071 13.5 5.5 12.3807 5.5 11C5.5 9.61929 4.38071 8.5 3 8.5V8H21V8.5ZM12 15C14.2091 15 16 13.2091 16 11C16 8.79086 14.2091 7 12 7C9.79086 7 8 8.79086 8 11C8 13.2091 9.79086 15 12 15ZM12 13C10.8954 13 10 12.1046 10 11C10 9.89543 10.8954 9 12 9C13.1046 9 14 9.89543 14 11C14 12.1046 13.1046 13 12 13Z" />
+                        </svg>
+                      </div>
                       Cash on Delivery (COD)
                     </span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-200 bg-emerald-500/20 dark:bg-emerald-400/20 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                      ✓ Recommended
+                    </span>
                   </div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <span className="text-xs text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed font-medium">
                     Pay with cash in AED upon doorstep delivery across UAE.
                   </span>
-                  <span className="mt-2 text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-900/40 w-fit px-2 py-0.5 rounded-md">
-                    ✓ Recommended
-                  </span>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                      <RiShieldCheckLine className="w-3.5 h-3.5" />
+                      Zero Advance Payment Required
+                    </span>
+                  </div>
                 </div>
-              </button>
+              </div>
 
-              {/* Option 2: Credit / Debit Card */}
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('card')}
-                className={`p-4 rounded-2xl border text-left flex items-start gap-3.5 transition-all cursor-pointer relative overflow-hidden ${
-                  paymentMethod === 'card'
-                    ? 'border-slate-900 dark:border-white bg-slate-50/50 dark:bg-slate-900 ring-2 ring-slate-900/20 dark:ring-white/20'
-                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-transparent'
-                }`}
+              {/* Option 2: Credit / Debit Card - Coming Soon */}
+              <div
+                className="p-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/40 dark:bg-slate-950/40 text-left flex items-start gap-3.5 transition-all opacity-65 select-none cursor-not-allowed relative"
               >
-                <div className="mt-1">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    checked={paymentMethod === 'card'}
-                    onChange={() => setPaymentMethod('card')}
-                    className="accent-slate-900 dark:accent-white cursor-pointer w-4 h-4"
-                  />
-                </div>
+                <div className="w-5 h-5 rounded-full border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 mt-0.5" />
                 <div className="flex flex-col flex-grow">
-                  <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <RiSecurePaymentLine className="w-4 h-4 text-slate-700 dark:text-slate-300" />
-                    Credit / Debit Card
-                  </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <div className="flex items-center justify-between gap-1 flex-wrap">
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <RiSecurePaymentLine className="w-4 h-4 text-slate-400" />
+                      Credit / Debit Card
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-500/15 dark:bg-amber-500/20 border border-amber-500/30 px-2.5 py-0.5 rounded-full">
+                      Coming Soon
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-400 mt-1.5">
                     Pay online with Visa, Mastercard, or AMEX.
                   </span>
-                  <span className="mt-2 text-[10px] font-bold text-slate-400">
-                    100% Encrypted Checkout
+                  <span className="mt-2 text-[10px] font-medium text-slate-400">
+                    Payment Gateway under integration
                   </span>
                 </div>
-              </button>
+              </div>
             </div>
 
             {/* COD Explanation Notice Banner */}
-            {paymentMethod === 'cod' && (
-              <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-800/60 flex items-start gap-3 text-left">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                  <RiMoneyDollarCircleLine className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-xs text-slate-650 dark:text-slate-300">
-                  <span className="font-bold text-emerald-800 dark:text-emerald-300">
-                    Cash on Delivery is Active
-                  </span>
-                  <p className="mt-0.5 text-slate-600 dark:text-slate-400 leading-relaxed">
-                    No card details needed. Please keep <strong className="text-slate-900 dark:text-white">AED {calculateFinalTotal().toFixed(2)}</strong> in cash ready when our courier rider delivers to your doorstep in the UAE.
-                  </p>
-                </div>
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-teal-500/10 border border-emerald-500/30 flex items-start gap-3.5 text-left">
+              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-600/30">
+                <RiMoneyDollarCircleLine className="w-5 h-5" />
               </div>
-            )}
+              <div className="flex flex-col text-xs text-slate-700 dark:text-slate-200">
+                <span className="font-extrabold text-emerald-700 dark:text-emerald-400 text-sm">
+                  Cash on Delivery is Active across UAE
+                </span>
+                <p className="mt-0.5 text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                  No advance card payment needed. Please keep <strong className="text-slate-900 dark:text-white font-mono font-bold">AED {calculateFinalTotal().toFixed(2)}</strong> in cash ready when our courier rider delivers to your doorstep.
+                </p>
+              </div>
+            </div>
 
             {/* Credit Card inputs (shown only when card selected) */}
             {paymentMethod === 'card' && (

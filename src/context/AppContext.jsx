@@ -39,6 +39,15 @@ export const defaultHeroSlides = [
   }
 ];
 
+export const defaultSocialLinks = [
+  { id: 'facebook', platform: 'facebook', label: 'Facebook', altText: 'Follow us on Facebook', href: 'https://facebook.com', enabled: true },
+  { id: 'tiktok', platform: 'tiktok', label: 'TikTok', altText: 'Follow us on TikTok', href: 'https://tiktok.com', enabled: true },
+  { id: 'whatsapp', platform: 'whatsapp', label: 'WhatsApp', altText: 'Chat with us on WhatsApp', href: 'https://wa.me', enabled: true },
+  { id: 'linkedin', platform: 'linkedin', label: 'LinkedIn', altText: 'Connect with us on LinkedIn', href: 'https://linkedin.com', enabled: true },
+  { id: 'instagram', platform: 'instagram', label: 'Instagram', altText: 'Follow us on Instagram', href: 'https://instagram.com', enabled: false },
+  { id: 'youtube', platform: 'youtube', label: 'YouTube', altText: 'Subscribe to our YouTube channel', href: 'https://youtube.com', enabled: false }
+];
+
 export const defaultPromoBanner = {
   badge: 'LIMITED TIME OFFER',
   title: 'Enjoy 20% Off Your First Purchase',
@@ -221,10 +230,16 @@ export const AppProvider = ({ children }) => {
   });
   const [accessToken, setAccessToken] = useState(null);
 
-  // Products state
+  // Products state (Clean database synchronization)
   const [productsList, setProductsList] = useState(() => {
     const saved = localStorage.getItem('products');
-    return saved ? JSON.parse(saved) : products;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (_) {}
+    }
+    return products || [];
   });
 
   // Categories state (Dynamic Store Categories)
@@ -233,10 +248,13 @@ export const AppProvider = ({ children }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const cleaned = parsed.filter(c => c && !['groceries', 'sneakers', 'gaming-vr'].includes(c.id) && (c.count === undefined || Number(c.count) > 0));
+          if (cleaned.length > 0) return cleaned;
+        }
       } catch (_) {}
     }
-    return defaultCategories;
+    return defaultCategories.filter(c => c && !['groceries', 'sneakers', 'gaming-vr'].includes(c.id));
   });
 
   // Orders state
@@ -675,6 +693,25 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('features', JSON.stringify(features));
   }, [features]);
 
+  // Social Links State (Footer & Admin controlled)
+  const [socialLinks, setSocialLinks] = useState(() => {
+    const saved = localStorage.getItem('socialLinks');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Filter out twitter if old cache had it
+          return parsed.filter((s) => s.platform !== 'twitter' && s.id !== 'twitter');
+        }
+      } catch (_) {}
+    }
+    return defaultSocialLinks;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('socialLinks', JSON.stringify(socialLinks));
+  }, [socialLinks]);
+
   // Sync settings with backend
   useEffect(() => {
     fetch('/api/settings')
@@ -709,6 +746,11 @@ export const AppProvider = ({ children }) => {
             setPromoBanner(data.settings.promoBanner);
             localStorage.setItem('promoBanner', JSON.stringify(data.settings.promoBanner));
           }
+          if (data.settings.socialLinks && Array.isArray(data.settings.socialLinks)) {
+            const sanitized = data.settings.socialLinks.filter((s) => s.platform !== 'twitter' && s.id !== 'twitter');
+            setSocialLinks(sanitized);
+            localStorage.setItem('socialLinks', JSON.stringify(sanitized));
+          }
           if (data.settings.products && Array.isArray(data.settings.products) && data.settings.products.length > 0) {
             setProductsList(data.settings.products);
             localStorage.setItem('products', JSON.stringify(data.settings.products));
@@ -724,8 +766,9 @@ export const AppProvider = ({ children }) => {
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
-          setCategories(data.categories);
-          localStorage.setItem('categories', JSON.stringify(data.categories));
+          const cleaned = data.categories.filter(c => c && !['groceries', 'sneakers', 'gaming-vr'].includes(c.id) && (c.count === undefined || Number(c.count) > 0));
+          setCategories(cleaned);
+          localStorage.setItem('categories', JSON.stringify(cleaned));
         }
       })
       .catch(() => {});
@@ -734,7 +777,7 @@ export const AppProvider = ({ children }) => {
     fetch('/api/products')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+        if (data.success && Array.isArray(data.products)) {
           setProductsList(data.products);
           localStorage.setItem('products', JSON.stringify(data.products));
         }
@@ -1244,6 +1287,32 @@ export const AppProvider = ({ children }) => {
     triggerToast('Features banner reset to defaults.', 'info');
   };
 
+  const updateSocialLinks = async (nextLinks) => {
+    setSocialLinks(nextLinks);
+    localStorage.setItem('socialLinks', JSON.stringify(nextLinks));
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ socialLinks: nextLinks })
+      });
+    } catch (_) {}
+    triggerToast('Social links updated successfully!', 'success');
+  };
+
+  const resetSocialLinks = async () => {
+    setSocialLinks(defaultSocialLinks);
+    localStorage.setItem('socialLinks', JSON.stringify(defaultSocialLinks));
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ socialLinks: defaultSocialLinks })
+      });
+    } catch (_) {}
+    triggerToast('Social links reset to default.', 'info');
+  };
+
   const uploadFeatureIcon = async (file) => {
     if (!file) return null;
     const formData = new FormData();
@@ -1423,6 +1492,32 @@ export const AppProvider = ({ children }) => {
     } catch (_) {}
 
     triggerToast('Product deleted.', 'info');
+  };
+
+  const clearAllProducts = async () => {
+    try {
+      await fetch('/api/products', { method: 'DELETE' });
+    } catch (_) {}
+    setProductsList([]);
+    try {
+      localStorage.setItem('products', JSON.stringify([]));
+    } catch (_) {}
+    triggerToast('All dummy products removed successfully.', 'success');
+  };
+
+  const fetchProductsFromApi = async () => {
+    try {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.products)) {
+        setProductsList(data.products);
+        try {
+          localStorage.setItem('products', JSON.stringify(data.products));
+        } catch (_) {}
+        return data.products;
+      }
+    } catch (_) {}
+    return [];
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
@@ -1911,6 +2006,8 @@ export const AppProvider = ({ children }) => {
         addProduct,
         updateProduct,
         deleteProduct,
+        clearAllProducts,
+        fetchProductsFromApi,
         toggleProductBadge,
         uploadProductImage,
         updateOrderStatus,
@@ -1937,6 +2034,10 @@ export const AppProvider = ({ children }) => {
         updateFeature,
         resetFeatures,
         uploadFeatureIcon,
+        socialLinks,
+        updateSocialLinks,
+        resetSocialLinks,
+        defaultSocialLinks,
         cart,
         addToCart,
         removeFromCart,

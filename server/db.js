@@ -375,9 +375,37 @@ export async function getAllProducts() {
     category: r.category,
     price: Number(r.price),
     discountPrice: r.discount_price !== null ? Number(r.discount_price) : null,
-    stock: r.stock,
-    images: (r.image && r.image.trim()) ? [r.image.trim()] : [],
-    image: r.image || '',
+    stock: Number(r.stock ?? 10),
+    colors: (() => {
+      if (!r.colors) return [];
+      try {
+        const parsed = JSON.parse(r.colors);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (_) {}
+      return String(r.colors).split(',').map((c) => c.trim()).filter(Boolean);
+    })(),
+    images: (() => {
+      if (!r.image) return [];
+      try {
+        const parsed = JSON.parse(r.image);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (_) {}
+      if (typeof r.image === 'string' && r.image.includes('|')) {
+        return r.image.split('|').map(s => s.trim()).filter(Boolean);
+      }
+      return [r.image.trim()];
+    })(),
+    image: (() => {
+      if (!r.image) return '';
+      try {
+        const parsed = JSON.parse(r.image);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+      } catch (_) {}
+      if (typeof r.image === 'string' && r.image.includes('|')) {
+        return r.image.split('|')[0].trim();
+      }
+      return r.image.trim();
+    })(),
     altText: r.alt_text,
     description: r.description,
     isFeatured: !!r.is_featured,
@@ -400,14 +428,17 @@ export async function createProduct(prod) {
   const price = Number(prod.price || 0);
   const discountPrice = prod.discountPrice ? Number(prod.discountPrice) : null;
   const stock = prod.stock !== undefined ? Number(prod.stock) : 10;
-  const image = prod.image || (prod.images && prod.images[0]) || '';
+  const colorsStr = prod.colors ? (Array.isArray(prod.colors) ? JSON.stringify(prod.colors) : String(prod.colors)) : '[]';
+  const image = prod.images && Array.isArray(prod.images) && prod.images.length > 0
+    ? (prod.images.length === 1 ? prod.images[0] : JSON.stringify(prod.images))
+    : (prod.image || '');
   const altText = prod.altText || prod.name;
   const description = prod.description || '';
 
   if (isMysql) {
     await mysqlPool.query(`
-      INSERT INTO products (id, sku, name, brand, category, price, discount_price, stock, image, alt_text, description, is_featured, is_bestseller, is_new)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO products (id, sku, name, brand, category, price, discount_price, stock, colors, image, alt_text, description, is_featured, is_bestseller, is_new)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       id,
       sku,
@@ -417,6 +448,7 @@ export async function createProduct(prod) {
       price,
       discountPrice,
       stock,
+      colorsStr,
       image,
       altText,
       description,
@@ -424,7 +456,7 @@ export async function createProduct(prod) {
       isBestSeller,
       isNewArrival
     ]);
-    return { id, sku, ...prod };
+    return { id, sku, ...prod, colors: Array.isArray(prod.colors) ? prod.colors : [] };
   }
 
   const stmt = sqliteDb.prepare(`
@@ -451,6 +483,10 @@ export async function createProduct(prod) {
 }
 
 export async function updateProductInDb(id, prod) {
+  const colorsStr = prod.colors !== undefined
+    ? (Array.isArray(prod.colors) ? JSON.stringify(prod.colors) : String(prod.colors))
+    : null;
+
   if (isMysql) {
     await mysqlPool.query(`
       UPDATE products SET
@@ -461,6 +497,7 @@ export async function updateProductInDb(id, prod) {
         price = COALESCE(?, price),
         discount_price = COALESCE(?, discount_price),
         stock = COALESCE(?, stock),
+        colors = COALESCE(?, colors),
         image = COALESCE(?, image),
         alt_text = COALESCE(?, alt_text),
         description = COALESCE(?, description),
@@ -476,7 +513,10 @@ export async function updateProductInDb(id, prod) {
       prod.price !== undefined ? Number(prod.price) : null,
       prod.discountPrice !== undefined ? Number(prod.discountPrice) : null,
       prod.stock !== undefined ? Number(prod.stock) : null,
-      prod.image !== undefined ? (prod.image || '') : (prod.images && prod.images[0]) || null,
+      colorsStr,
+      prod.images && Array.isArray(prod.images) && prod.images.length > 0
+        ? (prod.images.length === 1 ? prod.images[0] : JSON.stringify(prod.images))
+        : (prod.image !== undefined ? (prod.image || '') : null),
       prod.altText || null,
       prod.description !== undefined ? prod.description : null,
       prod.isFeatured !== undefined ? (prod.isFeatured ? 1 : 0) : null,
@@ -530,6 +570,22 @@ export async function deleteProductInDb(id) {
     return true;
   }
   sqliteDb.prepare('DELETE FROM products WHERE id = ?').run(id);
+  return true;
+}
+
+export async function clearAllProductsInDb() {
+  if (isMysql && mysqlPool) {
+    try {
+      await mysqlPool.query('DELETE FROM products');
+    } catch (err) {
+      console.error('[Database] MySQL clear products error:', err.message);
+    }
+  }
+  if (sqliteDb) {
+    try {
+      sqliteDb.prepare('DELETE FROM products').run();
+    } catch (_) {}
+  }
   return true;
 }
 
@@ -787,10 +843,10 @@ export async function deleteSettingKey(key) {
  */
 export async function getAllCategories() {
   if (isMysql) {
-    const [rows] = await mysqlPool.query('SELECT id, name, icon, image, count, description, created_at FROM categories ORDER BY name ASC');
+    const [rows] = await mysqlPool.query("SELECT id, name, icon, image, count, description, created_at FROM categories WHERE count > 0 AND id NOT IN ('groceries', 'sneakers', 'gaming-vr') ORDER BY name ASC");
     return rows;
   }
-  return sqliteDb.prepare('SELECT id, name, icon, image, count, description, created_at FROM categories ORDER BY name ASC').all();
+  return sqliteDb.prepare("SELECT id, name, icon, image, count, description, created_at FROM categories WHERE count > 0 AND id NOT IN ('groceries', 'sneakers', 'gaming-vr') ORDER BY name ASC").all();
 }
 
 export async function createCategoryInDb({ id, name, icon = 'RiShoppingBagLine', image = '', description = '', count = 0 }) {

@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
+import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -21,6 +22,7 @@ import {
   createProduct,
   updateProductInDb,
   deleteProductInDb,
+  clearAllProductsInDb,
   getAllOrders,
   getOrderById,
   createOrderInDb,
@@ -254,32 +256,58 @@ app.use('/uploads', express.static(storageDir, {
 // Apply general API rate limiter to all /api routes
 app.use('/api', apiLimiter);
 
-// Multer storage config for uploads (writes directly to storage/uploads/)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, storageDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || '.png';
-    const cleanName = `upload-${Date.now()}${ext}`;
-    cb(null, cleanName);
-  }
-});
+// Multer memory storage (holds upload buffer for Sharp WebP conversion)
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'];
+  const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp', 'image/gif', 'image/bmp'];
   if (allowed.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Only PNG, JPG, WEBP, and SVG image files are allowed.'));
+    cb(new Error('Only standard image files (PNG, JPG, WEBP, SVG) are allowed.'));
   }
 };
 
 const upload = multer({
   storage,
-  limits: { fileSize: 8 * 1024 * 1024 }, // 8 MB
+  limits: { fileSize: 12 * 1024 * 1024 }, // 12 MB max upload limit before compression
   fileFilter
 });
+
+// Universal WebP Image Optimization Helper (Converts raster images to .webp in tiny KB size)
+async function processAndSaveImage(file) {
+  if (!file || !file.buffer) {
+    throw new Error('No valid image buffer provided.');
+  }
+
+  // Preserve SVG vector format
+  if (file.mimetype === 'image/svg+xml') {
+    const filename = `upload-${Date.now()}-${Math.random().toString(36).substring(7)}.svg`;
+    const targetPath = path.join(storageDir, filename);
+    await fs.promises.writeFile(targetPath, file.buffer);
+    return {
+      filename,
+      imageUrl: `/storage/${filename}`,
+      format: 'svg'
+    };
+  }
+
+  // Convert any raster image (PNG, JPG, JPEG, WEBP, BMP, GIF) to highly-optimized WebP
+  const filename = `upload-${Date.now()}-${Math.random().toString(36).substring(7)}.webp`;
+  const targetPath = path.join(storageDir, filename);
+
+  await sharp(file.buffer)
+    .rotate() // auto-orient based on EXIF metadata
+    .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
+    .webp({ quality: 80, effort: 4 })
+    .toFile(targetPath);
+
+  return {
+    filename,
+    imageUrl: `/storage/${filename}`,
+    format: 'webp'
+  };
+}
 
 // ==========================================
 // 1. Health Check
@@ -630,6 +658,29 @@ app.delete('/api/products/:id', async (req, res) => {
   }
 });
 
+// Clear All Dummy Products Endpoint
+app.delete('/api/products', async (req, res) => {
+  try {
+    await clearAllProductsInDb();
+    cache.del('products');
+    cache.del('sitemap');
+    res.json({ success: true, message: 'All products removed from database successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/api/products/clear', async (req, res) => {
+  try {
+    await clearAllProductsInDb();
+    cache.del('products');
+    cache.del('sitemap');
+    res.json({ success: true, message: 'All products removed from database successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // ==========================================
 // Categories API (Dynamic Store Categories with In-Memory Caching)
 // ==========================================
@@ -967,60 +1018,63 @@ app.post('/api/settings', async (req, res) => {
   }
 });
 
-// Universal Storage Image Upload Endpoint
-app.post('/api/upload', upload.single('image'), (req, res) => {
+// Universal Storage Image Upload Endpoint (Auto-converts to WebP in KBs)
+app.post('/api/upload', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No image file provided.' });
     }
-    const imageUrl = `/storage/${req.file.filename}`;
+    const result = await processAndSaveImage(req.file);
     res.json({
       success: true,
-      imageUrl,
-      url: imageUrl,
-      path: imageUrl,
-      filename: req.file.filename,
-      message: 'Image uploaded to storage successfully.'
+      imageUrl: result.imageUrl,
+      url: result.imageUrl,
+      path: result.imageUrl,
+      filename: result.filename,
+      format: result.format,
+      message: 'Image converted to WebP and saved successfully.'
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// Settings & Product Image Upload Route (Saves to storage)
-app.post('/api/settings/upload-image', upload.single('image'), (req, res) => {
+// Settings & Product Image Upload Route (Auto-converts to WebP in KBs)
+app.post('/api/settings/upload-image', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No image file provided.' });
     }
-    const imageUrl = `/storage/${req.file.filename}`;
+    const result = await processAndSaveImage(req.file);
     res.json({
       success: true,
-      imageUrl,
-      url: imageUrl,
-      path: imageUrl,
-      filename: req.file.filename,
-      message: 'Image uploaded to storage successfully.'
+      imageUrl: result.imageUrl,
+      url: result.imageUrl,
+      path: result.imageUrl,
+      filename: result.filename,
+      format: result.format,
+      message: 'Image converted to WebP and saved successfully.'
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// Store Logo Upload (Saves to storage)
+// Store Logo Upload (Auto-converts to WebP or preserves SVG)
 app.post('/api/settings/logo', upload.single('logo'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No logo file provided.' });
     }
-    const logoUrl = `/storage/${req.file.filename}`;
+    const result = await processAndSaveImage(req.file);
+    const logoUrl = result.imageUrl;
     const settings = await updateSettings({ logoUrl });
     cache.del('settings');
     cache.del('sitemap');
 
     res.json({
       success: true,
-      message: 'Logo uploaded and saved successfully to storage.',
+      message: 'Logo converted and saved successfully to storage.',
       logoUrl,
       settings
     });

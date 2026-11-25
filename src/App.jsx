@@ -2,6 +2,7 @@ import React, { lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import MainLayout from './layouts/MainLayout';
+import ScrollToTop from './components/ScrollToTop';
 
 // Lazy loading all pages for optimal performance
 const Home = lazy(() => import('./pages/Home'));
@@ -27,6 +28,7 @@ function App() {
   return (
     <AppProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* Main Layout Shell */}
           <Route path="/" element={<MainLayout />}>

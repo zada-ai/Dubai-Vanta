@@ -6,14 +6,26 @@ import {
   RiFacebookFill,
   RiTiktokFill,
   RiWhatsappFill,
-  RiTwitterFill,
   RiLinkedinBoxFill,
+  RiInstagramFill,
+  RiYoutubeFill,
+  RiGlobalLine,
   RiMailSendLine,
   RiArrowRightSLine,
   RiArrowUpLine,
   RiArrowDownSLine,
   RiArrowUpSLine
 } from 'react-icons/ri';
+
+const SOCIAL_ICONS = {
+  facebook: RiFacebookFill,
+  tiktok: RiTiktokFill,
+  whatsapp: RiWhatsappFill,
+  linkedin: RiLinkedinBoxFill,
+  instagram: RiInstagramFill,
+  youtube: RiYoutubeFill,
+  default: RiGlobalLine
+};
 
 const MotionLink = motion.create(Link);
 
@@ -30,14 +42,6 @@ const categoryLinks = [
   { label: 'Fashion', to: '/shop?category=fashion' },
   { label: 'Home & Living', to: '/shop?category=home-decor' },
   { label: 'Wellness', to: '/shop?category=wellness' }
-];
-
-const socials = [
-  { label: 'Facebook', href: 'https://facebook.com', Icon: RiFacebookFill },
-  { label: 'TikTok', href: 'https://tiktok.com', Icon: RiTiktokFill },
-  { label: 'WhatsApp', href: 'https://wa.me', Icon: RiWhatsappFill },
-  { label: 'Twitter', href: 'https://twitter.com', Icon: RiTwitterFill },
-  { label: 'LinkedIn', href: 'https://linkedin.com', Icon: RiLinkedinBoxFill }
 ];
 
 // Columns reveal one after another when the footer scrolls into view
@@ -94,7 +98,7 @@ const ColumnTitle = ({ children }) => (
 );
 
 const Footer = () => {
-  const { triggerToast, storeLogo, categories = [] } = useApp();
+  const { triggerToast, storeLogo, categories = [], socialLinks = [] } = useApp();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
@@ -195,22 +199,29 @@ const Footer = () => {
               </motion.p>
 
               {/* Social Links */}
-              <div className="flex gap-2.5">
-                {socials.map(({ label, href, Icon }) => (
-                  <motion.a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={label}
-                    variants={pop}
-                    whileHover={{ y: -5, scale: 1.12, rotate: 8 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="p-2.5 rounded-full border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-white hover:bg-primary-600 hover:border-primary-600 hover:shadow-lg hover:shadow-primary-500/30 transition-colors cursor-pointer"
-                  >
-                    <Icon className="w-5 h-5" />
-                  </motion.a>
-                ))}
+              <div className="flex gap-2.5 flex-wrap">
+                {(socialLinks || [])
+                  .filter((item) => item.enabled !== false && item.href && item.platform !== 'twitter' && item.id !== 'twitter')
+                  .map((item) => {
+                    const IconComponent = SOCIAL_ICONS[item.platform?.toLowerCase()] || SOCIAL_ICONS.default;
+                    const altOrTitle = item.altText || item.label || 'Social Link';
+                    return (
+                      <motion.a
+                        key={item.id || item.label}
+                        href={item.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={altOrTitle}
+                        title={altOrTitle}
+                        variants={pop}
+                        whileHover={{ y: -5, scale: 1.12, rotate: 8 }}
+                        whileTap={{ scale: 0.9 }}
+                        className="p-2.5 rounded-full border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-white hover:bg-primary-600 hover:border-primary-600 hover:shadow-lg hover:shadow-primary-500/30 transition-colors cursor-pointer"
+                      >
+                        <IconComponent className="w-5 h-5" />
+                      </motion.a>
+                    );
+                  })}
               </div>
             </motion.div>
 
@@ -245,7 +256,7 @@ const Footer = () => {
                     </>
                   ) : (
                     <>
-                      <span>See More ({allCategoryLinks.length - 4})</span>
+                      <span>See More</span>
                       <RiArrowDownSLine className="w-3.5 h-3.5" />
                     </>
                   )}

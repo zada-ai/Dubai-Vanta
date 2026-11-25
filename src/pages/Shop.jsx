@@ -12,8 +12,11 @@ import { RiSearchLine, RiFilterLine } from 'react-icons/ri';
 
 const Shop = () => {
   const { productsList, categories: appCategories } = useApp();
-  const products = (productsList && productsList.length > 0) ? productsList : initialProducts;
-  const categories = (appCategories && appCategories.length > 0) ? appCategories : initialCategories;
+  const products = productsList || [];
+  const rawCategories = (appCategories && appCategories.length > 0) ? appCategories : initialCategories;
+  const categories = useMemo(() => {
+    return rawCategories.filter(c => c && !['groceries', 'sneakers', 'gaming-vr'].includes(c.id) && (c.count === undefined || Number(c.count) > 0));
+  }, [rawCategories]);
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category') || 'all';
   const searchParam = searchParams.get('search') || '';
