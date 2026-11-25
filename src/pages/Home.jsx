@@ -196,6 +196,14 @@ const Home = () => {
         </AnimatePresence>
       </section>
 
+      {/* Featured Products (Swipeable Horizontal Rail) */}
+      <ProductSwipeSection
+        title="Featured Products"
+        subtitle="Our handpicked design highlights of the season"
+        products={featuredProducts}
+        viewAllLink="/shop"
+      />
+
       {/* Promotional Banner (Admin Managed) */}
       {promoBanner && promoBanner.isVisible !== false && (
         <section className={`relative overflow-hidden rounded-3xl bg-gradient-to-r ${promoBanner.bgGradient || 'from-violet-600 to-indigo-850'} p-6 md:p-12 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8`}>
@@ -254,14 +262,6 @@ const Home = () => {
           )}
         </section>
       )}
-
-      {/* Featured Products (Swipeable Horizontal Rail) */}
-      <ProductSwipeSection
-        title="Featured Products"
-        subtitle="Our handpicked design highlights of the season"
-        products={featuredProducts}
-        viewAllLink="/shop"
-      />
 
       {/* Best Sellers (Swipeable Horizontal Rail) */}
       <ProductSwipeSection
