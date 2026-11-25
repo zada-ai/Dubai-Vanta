@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Private, account and checkout pages
+Disallow: /admin
+Disallow: /api/
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order-success
+Disallow: /orders
+Disallow: /profile
+Disallow: /wishlist
+Disallow: /login
+Disallow: /register
+
+# Internal search result pages
+Disallow: /*?search=
+Disallow: /*&search=
+
+# The live server adds the "Sitemap:" line with the site's real domain (see server/seo.js).
