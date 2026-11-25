@@ -61,7 +61,7 @@ const CategoryChips = ({ categories, counts, totalCount, selected, onSelect }) =
           Categories
         </button>
 
-        <div className="flex-1 min-w-0 flex items-center gap-2 overflow-x-auto no-scrollbar snap-x -mr-4 pr-4">
+        <div className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar snap-x py-0.5">
         <button
           type="button"
           ref={selected === 'all' ? activeChipRef : null}

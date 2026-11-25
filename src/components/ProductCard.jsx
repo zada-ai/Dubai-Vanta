@@ -54,74 +54,61 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Content Section */}
-      <div className="p-3 sm:p-4 flex flex-col flex-grow">
+      <div className="p-2.5 sm:p-4 flex flex-col flex-grow">
         {/* Brand & Category */}
         <div className="flex items-center gap-1.5 mb-1 min-w-0">
-          <span className="text-[10px] tracking-wider uppercase font-semibold text-primary-600 dark:text-primary-400 truncate">
+          <span className="text-[9px] sm:text-[10px] tracking-wider uppercase font-semibold text-primary-600 dark:text-primary-400 truncate">
             {product.brand}
           </span>
-          <span className="text-[10px] text-slate-400">•</span>
-          <span className="text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500 truncate">
+          <span className="text-[9px] sm:text-[10px] text-slate-400">•</span>
+          <span className="text-[9px] sm:text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500 truncate">
             {product.category}
           </span>
         </div>
 
         {/* Product Title */}
-        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200 mb-1.5 line-clamp-2 min-h-[40px]">
+        <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200 mb-1 sm:mb-1.5 line-clamp-2 min-h-[32px] sm:min-h-[40px]">
           <Link to={`/product/${product.id}`}>{product.name}</Link>
         </h3>
 
         {/* Rating */}
-        <div className="flex items-center gap-2 mb-3">
-          <RatingComponent rating={product.rating} size={13} />
-          <span className="text-xs text-slate-400 dark:text-slate-500">({product.reviewsCount})</span>
+        <div className="flex items-center gap-1 sm:gap-2 mb-2 sm:mb-3">
+          <RatingComponent rating={product.rating} size={11} />
+          <span className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">({product.reviewsCount})</span>
         </div>
 
         {/* Footer info: Price & Add to Cart */}
-        <div className="flex items-end justify-between mt-auto pt-3 border-t border-slate-100 dark:border-slate-800/80">
-          <div>
+        <div className="flex items-center justify-between mt-auto pt-2 sm:pt-3 border-t border-slate-100 dark:border-slate-800/80 gap-1 sm:gap-2">
+          <div className="min-w-0 flex-1">
             {isDiscounted ? (
               <div className="flex flex-col">
-                <span className="text-xs text-slate-400 dark:text-slate-500 line-through leading-none">
+                <span className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 line-through leading-none truncate">
                   AED {product.price.toFixed(2)}
                 </span>
-                <span className="text-base font-extrabold text-slate-900 dark:text-white leading-none mt-1">
+                <span className="text-xs sm:text-base font-extrabold text-slate-900 dark:text-white leading-tight mt-0.5 truncate">
                   AED {discountPrice.toFixed(2)}
                 </span>
               </div>
             ) : (
-              <span className="text-base font-extrabold text-slate-900 dark:text-white">
+              <span className="text-xs sm:text-base font-extrabold text-slate-900 dark:text-white leading-tight truncate">
                 AED {product.price.toFixed(2)}
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Quick Add to Cart button - Commented out per user request */}
-            {/* 
-            <button
-              onClick={() => addToCart(product)}
-              className="p-2 sm:p-2.5 rounded-xl bg-slate-900 hover:bg-primary-600 dark:bg-slate-800 dark:hover:bg-primary-600 text-white shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer"
-              aria-label="Add to cart"
-              disabled={product.stock === 0}
-              title="Add to Cart"
-            >
-              <RiShoppingBagLine className="w-4 h-4" />
-            </button> 
-            */}
-
-            {/* Direct Cash on Delivery Button - redirects to dedicated checkout page */}
+          <div className="flex items-center shrink-0">
+            {/* Direct Cash on Delivery Button */}
             <button
               onClick={() => {
                 addToCart(product);
                 navigate('/checkout');
               }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-[10px] sm:text-xs font-bold shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               aria-label="Order with Cash on Delivery"
               disabled={product.stock === 0}
               title={product.stock === 0 ? "Out of Stock" : "Quick Order with Cash on Delivery"}
             >
-              <RiHandCoinLine className="w-4 h-4" />
+              <RiHandCoinLine className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
               <span>COD</span>
             </button>
           </div>

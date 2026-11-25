@@ -90,12 +90,12 @@ const MainLayout = () => {
   }, [location.pathname, seoSettings, storeName]);
 
   return (
-    <div className="flex flex-col min-h-screen relative">
+    <div className="flex flex-col min-h-screen relative overflow-x-hidden w-full max-w-full">
       {/* Sticky header navbar */}
       <Navbar />
 
       {/* Main page content shell with loading Suspense boundary */}
-      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-grow max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
         <Suspense
           fallback={
             <div className="flex items-center justify-center min-h-[400px]">

@@ -143,18 +143,18 @@ const Shop = () => {
       <Breadcrumb items={[{ name: 'Shop', path: '/shop' }]} />
 
       {/* Premium Shop Header Banner */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl h-28 sm:h-44 md:h-56 flex items-center bg-slate-900 text-white sm:mb-4">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl h-24 sm:h-36 md:h-52 flex items-center bg-slate-900 text-white sm:mb-4">
         <img 
           src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200&auto=format&fit=crop&q=80" 
           alt="Premium store catalog collections" 
           className="absolute inset-0 w-full h-full object-cover opacity-45"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent" />
-        <div className="relative z-10 px-6 md:px-12 text-left">
-          <h1 className="text-2xl sm:text-3xl md:text-5xl font-black tracking-tight mb-1 sm:mb-2 line-clamp-1">
+        <div className="relative z-10 px-4 sm:px-6 md:px-12 text-left">
+          <h1 className="text-xl sm:text-3xl md:text-5xl font-black tracking-tight mb-1 sm:mb-2 line-clamp-1">
             {activeCategory ? activeCategory.name : 'Our Catalog'}
           </h1>
-          <p className="text-xs md:text-sm text-slate-300 max-w-md font-medium leading-relaxed line-clamp-2">
+          <p className="text-[11px] sm:text-xs md:text-sm text-slate-300 max-w-md font-medium leading-relaxed line-clamp-2">
             {activeCategory
               ? activeCategory.description || `Browse all ${categoryCounts[activeCategory.id] || 0} products in ${activeCategory.name}.`
               : 'Browse and discover our handpicked collection of premium design products.'}
@@ -172,51 +172,53 @@ const Shop = () => {
       />
 
       {/* Filter and Action Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-4 border-b border-slate-200/60 dark:border-slate-800/80 pb-3 sm:pb-4">
         <div className="text-left">
-          <p className="text-sm font-bold text-slate-700 dark:text-slate-350">
+          <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-350">
             Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
             {activeCategory ? ` in ${activeCategory.name}` : ''}
           </p>
         </div>
 
         {/* Search Input, Category Selector and Filter Trigger */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
-          {/* Category Dropdown (All Screens) */}
-          <select
-            value={filters.category}
-            onChange={(e) => handleCategorySelect(e.target.value)}
-            className="flex-1 sm:flex-initial px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500 cursor-pointer shadow-xs max-w-[140px] sm:max-w-none truncate"
-            aria-label="Filter by Category"
-          >
-            <option value="all">All Categories ({products.length})</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name} ({categoryCounts[cat.id] || 0})
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+          {/* Row with Category Selector and Filter Button on Mobile */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <select
+              value={filters.category}
+              onChange={(e) => handleCategorySelect(e.target.value)}
+              className="flex-1 sm:flex-initial px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500 cursor-pointer shadow-xs truncate"
+              aria-label="Filter by Category"
+            >
+              <option value="all">All Categories ({products.length})</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name} ({categoryCounts[cat.id] || 0})
+                </option>
+              ))}
+            </select>
+
+            {/* Mobile Filter Button (only visible on mobile screens < 768px) */}
+            <button
+              onClick={() => setMobileFiltersOpen(true)}
+              className="md:hidden shrink-0 flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-350 hover:bg-slate-50 cursor-pointer shadow-xs"
+            >
+              <RiFilterLine className="w-3.5 h-3.5" />
+              <span>Filters</span>
+            </button>
+          </div>
 
           {/* Live Search Field */}
-          <div className="relative flex-grow sm:flex-grow-0 sm:w-64">
+          <div className="relative w-full sm:w-60">
             <input
               type="text"
               placeholder="Search in catalog..."
               value={filters.search}
               onChange={handleSearchChange}
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:bg-white shadow-xs"
+              className="w-full pl-8 sm:pl-9 pr-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500 shadow-xs"
             />
-            <RiSearchLine className="absolute left-3 top-3 text-slate-400 w-4 h-4" />
+            <RiSearchLine className="absolute left-2.5 sm:left-3 top-2.5 text-slate-400 w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
-
-          {/* Mobile Filter Button (only visible on mobile screens < 768px) */}
-          <button
-            onClick={() => setMobileFiltersOpen(true)}
-            className="md:hidden flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold text-slate-700 dark:text-slate-350 hover:bg-slate-50 cursor-pointer"
-          >
-            <RiFilterLine className="w-4 h-4" />
-            Filters
-          </button>
         </div>
       </div>
 
@@ -236,7 +238,7 @@ const Shop = () => {
         <main className="md:col-span-3 flex flex-col gap-6">
           {paginatedProducts.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-6">
                 {paginatedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

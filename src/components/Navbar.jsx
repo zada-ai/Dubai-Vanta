@@ -189,21 +189,21 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16 gap-2 sm:gap-4">
           
           {/* Logo / Brand */}
-          <div className="flex-shrink-0 flex items-center">
+          <div className="shrink-0 flex items-center min-w-0">
             <Link to="/" className="flex items-center group">
               {resolvedLogo && !logoError ? (
                 <img
                   src={resolvedLogo}
                   alt={storeName || "Store Logo"}
                   onError={() => setLogoError(true)}
-                  className="h-8 max-h-8 w-auto max-w-[120px] sm:max-w-[150px] object-contain"
+                  className="h-7 sm:h-8 w-auto max-w-[100px] sm:max-w-[150px] object-contain"
                 />
               ) : (
-                <div className="flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-xl bg-slate-900 dark:bg-white flex items-center justify-center font-black text-white dark:text-slate-950 text-base shadow-sm group-hover:scale-105 transition-transform">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-slate-900 dark:bg-white flex items-center justify-center font-black text-white dark:text-slate-950 text-xs sm:text-base shadow-sm group-hover:scale-105 transition-transform shrink-0">
                     {(storeName || 'A').charAt(0).toUpperCase()}
                   </span>
-                  <span className="text-base sm:text-lg font-black tracking-wider text-slate-900 dark:text-white uppercase truncate max-w-[120px] sm:max-w-none">
+                  <span className="text-xs sm:text-base md:text-lg font-black tracking-wider text-slate-900 dark:text-white uppercase truncate max-w-[95px] sm:max-w-none">
                     {storeName || 'AEROSTORE'}
                   </span>
                 </div>
@@ -359,7 +359,7 @@ const Navbar = () => {
           </form>
 
           {/* Action Icons */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
             {/* Search SVG Toggle Icon Button (Visible on mobile screens) */}
             <button
               ref={searchButtonRef}
@@ -368,7 +368,7 @@ const Navbar = () => {
                 setShowSearch((prev) => !prev);
                 if (mobileMenuOpen) setMobileMenuOpen(false);
               }}
-              className={`p-2 sm:p-2.5 rounded-full transition-all sm:hidden cursor-pointer ${
+              className={`p-1.5 sm:p-2.5 rounded-full transition-all sm:hidden cursor-pointer ${
                 showSearch
                   ? 'bg-primary-500/15 text-primary-600 dark:text-primary-400'
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -391,12 +391,12 @@ const Navbar = () => {
             {/* Wishlist Link */}
             <Link
               to="/wishlist"
-              className="p-2 sm:p-2.5 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all relative"
+              className="p-1.5 sm:p-2.5 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all relative"
               aria-label="Wishlist"
             >
               <RiHeartLine className="w-5 h-5" />
               {wishlistCount > 0 && (
-                <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-4 h-4 rounded-full bg-rose-500 text-white font-bold text-[9px] flex items-center justify-center leading-none shadow-xs">
+                <span className="absolute top-0.5 right-0.5 sm:top-1.5 sm:right-1.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-rose-500 text-white font-bold text-[8px] sm:text-[9px] flex items-center justify-center leading-none shadow-xs">
                   {wishlistCount}
                 </span>
               )}
@@ -405,12 +405,12 @@ const Navbar = () => {
             {/* Cart Link */}
             <Link
               to="/cart"
-              className="p-2 sm:p-2.5 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all relative"
+              className="p-1.5 sm:p-2.5 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all relative"
               aria-label="Cart"
             >
               <RiShoppingBagLine className="w-5 h-5" />
               {cartCount > 0 && (
-                <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-4 h-4 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold text-[9px] flex items-center justify-center leading-none shadow-xs">
+                <span className="absolute top-0.5 right-0.5 sm:top-1.5 sm:right-1.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold text-[8px] sm:text-[9px] flex items-center justify-center leading-none shadow-xs">
                   {cartCount}
                 </span>
               )}
