@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node init && vite",
     "server": "node server/index.js",
     "migrate": "node server/migrate.js",
-    "build": "vite build",
+    "build": "node init && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },

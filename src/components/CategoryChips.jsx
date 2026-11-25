@@ -4,9 +4,9 @@ import { RiApps2Line, RiCloseLine, RiSearchLine, RiCheckLine } from 'react-icons
 /**
  * Mobile-first category switcher for the shop page, built for stores with many categories:
  *  - a swipeable row of chips for quick switching
- *  - an "All categories" bottom sheet with search, thumbnails and product counts
+ *  - an "All categories" bottom sheet with search and thumbnails
  */
-const CategoryChips = ({ categories, counts, totalCount, selected, onSelect }) => {
+const CategoryChips = ({ categories, selected, onSelect }) => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [query, setQuery] = useState('');
   const activeChipRef = useRef(null);
@@ -44,8 +44,6 @@ const CategoryChips = ({ categories, counts, totalCount, selected, onSelect }) =
         : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800'
     }`;
 
-  const countClass = (active) =>
-    `text-[10px] font-semibold ${active ? 'text-white/70 dark:text-slate-500' : 'text-slate-400'}`;
 
   return (
     <div className="w-full">
@@ -68,7 +66,7 @@ const CategoryChips = ({ categories, counts, totalCount, selected, onSelect }) =
           onClick={() => onSelect('all')}
           className={chipClass(selected === 'all')}
         >
-          All <span className={countClass(selected === 'all')}>{totalCount}</span>
+          All
         </button>
 
         {categories.map((cat) => {
@@ -81,7 +79,7 @@ const CategoryChips = ({ categories, counts, totalCount, selected, onSelect }) =
               onClick={() => onSelect(cat.id)}
               className={chipClass(active)}
             >
-              {cat.name} <span className={countClass(active)}>{counts[cat.id] || 0}</span>
+              {cat.name}
             </button>
           );
         })}
@@ -101,7 +99,7 @@ const CategoryChips = ({ categories, counts, totalCount, selected, onSelect }) =
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
               <div className="text-left">
                 <h3 className="text-base font-black text-slate-900 dark:text-white">All Categories</h3>
-                <p className="text-[11px] text-slate-400">{categories.length} categories · {totalCount} products</p>
+                <p className="text-[11px] text-slate-400">{categories.length} categories</p>
               </div>
               <button
                 type="button"
@@ -130,7 +128,6 @@ const CategoryChips = ({ categories, counts, totalCount, selected, onSelect }) =
               {!query && (
                 <SheetRow
                   name="All Products"
-                  count={totalCount}
                   active={selected === 'all'}
                   onClick={() => choose('all')}
                 />
@@ -140,7 +137,6 @@ const CategoryChips = ({ categories, counts, totalCount, selected, onSelect }) =
                   key={cat.id}
                   name={cat.name}
                   image={cat.image}
-                  count={counts[cat.id] || 0}
                   active={selected === cat.id}
                   onClick={() => choose(cat.id)}
                 />
@@ -156,7 +152,7 @@ const CategoryChips = ({ categories, counts, totalCount, selected, onSelect }) =
   );
 };
 
-const SheetRow = ({ name, image, count, active, onClick }) => (
+const SheetRow = ({ name, image, active, onClick }) => (
   <button
     type="button"
     onClick={onClick}
@@ -171,7 +167,6 @@ const SheetRow = ({ name, image, count, active, onClick }) => (
       <span className={`block text-sm font-bold truncate ${active ? 'text-primary-600 dark:text-primary-400' : 'text-slate-800 dark:text-slate-100'}`}>
         {name}
       </span>
-      <span className="block text-[11px] text-slate-400">{count} products</span>
     </span>
     {active && <RiCheckLine className="shrink-0 w-5 h-5 text-primary-600 dark:text-primary-400" />}
   </button>

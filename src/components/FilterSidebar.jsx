@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import SelectField from './SelectField';
 import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { categories as defaultCategories } from '../data/mockData';
@@ -142,16 +143,17 @@ const FilterSidebar = ({ filters, setFilters, onClose, onCategorySelect, onSearc
       {/* Sorting options */}
       <div className="flex flex-col gap-2">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Sort By</label>
-        <select
+        <SelectField
           value={filters.sortBy}
           onChange={handleSortChange}
-          className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-hidden focus:ring-2 focus:ring-primary-500 transition-all cursor-pointer"
-        >
-          <option value="latest">Latest Arrivals</option>
-          <option value="price-low">Price: Low to High</option>
-          <option value="price-high">Price: High to Low</option>
-          <option value="popular">Popularity</option>
-        </select>
+          ariaLabel="Sort products"
+          options={[
+            { value: 'latest', label: 'Latest Arrivals' },
+            { value: 'price-low', label: 'Price: Low to High' },
+            { value: 'price-high', label: 'Price: High to Low' },
+            { value: 'popular', label: 'Popularity' },
+          ]}
+        />
       </div>
 
       {/* Categories filter */}

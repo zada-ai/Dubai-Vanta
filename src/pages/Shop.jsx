@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import SelectField from '../components/SelectField';
 import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { products as initialProducts, categories as initialCategories } from '../data/mockData';
@@ -165,8 +166,6 @@ const Shop = () => {
       {/* Mobile & tablet category switcher (desktop uses the sidebar) */}
       <CategoryChips
         categories={categories}
-        counts={categoryCounts}
-        totalCount={products.length}
         selected={filters.category}
         onSelect={handleCategorySelect}
       />
@@ -184,19 +183,16 @@ const Shop = () => {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
           {/* Row with Category Selector and Filter Button on Mobile */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <select
+            <SelectField
+              className="flex-1 sm:w-60 sm:flex-initial"
               value={filters.category}
               onChange={(e) => handleCategorySelect(e.target.value)}
-              className="flex-1 sm:flex-initial px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-primary-500 cursor-pointer shadow-xs truncate"
-              aria-label="Filter by Category"
-            >
-              <option value="all">All Categories ({products.length})</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name} ({categoryCounts[cat.id] || 0})
-                </option>
-              ))}
-            </select>
+              ariaLabel="Filter by Category"
+              options={[
+                { value: 'all', label: 'All Categories' },
+                ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
+              ]}
+            />
 
             {/* Mobile Filter Button (only visible on mobile screens < 768px) */}
             <button

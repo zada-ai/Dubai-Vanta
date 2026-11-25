@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SelectField from './SelectField';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
@@ -329,18 +330,7 @@ const CashOnDeliveryModal = () => {
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
                 Emirate (City) *
               </label>
-              <select
-                name="emirate"
-                value={formData.emirate}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-bold focus:outline-hidden focus:ring-2 focus:ring-primary-500"
-              >
-                {UAE_EMIRATES.map((em) => (
-                  <option key={em} value={em}>
-                    {em}
-                  </option>
-                ))}
-              </select>
+              <SelectField name="emirate" value={formData.emirate} onChange={handleChange} options={UAE_EMIRATES} ariaLabel="Emirate" />
             </div>
 
             {/* Area / Neighborhood */}
@@ -398,21 +388,7 @@ const CashOnDeliveryModal = () => {
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
                 Preferred Delivery Time Slot
               </label>
-              <div className="relative">
-                <RiTimeLine className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                <select
-                  name="deliveryTime"
-                  value={formData.deliveryTime}
-                  onChange={handleChange}
-                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-primary-500"
-                >
-                  {DELIVERY_TIMES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SelectField name="deliveryTime" value={formData.deliveryTime} onChange={handleChange} options={DELIVERY_TIMES} icon={RiTimeLine} ariaLabel="Preferred delivery time slot" />
             </div>
 
             {/* Cash Change Note */}
@@ -420,21 +396,7 @@ const CashOnDeliveryModal = () => {
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
                 Cash Change Note for Rider
               </label>
-              <div className="relative">
-                <RiMoneyDollarCircleLine className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                <select
-                  name="changeNote"
-                  value={formData.changeNote}
-                  onChange={handleChange}
-                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-primary-500"
-                >
-                  {CHANGE_OPTIONS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SelectField name="changeNote" value={formData.changeNote} onChange={handleChange} options={CHANGE_OPTIONS} icon={RiMoneyDollarCircleLine} ariaLabel="Cash on delivery note" />
             </div>
 
             {/* Driver Instructions */}

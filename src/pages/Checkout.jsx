@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SelectField from '../components/SelectField';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Breadcrumb from '../components/Breadcrumb';
@@ -282,18 +283,7 @@ const Checkout = () => {
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Emirate (State) *
                 </label>
-                <select
-                  name="emirate"
-                  value={shippingDetails.emirate}
-                  onChange={handleInputChange}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100 font-semibold cursor-pointer"
-                >
-                  {UAE_EMIRATES.map((em) => (
-                    <option key={em} value={em}>
-                      {em}
-                    </option>
-                  ))}
-                </select>
+                <SelectField name="emirate" value={shippingDetails.emirate} onChange={handleInputChange} options={UAE_EMIRATES} ariaLabel="Emirate" />
               </div>
 
               {/* Area / Neighborhood */}
@@ -348,18 +338,7 @@ const Checkout = () => {
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Preferred Delivery Time Slot
                 </label>
-                <select
-                  name="deliveryTime"
-                  value={shippingDetails.deliveryTime}
-                  onChange={handleInputChange}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100 font-semibold cursor-pointer"
-                >
-                  {DELIVERY_TIMES.map((time) => (
-                    <option key={time} value={time}>
-                      {time}
-                    </option>
-                  ))}
-                </select>
+                <SelectField name="deliveryTime" value={shippingDetails.deliveryTime} onChange={handleInputChange} options={DELIVERY_TIMES} ariaLabel="Preferred delivery time slot" />
               </div>
 
               {/* Cash on Delivery Note */}
@@ -367,18 +346,7 @@ const Checkout = () => {
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Cash on Delivery Note
                 </label>
-                <select
-                  name="changeNote"
-                  value={shippingDetails.changeNote}
-                  onChange={handleInputChange}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-850 dark:text-slate-100 font-semibold cursor-pointer"
-                >
-                  {CHANGE_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+                <SelectField name="changeNote" value={shippingDetails.changeNote} onChange={handleInputChange} options={CHANGE_OPTIONS} ariaLabel="Cash on delivery note" />
               </div>
 
               {/* Delivery Instructions */}
