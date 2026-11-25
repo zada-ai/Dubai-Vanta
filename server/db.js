@@ -1,4 +1,8 @@
-import { DatabaseSync } from 'node:sqlite';
+let DatabaseSync = null;
+try {
+  const sqliteModule = await import('node:sqlite');
+  DatabaseSync = sqliteModule.DatabaseSync;
+} catch (_) {}
 import mysql from 'mysql2/promise';
 import crypto from 'crypto';
 import path from 'path';
@@ -62,7 +66,7 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 const dbPath = process.env.DB_PATH || path.join(dataDir, 'store.db');
-export const sqliteDb = new DatabaseSync(dbPath);
+export const sqliteDb = DatabaseSync ? new DatabaseSync(dbPath) : null;
 export const db = sqliteDb; // backwards compatibility
 
 // Default Seed Blogs
