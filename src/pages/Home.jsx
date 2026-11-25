@@ -8,11 +8,9 @@ import CategoryCard from '../components/CategoryCard';
 import ProductCard from '../components/ProductCard';
 import RatingComponent from '../components/RatingComponent';
 import WriteReviewModal from '../components/WriteReviewModal';
-import { categories as initialCategories, products as initialProducts, testimonials } from '../data/mockData';
+import { categories as initialCategories, testimonials } from '../data/mockData';
 import { 
   RiArrowRightLine, 
-  RiArrowLeftSLine, 
-  RiArrowRightSLine, 
   RiArrowUpSLine,
   RiEditLine,
   RiShieldCheckFill,
@@ -506,7 +504,6 @@ const Home = () => {
               </div>
             </div>
 
-            {/* Micro Helper */}
             {/* Micro Helper */}
             <div className="flex items-center justify-between text-xs text-slate-400 px-1 -mt-2">
               <span className="inline-flex items-center gap-1.5">
