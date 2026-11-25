@@ -1519,7 +1519,6 @@ export const AppProvider = ({ children }) => {
     } catch (_) {}
     return [];
   };
-
   const updateOrderStatus = async (orderId, newStatus) => {
     setOrders((prev) =>
       prev.map((ord) => (ord.orderId === orderId ? { ...ord, status: newStatus } : ord))

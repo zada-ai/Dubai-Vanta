@@ -28,4 +28,3 @@ config.bat
 # Local symlink to storage/uploads (created per machine)
 public/uploads
 
-.env
