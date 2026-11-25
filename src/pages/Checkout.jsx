@@ -13,7 +13,8 @@ import {
   RiCheckLine,
   RiMapPinLine,
   RiTimeLine,
-  RiPhoneLine
+  RiPhoneLine,
+  RiSubtractLine
 } from 'react-icons/ri';
 
 const UAE_EMIRATES = [
@@ -51,7 +52,8 @@ const Checkout = () => {
     getTaxAmount,
     getCartTotal,
     createOrder,
-    triggerToast
+    triggerToast,
+    removeFromCart
   } = useApp();
 
   // Set default shipping form details (UAE & Dubai default)
@@ -604,19 +606,37 @@ const Checkout = () => {
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-5">Checkout Summary</h3>
 
             {/* Cart products check */}
-            <div className="flex flex-col gap-3.5 mb-5 max-h-[180px] overflow-y-auto pr-2 border-b border-slate-100 dark:border-slate-800 pb-5">
+            <div className="flex flex-col gap-3.5 mb-5 max-h-[200px] overflow-y-auto pr-2 border-b border-slate-100 dark:border-slate-800 pb-5">
               {cart.map((item) => (
-                <div key={item.cartItemId} className="flex gap-3 items-center">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-10 h-10 rounded-lg object-cover bg-slate-50 dark:bg-slate-950"
-                  />
+                <div key={item.cartItemId} className="flex gap-2.5 items-center group">
+                  {/* Remove Minus Button (Only shown when more than 1 item in checkout) */}
+                  {cart.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        removeFromCart(item.cartItemId);
+                        triggerToast(`Removed "${item.name}" from order`, 'info');
+                      }}
+                      className="w-5 h-5 rounded-full bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/70 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/80 flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-2xs hover:scale-110 active:scale-95"
+                      title="Remove product from order"
+                      aria-label={`Remove ${item.name}`}
+                    >
+                      <RiSubtractLine className="w-3 h-3" />
+                    </button>
+                  )}
+
+                  <div className="relative shrink-0">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-10 h-10 rounded-lg object-cover bg-slate-50 dark:bg-slate-950"
+                    />
+                  </div>
                   <div className="flex-grow min-w-0">
                     <h5 className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{item.name}</h5>
                     <p className="text-[10px] text-slate-400">Qty: {item.quantity} • {item.color}</p>
                   </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 shrink-0">
                     AED {((item.discountPrice || item.price) * item.quantity).toFixed(2)}
                   </span>
                 </div>
