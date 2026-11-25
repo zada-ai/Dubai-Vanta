@@ -1,68 +1,76 @@
 <?php
-// High-performance reverse proxy with Native PHP PDO Fallback for Node.js API
-$nodePort = 5000;
-$requestUri = $_SERVER['REQUEST_URI'] ?? '/';
-$targetUrl = 'http://127.0.0.1:' . $nodePort . $requestUri;
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $targetUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HEADER, true);
-curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $_SERVER['REQUEST_METHOD'] ?? 'GET');
-curl_setopt($ch, CURLOPT_TIMEOUT, 3); // Fast 3-second timeout
+try {
+    // High-performance reverse proxy with Native PHP PDO Fallback for Node.js API
+    $nodePort = 5000;
+    $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+    $targetUrl = 'http://127.0.0.1:' . $nodePort . $requestUri;
 
-// Forward incoming HTTP headers (Authorization, Content-Type, etc.)
-$forwardHeaders = [];
-if (function_exists('getallheaders')) {
-    foreach (getallheaders() as $name => $val) {
-        $lower = strtolower($name);
-        if ($lower !== 'host' && $lower !== 'content-length') {
-            $forwardHeaders[] = "$name: $val";
-        }
-    }
-}
-curl_setopt($ch, CURLOPT_HTTPHEADER, $forwardHeaders);
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $targetUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $_SERVER['REQUEST_METHOD'] ?? 'GET');
+    curl_setopt($ch, CURLOPT_TIMEOUT, 3); // Fast 3-second timeout
 
-// Forward payload for POST / PUT / PATCH / DELETE
-$input = file_get_contents('php://input');
-if (!empty($input)) {
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $input);
-}
-
-// Forward cookies for JWT refresh tokens
-if (!empty($_COOKIE)) {
-    $cookies = [];
-    foreach ($_COOKIE as $k => $v) {
-        $cookies[] = "$k=$v";
-    }
-    curl_setopt($ch, CURLOPT_COOKIE, implode('; ', $cookies));
-}
-
-$response = curl_exec($ch);
-
-// If Node.js responded successfully, return its response
-if ($response !== false) {
-    $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $headersStr = substr($response, 0, $headerSize);
-    $body = substr($response, $headerSize);
-    curl_close($ch);
-
-    // If Node.js returned a valid response (< 500), serve it directly
-    if ($httpCode < 500) {
-        http_response_code($httpCode);
-        $headers = explode("\r\n", $headersStr);
-        foreach ($headers as $h) {
-            if (!empty($h) && !preg_match('/^Transfer-Encoding:/i', $h) && !preg_match('/^HTTP\//i', $h)) {
-                header($h, false);
+    // Forward incoming HTTP headers (Authorization, Content-Type, etc.)
+    $forwardHeaders = [];
+    if (function_exists('getallheaders')) {
+        foreach (getallheaders() as $name => $val) {
+            $lower = strtolower($name);
+            if ($lower !== 'host' && $lower !== 'content-length') {
+                $forwardHeaders[] = "$name: $val";
             }
         }
-        echo $body;
-        exit;
     }
-} else {
-    curl_close($ch);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $forwardHeaders);
+
+    // Forward payload for POST / PUT / PATCH / DELETE
+    $input = file_get_contents('php://input');
+    if (!empty($input)) {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $input);
+    }
+
+    // Forward cookies for JWT refresh tokens
+    if (!empty($_COOKIE)) {
+        $cookies = [];
+        foreach ($_COOKIE as $k => $v) {
+            $cookies[] = "$k=$v";
+        }
+        curl_setopt($ch, CURLOPT_COOKIE, implode('; ', $cookies));
+    }
+
+    $response = curl_exec($ch);
+
+    // If Node.js responded successfully, return its response
+    if ($response !== false) {
+        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $headersStr = substr($response, 0, $headerSize);
+        $body = substr($response, $headerSize);
+        curl_close($ch);
+
+        // If Node.js returned a valid response (< 500), serve it directly
+        if ($httpCode > 0 && $httpCode < 500) {
+            http_response_code($httpCode);
+            $headers = explode("\r\n", $headersStr);
+            foreach ($headers as $h) {
+                if (!empty($h) && !preg_match('/^Transfer-Encoding:/i', $h) && !preg_match('/^HTTP\//i', $h)) {
+                    header($h, false);
+                }
+            }
+            echo $body;
+            exit;
+        }
+    } else {
+        curl_close($ch);
+    }
+} catch (Throwable $e) {
+    // Continue to PDO fallback if curl failed
 }
 
 // =========================================================================
@@ -70,10 +78,14 @@ if ($response !== false) {
 // =========================================================================
 
 // Try to auto-resurrect Node.js daemon in background
-@shell_exec('nohup /home/u383896879/.nvm/versions/node/v20.20.2/bin/node ' . __DIR__ . '/server/index.js > ' . __DIR__ . '/server.log 2>&1 &');
-@shell_exec('nohup node ' . __DIR__ . '/server/index.js > ' . __DIR__ . '/server.log 2>&1 &');
+if (function_exists('shell_exec')) {
+    @shell_exec('nohup /home/u383896879/.nvm/versions/node/v20.20.2/bin/node ' . __DIR__ . '/server/index.js > ' . __DIR__ . '/server.log 2>&1 &');
+    @shell_exec('nohup node ' . __DIR__ . '/server/index.js > ' . __DIR__ . '/server.log 2>&1 &');
+}
 
+$pdo_error = null;
 function get_pdo_connection() {
+    global $pdo_error;
     static $pdo = null;
     if ($pdo !== null) return $pdo;
 
@@ -109,7 +121,8 @@ function get_pdo_connection() {
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
         ]);
         return $pdo;
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
+        $pdo_error = $e->getMessage();
         return null;
     }
 }
@@ -120,7 +133,8 @@ if (!$pdo) {
     header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
-        'message' => 'Backend database temporarily unavailable. Please retry in a few seconds.'
+        'message' => 'Backend database temporarily unavailable. Please retry in a few seconds.',
+        'db_error' => $pdo_error ?? 'Unknown connection error'
     ]);
     exit;
 }
