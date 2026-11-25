@@ -103,13 +103,13 @@ const ProductSwipeSection = ({
         <div
           ref={scrollRef}
           onScroll={checkScroll}
-          className="flex gap-3 sm:gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory py-2 scrollbar-none"
+          className="flex gap-2.5 sm:gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory py-1.5 sm:py-2 scrollbar-none"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {products.map((product) => (
             <div
               key={product.id}
-              className="w-[200px] sm:w-[240px] md:w-[260px] lg:w-[270px] shrink-0 snap-start flex flex-col"
+              className="w-[145px] sm:w-[210px] md:w-[240px] lg:w-[260px] shrink-0 snap-start flex flex-col"
             >
               <ProductCard product={product} />
             </div>
