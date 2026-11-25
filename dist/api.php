@@ -1,7 +1,13 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Never print PHP errors to visitors (they leak paths, queries and credentials).
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+ini_set('log_errors', 1);
 error_reporting(E_ALL);
+
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: SAMEORIGIN');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 
 try {
     // High-performance reverse proxy with Native PHP PDO Fallback for Node.js API
@@ -13,7 +19,7 @@ try {
     curl_setopt($ch, CURLOPT_URL, $targetUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HEADER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $_SERVER['REQUEST_METHOD'] ?? 'GET');
     curl_setopt($ch, CURLOPT_TIMEOUT, 3); // Fast 3-second timeout
 
@@ -83,36 +89,35 @@ if (function_exists('shell_exec')) {
     @shell_exec('nohup node ' . __DIR__ . '/server/index.js > ' . __DIR__ . '/server.log 2>&1 &');
 }
 
+// Read configuration from .env only (no credentials are hard-coded in this file).
+function env_config() {
+    static $cfg = null;
+    if ($cfg !== null) return $cfg;
+    $cfg = [];
+    $envFile = __DIR__ . '/.env';
+    if (is_readable($envFile)) {
+        foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+            $line = trim($line);
+            if ($line === '' || $line[0] === '#' || strpos($line, '=') === false) continue;
+            list($k, $v) = explode('=', $line, 2);
+            $cfg[trim($k)] = trim(trim($v), '"\'');
+        }
+    }
+    return $cfg;
+}
+
 $pdo_error = null;
 function get_pdo_connection() {
     global $pdo_error;
     static $pdo = null;
     if ($pdo !== null) return $pdo;
 
-    $envFile = __DIR__ . '/.env';
-    $dbHost = 'localhost';
-    $dbPort = 3306;
-    $dbName = 'u383896879_dubai_vanta';
-    $dbUser = 'u383896879_vanta_user';
-    $dbPass = 'Dubai2026Vanta@';
-
-    if (file_exists($envFile)) {
-        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (empty($line) || strpos($line, '#') === 0) continue;
-            if (strpos($line, '=') !== false) {
-                list($k, $v) = explode('=', $line, 2);
-                $k = trim($k);
-                $v = trim(trim($v), '"\'');
-                if ($k === 'DB_HOST') $dbHost = $v;
-                if ($k === 'DB_PORT') $dbPort = (int)$v;
-                if ($k === 'DB_NAME') $dbName = $v;
-                if ($k === 'DB_USER') $dbUser = $v;
-                if ($k === 'DB_PASSWORD') $dbPass = $v;
-            }
-        }
-    }
+    $cfg = env_config();
+    $dbHost = $cfg['DB_HOST'] ?? 'localhost';
+    $dbPort = (int)($cfg['DB_PORT'] ?? 3306);
+    $dbName = $cfg['DB_NAME'] ?? '';
+    $dbUser = $cfg['DB_USER'] ?? '';
+    $dbPass = $cfg['DB_PASSWORD'] ?? '';
 
     try {
         $dsn = "mysql:host=$dbHost;port=$dbPort;dbname=$dbName;charset=utf8mb4";
@@ -131,11 +136,77 @@ $pdo = get_pdo_connection();
 if (!$pdo) {
     http_response_code(502);
     header('Content-Type: application/json');
+    error_log('[api.php] DB connection failed: ' . ($pdo_error ?? 'unknown'));
     echo json_encode([
         'success' => false,
-        'message' => 'Backend database temporarily unavailable. Please retry in a few seconds.',
-        'db_error' => $pdo_error ?? 'Unknown connection error'
+        'message' => 'Backend database temporarily unavailable. Please retry in a few seconds.'
     ]);
+    exit;
+}
+
+// ---- Auth helpers (mirror the Node backend's JWT check) ----
+function b64url_decode($data) {
+    $data = strtr($data, '-_', '+/');
+    $pad = strlen($data) % 4;
+    if ($pad) $data .= str_repeat('=', 4 - $pad);
+    return base64_decode($data, true);
+}
+
+function verify_jwt_hs256($token, $secret) {
+    if (!$token || !$secret) return null;
+    $parts = explode('.', $token);
+    if (count($parts) !== 3) return null;
+    list($h, $p, $sig) = $parts;
+    $header = json_decode(b64url_decode($h) ?: '', true);
+    if (!is_array($header) || ($header['alg'] ?? '') !== 'HS256') return null;
+    $expected = rtrim(strtr(base64_encode(hash_hmac('sha256', "$h.$p", $secret, true)), '+/', '-_'), '=');
+    if (!hash_equals($expected, $sig)) return null;
+    $payload = json_decode(b64url_decode($p) ?: '', true);
+    if (!is_array($payload)) return null;
+    if (isset($payload['exp']) && time() >= (int)$payload['exp']) return null;
+    return $payload;
+}
+
+function current_user($pdo) {
+    $cfg = env_config();
+    $accessSecret = $cfg['JWT_ACCESS_SECRET'] ?? '';
+    $refreshSecret = $cfg['JWT_REFRESH_SECRET'] ?? '';
+    $payload = null;
+
+    $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+    if (!$auth && function_exists('getallheaders')) {
+        foreach (getallheaders() as $k => $v) {
+            if (strtolower($k) === 'authorization') { $auth = $v; break; }
+        }
+    }
+    if (stripos($auth, 'Bearer ') === 0) {
+        $payload = verify_jwt_hs256(trim(substr($auth, 7)), $accessSecret);
+    }
+    if (!$payload && !empty($_COOKIE['refreshToken'])) {
+        $payload = verify_jwt_hs256($_COOKIE['refreshToken'], $refreshSecret);
+    }
+    if (!$payload || empty($payload['id'])) return null;
+
+    $stmt = $pdo->prepare('SELECT id, email, role FROM users WHERE id = :id LIMIT 1');
+    $stmt->execute([':id' => $payload['id']]);
+    return $stmt->fetch() ?: null;
+}
+
+function is_admin_user($user) {
+    return $user && in_array($user['role'] ?? '', ['admin', 'supermanager', 'superadmin'], true);
+}
+
+function deny($code, $message) {
+    http_response_code($code);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'message' => $message]);
+    exit;
+}
+
+function server_error($e) {
+    error_log('[api.php] ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Something went wrong. Please try again.']);
     exit;
 }
 
@@ -192,9 +263,7 @@ if ($method === 'GET' && preg_match('#^/api/products/?$#', $path)) {
         echo json_encode(['success' => true, 'count' => count($products), 'products' => $products]);
         exit;
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        exit;
+        server_error($e);
     }
 }
 
@@ -242,9 +311,7 @@ if ($method === 'GET' && preg_match('#^/api/products/([^/]+)$#', $path, $matches
         }
         exit;
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        exit;
+        server_error($e);
     }
 }
 
@@ -256,9 +323,7 @@ if ($method === 'GET' && preg_match('#^/api/categories/?$#', $path)) {
         echo json_encode(['success' => true, 'count' => count($categories), 'categories' => $categories]);
         exit;
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        exit;
+        server_error($e);
     }
 }
 
@@ -275,16 +340,21 @@ if ($method === 'GET' && preg_match('#^/api/settings/?$#', $path)) {
         echo json_encode(['success' => true, 'settings' => $settings]);
         exit;
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        exit;
+        server_error($e);
     }
 }
 
 // 5. GET /api/orders (List all orders for Super Admin & syncing)
 if ($method === 'GET' && preg_match('#^/api/orders/?$#', $path)) {
+    $authUser = current_user($pdo);
+    if (!$authUser) deny(401, 'Please log in to view orders.');
     try {
-        $stmt = $pdo->query("SELECT * FROM orders ORDER BY created_at DESC");
+        if (is_admin_user($authUser)) {
+            $stmt = $pdo->query("SELECT * FROM orders ORDER BY created_at DESC");
+        } else {
+            $stmt = $pdo->prepare("SELECT * FROM orders WHERE user_id = :uid OR LOWER(customer_email) = LOWER(:email) ORDER BY created_at DESC");
+            $stmt->execute([':uid' => $authUser['id'], ':email' => $authUser['email'] ?? '']);
+        }
         $rows = $stmt->fetchAll();
         $orders = [];
         foreach ($rows as $r) {
@@ -342,9 +412,7 @@ if ($method === 'GET' && preg_match('#^/api/orders/?$#', $path)) {
         ]);
         exit;
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        exit;
+        server_error($e);
     }
 }
 
@@ -387,9 +455,7 @@ if ($method === 'GET' && preg_match('#^/api/orders/([^/]+)$#', $path, $matches))
         }
         exit;
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        exit;
+        server_error($e);
     }
 }
 
@@ -407,8 +473,8 @@ if ($method === 'POST' && preg_match('#^/api/orders/?$#', $path)) {
         $items = !empty($body['items']) ? json_encode($body['items']) : '[]';
         $totalAmount = (float)($body['totalAmount'] ?? ($body['totals']['total'] ?? 0));
         $payMethod = is_string($body['paymentMethod'] ?? null) ? $body['paymentMethod'] : 'Cash on Delivery';
-        $orderStatus = $body['orderStatus'] ?? 'Processing';
-        $paymentStatus = $body['paymentStatus'] ?? ($payMethod === 'Cash on Delivery' ? 'Pending (Pay upon arrival)' : 'Paid');
+        $orderStatus = 'Processing';
+        $paymentStatus = $payMethod === 'Cash on Delivery' ? 'Pending (Pay upon arrival)' : 'Pending';
 
         $stmt = $pdo->prepare("
             INSERT INTO orders (id, user_id, customer_name, customer_email, customer_phone, shipping_address, items, total_amount, currency, payment_method, payment_status, order_status)
@@ -438,14 +504,13 @@ if ($method === 'POST' && preg_match('#^/api/orders/?$#', $path)) {
         ]);
         exit;
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        exit;
+        server_error($e);
     }
 }
 
 // 8. PUT /api/orders/:id/status (Super Admin update order status)
 if (($method === 'PUT' || $method === 'PATCH') && preg_match('#^/api/orders/([^/]+)/status/?$#', $path, $matches)) {
+    if (!is_admin_user(current_user($pdo))) deny(403, 'You do not have permission to do this.');
     $orderId = urldecode($matches[1]);
     $cleanId = preg_replace('/^ORD-/i', '', $orderId);
     $body = json_decode($input, true) ?: [];
@@ -458,12 +523,10 @@ if (($method === 'PUT' || $method === 'PATCH') && preg_match('#^/api/orders/([^/
             ':prefixed' => 'ORD-' . $cleanId,
             ':clean' => $cleanId
         ]);
-        echo json_encode(['success' => true, 'message' => "Order status updated to {$status}"]);
+        echo json_encode(['success' => true, 'message' => 'Order status updated to ' . (string)$status]);
         exit;
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        exit;
+        server_error($e);
     }
 }
 

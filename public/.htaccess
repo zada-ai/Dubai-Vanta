@@ -1,0 +1,51 @@
+# Never show folder listings
+Options -Indexes
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 0. SECURITY: block files that must never be downloadable from the web
+  #    - hidden files/folders (.env, .git, .tmp, .htaccess ...), except .well-known
+  RewriteRule (^|/)\.(?!well-known(/|$)) - [F,L]
+  #    - source code, server code, build tooling, dependencies
+  RewriteRule ^(server|src|node_modules|init)(/|$) - [F,L,NC]
+  RewriteRule ^(package(-lock)?\.json|vite\.config\.[cm]?js|app\.cjs|README\.md)$ - [F,L,NC]
+  #    - database dumps, logs, spreadsheets, backups, config files
+  RewriteRule \.(sql|sqlite3?|db|log|csv|xlsx?|bak|old|orig|swp|ini|conf|ya?ml|lock|sh|md)$ - [F,L,NC]
+  #    - nothing executable may ever run from the upload folders
+  RewriteRule ^(storage|uploads)/.*\.(php[0-9]?|phtml|phar|pht|cgi|pl|py|sh|asp|aspx|jsp|js|mjs|html?|svgz)$ - [F,L,NC]
+  #    - the only PHP file allowed to run is api.php (via the /api rewrite below)
+  RewriteCond %{REQUEST_URI} !^/api\.php$
+  RewriteRule \.(php[0-9]?|phtml|phar|pht)$ - [F,L,NC]
+
+  # 1. Direct access to storage & uploads
+  RewriteRule ^uploads/(.*)$ storage/uploads/$1 [L]
+  RewriteRule ^storage/(.*)$ storage/$1 [L]
+
+  # 2. Forward API requests to Node backend via api.php proxy
+  RewriteRule ^api(/.*)?$ api.php [L,QSA]
+
+  # 3. Serve real static files directly
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 4. SPA fallback: Route all frontend page routes to index.html
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Uploaded files are data only: SVGs cannot run scripts
+<IfModule mod_headers.c>
+  <FilesMatch "\.svg$">
+    Header always set Content-Security-Policy "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox"
+  </FilesMatch>
+</IfModule>

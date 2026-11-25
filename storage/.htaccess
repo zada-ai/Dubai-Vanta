@@ -1,0 +1,13 @@
+# Upload folder: serve images only, never execute anything.
+Options -Indexes -ExecCGI
+RemoveHandler .php .php3 .php4 .php5 .php7 .php8 .phtml .phar .pht .cgi .pl .py .sh
+RemoveType .php .php3 .php4 .php5 .php7 .php8 .phtml .phar .pht
+
+<FilesMatch "\.(php[0-9]?|phtml|phar|pht|cgi|pl|py|sh|asp|aspx|jsp|js|mjs|html?|htaccess)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Content-Security-Policy "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox"
+</IfModule>

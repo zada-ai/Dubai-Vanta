@@ -110,7 +110,7 @@ Invest in tactile touchpoints. A full-grain leather desk mat offers wrist suppor
 Avoid harsh overhead glare. Instead, employ warm 2700K indirect LED backlights paired with an asymmetrical monitor light bar. The balanced luminance contrast protects circadian rhythms during late-night creative sprints.`,
     image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=1200&auto=format&fit=crop&q=80',
     category: 'Lifestyle',
-    author: 'AeroStore Editorial',
+    author: 'Vanta Dubai Editorial',
     tags: 'Workspace, Luxury, Minimalism, Design, Productivity',
     read_time: '6 min read',
     is_published: 1
@@ -148,7 +148,7 @@ Gone are the days of manually pairing Bluetooth speakers. Ultra-Wideband (UWB) t
 Intelligent thermal sensors and automated solar louvers work alongside smart HVAC controllers to slash power consumption while maintaining bespoke microclimate comfort throughout Dubai’s hottest summers. Luxury and environmental stewardship now exist in effortless harmony.`,
     image: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=1200&auto=format&fit=crop&q=80',
     category: 'Smart Home',
-    author: 'AeroStore Editorial',
+    author: 'Vanta Dubai Editorial',
     tags: 'SmartHome, IoT, AudioZones, Connectivity, Future',
     read_time: '5 min read',
     is_published: 1
@@ -172,7 +172,7 @@ export async function initDatabase() {
         content LONGTEXT,
         image VARCHAR(500),
         category VARCHAR(100) DEFAULT 'Lifestyle',
-        author VARCHAR(100) DEFAULT 'AeroStore Editorial',
+        author VARCHAR(100) DEFAULT 'Vanta Dubai Editorial',
         tags VARCHAR(255) DEFAULT '',
         read_time VARCHAR(50) DEFAULT '5 min read',
         is_published TINYINT(1) DEFAULT 1,
@@ -283,6 +283,15 @@ export async function saveUserRefreshToken(userId, token) {
   try {
     sqliteDb.prepare('UPDATE users SET refresh_token = ? WHERE id = ?').run(token, userId);
   } catch (_) {}
+  return true;
+}
+
+export async function updateUserPassword(userId, passwordHash) {
+  if (isMysql) {
+    await mysqlPool.query('UPDATE users SET password = ? WHERE id = ?', [passwordHash, userId]);
+    return true;
+  }
+  sqliteDb.prepare('UPDATE users SET password = ? WHERE id = ?').run(passwordHash, userId);
   return true;
 }
 
@@ -929,7 +938,7 @@ export async function createBlog({
   content = '',
   image = '',
   category = 'Lifestyle',
-  author = 'AeroStore Editorial',
+  author = 'Vanta Dubai Editorial',
   tags = '',
   read_time = '5 min read',
   is_published = 1

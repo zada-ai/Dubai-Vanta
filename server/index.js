@@ -8,12 +8,14 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 import { 
   initDatabase, 
   getUserByEmail, 
   getUserById,
   saveUserRefreshToken,
   clearUserRefreshToken,
+  updateUserPassword,
   createUser, 
   getAllUsers, 
   updateUserRole,
@@ -126,6 +128,48 @@ function generateRefreshToken(user) {
     { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
   );
 }
+
+// ==========================================
+// Security helpers: password hashing + role guards
+// ==========================================
+const ADMIN_ROLES = ['admin', 'supermanager', 'superadmin'];
+const SUPER_ROLES = ['supermanager', 'superadmin'];
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(String(password), salt, 64).toString('hex');
+  return `scrypt$${salt}$${hash}`;
+}
+
+// Returns { ok, needsUpgrade }. Legacy plain-text passwords still work and are re-hashed on login.
+function verifyPassword(password, stored) {
+  if (!stored) return { ok: false, needsUpgrade: false };
+  if (stored.startsWith('scrypt$')) {
+    const [, salt, hash] = stored.split('$');
+    const candidate = crypto.scryptSync(String(password), salt, 64);
+    const expected = Buffer.from(hash, 'hex');
+    return { ok: expected.length === candidate.length && crypto.timingSafeEqual(expected, candidate), needsUpgrade: false };
+  }
+  const a = Buffer.from(String(password));
+  const b = Buffer.from(String(stored));
+  return { ok: a.length === b.length && crypto.timingSafeEqual(a, b), needsUpgrade: true };
+}
+
+function requireRoles(roles) {
+  return async (req, res, next) => {
+    const requester = await getRequesterUser(req);
+    if (!requester) {
+      return res.status(401).json({ success: false, message: 'Please log in to continue.' });
+    }
+    if (!roles.includes(requester.role)) {
+      return res.status(403).json({ success: false, message: 'You do not have permission to do this.' });
+    }
+    req.authUser = requester;
+    next();
+  };
+}
+const requireAdmin = requireRoles(ADMIN_ROLES);
+const requireSuper = requireRoles(SUPER_ROLES);
 
 function formatSafeUser(user) {
   return {
@@ -244,14 +288,17 @@ app.use(cookieParser());
 app.use(express.json());
 
 // Static file serving with browser Cache-Control (1 day immutable cache)
-app.use('/storage', express.static(storageDir, {
+// Uploaded files are served as inert data: no script execution, no MIME sniffing.
+const storageStaticOptions = {
   maxAge: '1d',
-  immutable: true
-}));
-app.use('/uploads', express.static(storageDir, {
-  maxAge: '1d',
-  immutable: true
-}));
+  immutable: true,
+  setHeaders: (res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox");
+  }
+};
+app.use('/storage', express.static(storageDir, storageStaticOptions));
+app.use('/uploads', express.static(storageDir, storageStaticOptions));
 
 // Apply general API rate limiter to all /api routes
 app.use('/api', apiLimiter);
@@ -280,8 +327,12 @@ async function processAndSaveImage(file) {
     throw new Error('No valid image buffer provided.');
   }
 
-  // Preserve SVG vector format
+  // Preserve SVG vector format, but refuse SVGs that carry scripts or event handlers
   if (file.mimetype === 'image/svg+xml') {
+    const svgText = file.buffer.toString('utf8');
+    if (/<script|javascript:|\son[a-z]+\s*=|<foreignObject|<iframe|<embed|<object/i.test(svgText)) {
+      throw new Error('This SVG contains scripts and was rejected for security reasons.');
+    }
     const filename = `upload-${Date.now()}-${Math.random().toString(36).substring(7)}.svg`;
     const targetPath = path.join(storageDir, filename);
     await fs.promises.writeFile(targetPath, file.buffer);
@@ -339,9 +390,13 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
 
-    // Verify password
-    if (user.password !== password) {
+    // Verify password (auto-upgrades legacy plain-text passwords to scrypt hashes)
+    const check = verifyPassword(password, user.password);
+    if (!check.ok) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    }
+    if (check.needsUpgrade) {
+      await updateUserPassword(user.id, hashPassword(password)).catch(() => {});
     }
 
     // Safe user payload
@@ -375,16 +430,19 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Name, email, and password are required.' });
     }
 
+    if (String(password).length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
-    const isSuper = normalizedEmail === (process.env.SUPERADMIN_EMAIL || 'sohaibmehmood0067@gmail.com').toLowerCase();
-    const isSuperManager = normalizedEmail === 'manager@aerostore.com' || normalizedEmail.includes('supermanager');
-    const isAdmin = isSuper || isSuperManager || normalizedEmail.includes('admin');
-    const role = isSuper ? 'superadmin' : isSuperManager ? 'supermanager' : isAdmin ? 'admin' : 'customer';
+    // Public sign-up always creates a customer. Staff roles are granted only by a Super Admin.
+    const role = 'customer';
+    const isAdmin = false;
 
     const newUser = await createUser({
       name,
       email: normalizedEmail,
-      password,
+      password: hashPassword(password),
       role,
       phone: phone || '',
       avatar: isAdmin
@@ -522,7 +580,7 @@ app.get('/api/auth/me', async (req, res) => {
   }
 });
 
-app.get('/api/auth/users', async (req, res) => {
+app.get('/api/auth/users', requireAdmin, async (req, res) => {
   try {
     const users = await getAllUsers();
     res.json({ success: true, count: users.length, users });
@@ -556,7 +614,7 @@ async function getRequesterUser(req) {
 }
 
 // Update User Role (Super Admin & Super Manager Privilege)
-app.put('/api/auth/users/:id/role', async (req, res) => {
+app.put('/api/auth/users/:id/role', requireSuper, async (req, res) => {
   try {
     const { role } = req.body;
     if (!['superadmin', 'supermanager', 'admin', 'customer'].includes(role)) {
@@ -566,6 +624,10 @@ app.put('/api/auth/users/:id/role', async (req, res) => {
     const requester = await getRequesterUser(req);
     const targetUser = await getUserById(req.params.id);
     if (!targetUser) return res.status(404).json({ success: false, message: 'User not found' });
+
+    if (role === 'superadmin' && requester.role !== 'superadmin') {
+      return res.status(403).json({ success: false, message: 'Only a Super Admin can grant the Super Admin role' });
+    }
 
     // Super Manager CANNOT modify Super Admin!
     if (requester && requester.role === 'supermanager' && targetUser.role === 'superadmin') {
@@ -580,7 +642,7 @@ app.put('/api/auth/users/:id/role', async (req, res) => {
 });
 
 // Delete User Endpoint (Super Admin & Super Manager Privilege)
-app.delete('/api/auth/users/:id', async (req, res) => {
+app.delete('/api/auth/users/:id', requireSuper, async (req, res) => {
   try {
     const requester = await getRequesterUser(req);
     const targetUser = await getUserById(req.params.id);
@@ -625,7 +687,7 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-app.post('/api/products', async (req, res) => {
+app.post('/api/products', requireAdmin, async (req, res) => {
   try {
     const newProd = await createProduct(req.body);
     cache.del('products');
@@ -636,7 +698,7 @@ app.post('/api/products', async (req, res) => {
   }
 });
 
-app.put('/api/products/:id', async (req, res) => {
+app.put('/api/products/:id', requireAdmin, async (req, res) => {
   try {
     const updated = await updateProductInDb(req.params.id, req.body);
     cache.del('products');
@@ -647,7 +709,7 @@ app.put('/api/products/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/products/:id', async (req, res) => {
+app.delete('/api/products/:id', requireAdmin, async (req, res) => {
   try {
     await deleteProductInDb(req.params.id);
     cache.del('products');
@@ -659,7 +721,7 @@ app.delete('/api/products/:id', async (req, res) => {
 });
 
 // Clear All Dummy Products Endpoint
-app.delete('/api/products', async (req, res) => {
+app.delete('/api/products', requireAdmin, async (req, res) => {
   try {
     await clearAllProductsInDb();
     cache.del('products');
@@ -670,7 +732,7 @@ app.delete('/api/products', async (req, res) => {
   }
 });
 
-app.post('/api/products/clear', async (req, res) => {
+app.post('/api/products/clear', requireAdmin, async (req, res) => {
   try {
     await clearAllProductsInDb();
     cache.del('products');
@@ -703,7 +765,7 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
-app.post('/api/categories', async (req, res) => {
+app.post('/api/categories', requireAdmin, async (req, res) => {
   try {
     const { name, id, icon, image, description } = req.body;
     if (!name || !name.trim()) {
@@ -724,7 +786,7 @@ app.post('/api/categories', async (req, res) => {
   }
 });
 
-app.delete('/api/categories/:id', async (req, res) => {
+app.delete('/api/categories/:id', requireAdmin, async (req, res) => {
   try {
     await deleteCategoryInDb(req.params.id);
     cache.del('categories');
@@ -787,7 +849,7 @@ app.get('/api/blogs/:idOrSlug', async (req, res) => {
   }
 });
 
-app.post('/api/blogs', async (req, res) => {
+app.post('/api/blogs', requireAdmin, async (req, res) => {
   try {
     const requester = await getRequesterUser(req);
     if (!requester || !['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
@@ -813,7 +875,7 @@ app.post('/api/blogs', async (req, res) => {
       content,
       image,
       category: category || 'Lifestyle',
-      author: author || requester.name || 'AeroStore Editorial',
+      author: author || requester.name || 'Vanta Dubai Editorial',
       tags: tags || '',
       read_time: read_time || '5 min read',
       is_published: is_published !== undefined ? is_published : 1
@@ -828,7 +890,7 @@ app.post('/api/blogs', async (req, res) => {
   }
 });
 
-app.put('/api/blogs/:id', async (req, res) => {
+app.put('/api/blogs/:id', requireAdmin, async (req, res) => {
   try {
     const requester = await getRequesterUser(req);
     if (!requester || !['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
@@ -856,7 +918,7 @@ app.put('/api/blogs/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/blogs/:id', async (req, res) => {
+app.delete('/api/blogs/:id', requireAdmin, async (req, res) => {
   try {
     const requester = await getRequesterUser(req);
     if (!requester || !['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
@@ -878,7 +940,18 @@ app.delete('/api/blogs/:id', async (req, res) => {
 // ==========================================
 app.get('/api/orders', async (req, res) => {
   try {
-    const orders = await getAllOrders();
+    const requester = await getRequesterUser(req);
+    if (!requester) {
+      return res.status(401).json({ success: false, message: 'Please log in to view orders.' });
+    }
+    let orders = await getAllOrders();
+    if (!ADMIN_ROLES.includes(requester.role)) {
+      const email = String(requester.email || '').toLowerCase();
+      orders = orders.filter((o) =>
+        String(o.userId ?? '') === String(requester.id) ||
+        (email && String(o.customerEmail || '').toLowerCase() === email)
+      );
+    }
     res.json({ success: true, count: orders.length, orders });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -934,8 +1007,6 @@ app.post('/api/orders', orderLimiter, authenticateOptionalToken, async (req, res
       totalAmount,
       currency,
       paymentMethod,
-      paymentStatus,
-      orderStatus,
       shippingDetails,
       totals
     } = req.body;
@@ -957,8 +1028,9 @@ app.post('/api/orders', orderLimiter, authenticateOptionalToken, async (req, res
       totalAmount: totalAmount || totals?.total || 0,
       currency: currency || 'AED',
       paymentMethod: chosenPaymentMethod,
-      paymentStatus: paymentStatus || (chosenPaymentMethod === 'Cash on Delivery' ? 'Pending (Pay upon arrival)' : 'Paid'),
-      orderStatus: orderStatus || 'Processing'
+      // Never trust status fields from the browser: a customer must not be able to mark an order as paid/shipped.
+      paymentStatus: chosenPaymentMethod === 'Cash on Delivery' ? 'Pending (Pay upon arrival)' : 'Pending',
+      orderStatus: 'Processing'
     });
 
     res.status(201).json({
@@ -974,7 +1046,7 @@ app.post('/api/orders', orderLimiter, authenticateOptionalToken, async (req, res
   }
 });
 
-app.put('/api/orders/:id/status', async (req, res) => {
+app.put('/api/orders/:id/status', requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
     await updateOrderStatusInDb(req.params.id, status);
@@ -1006,7 +1078,7 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
-app.post('/api/settings', async (req, res) => {
+app.post('/api/settings', requireAdmin, async (req, res) => {
   try {
     const updates = req.body;
     const settings = await updateSettings(updates);
@@ -1019,7 +1091,7 @@ app.post('/api/settings', async (req, res) => {
 });
 
 // Universal Storage Image Upload Endpoint (Auto-converts to WebP in KBs)
-app.post('/api/upload', upload.single('image'), async (req, res) => {
+app.post('/api/upload', requireAdmin, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No image file provided.' });
@@ -1040,7 +1112,7 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 });
 
 // Settings & Product Image Upload Route (Auto-converts to WebP in KBs)
-app.post('/api/settings/upload-image', upload.single('image'), async (req, res) => {
+app.post('/api/settings/upload-image', requireAdmin, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No image file provided.' });
@@ -1061,7 +1133,7 @@ app.post('/api/settings/upload-image', upload.single('image'), async (req, res) 
 });
 
 // Store Logo Upload (Auto-converts to WebP or preserves SVG)
-app.post('/api/settings/logo', upload.single('logo'), async (req, res) => {
+app.post('/api/settings/logo', requireAdmin, upload.single('logo'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No logo file provided.' });
@@ -1084,7 +1156,7 @@ app.post('/api/settings/logo', upload.single('logo'), async (req, res) => {
 });
 
 // Reset Store Logo
-app.delete('/api/settings/logo', async (req, res) => {
+app.delete('/api/settings/logo', requireAdmin, async (req, res) => {
   try {
     const current = await getAllSettings();
     if (current.logoUrl) {
@@ -1116,7 +1188,7 @@ app.delete('/api/settings/logo', async (req, res) => {
 registerSeoRoutes(app, { cache, getAllSettings, getAllProducts, getAllCategories });
 
 // Update robots.txt
-app.post('/api/settings/robots', async (req, res) => {
+app.post('/api/settings/robots', requireAdmin, async (req, res) => {
   try {
     const { robotsTxt } = req.body;
     if (typeof robotsTxt !== 'string') {
