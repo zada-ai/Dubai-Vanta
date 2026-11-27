@@ -13,7 +13,7 @@ const RatingComponent = ({ rating = 0, maxStars = 5, size = 16, interactive = fa
         stars.push(
           <RiStarFill
             key={i}
-            className={`cursor-pointer text-amber-400`}
+            className={`cursor-pointer text-[#D9A441]`}
             style={{ fontSize: size }}
             onMouseEnter={interactive ? () => setHoverRating(i) : undefined}
             onMouseLeave={interactive ? () => setHoverRating(0) : undefined}
@@ -24,7 +24,7 @@ const RatingComponent = ({ rating = 0, maxStars = 5, size = 16, interactive = fa
         stars.push(
           <RiStarHalfFill
             key={i}
-            className={`cursor-pointer text-amber-400`}
+            className={`cursor-pointer text-[#D9A441]`}
             style={{ fontSize: size }}
             onMouseEnter={interactive ? () => setHoverRating(i) : undefined}
             onMouseLeave={interactive ? () => setHoverRating(0) : undefined}

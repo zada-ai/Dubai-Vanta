@@ -396,7 +396,7 @@ const Navbar = () => {
             >
               <RiHeartLine className="w-5 h-5" />
               {wishlistCount > 0 && (
-                <span className="absolute top-0.5 right-0.5 sm:top-1.5 sm:right-1.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-rose-500 text-white font-bold text-[8px] sm:text-[9px] flex items-center justify-center leading-none shadow-xs">
+                <span className="absolute top-0.5 right-0.5 sm:top-1.5 sm:right-1.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#A83E68] text-white font-bold text-[8px] sm:text-[9px] flex items-center justify-center leading-none shadow-xs">
                   {wishlistCount}
                 </span>
               )}
@@ -410,7 +410,7 @@ const Navbar = () => {
             >
               <RiShoppingBagLine className="w-5 h-5" />
               {cartCount > 0 && (
-                <span className="absolute top-0.5 right-0.5 sm:top-1.5 sm:right-1.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold text-[8px] sm:text-[9px] flex items-center justify-center leading-none shadow-xs">
+                <span className="absolute top-0.5 right-0.5 sm:top-1.5 sm:right-1.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#35152F] dark:bg-[#F7F5F1] text-white dark:text-[#35152F] font-bold text-[8px] sm:text-[9px] flex items-center justify-center leading-none shadow-xs">
                   {cartCount}
                 </span>
               )}
@@ -743,7 +743,7 @@ const Navbar = () => {
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-500 cursor-pointer"
+                    className="p-2.5 rounded-xl bg-[#A83E68]/10 text-[#A83E68] cursor-pointer"
                     aria-label="Logout"
                   >
                     <RiLogoutBoxRLine className="w-5 h-5" />
@@ -755,7 +755,7 @@ const Navbar = () => {
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center justify-center py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 dark:bg-white dark:text-slate-950 transition-colors shadow-sm"
+                  className="w-full flex items-center justify-center py-3 rounded-xl bg-[#35152F] text-white font-bold hover:bg-[#A83E68] transition-colors shadow-sm"
                 >
                   Login / Register
                 </Link>
@@ -765,7 +765,7 @@ const Navbar = () => {
             {/* Mobile Menu Theme Mode Toggle */}
             <div className="border-t border-slate-100 dark:border-slate-800 pt-3 px-1 flex items-center justify-between">
               <span className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2">
-                {darkMode ? <RiSunLine className="w-4 h-4 text-amber-500" /> : <RiMoonLine className="w-4 h-4 text-primary-500" />}
+                {darkMode ? <RiSunLine className="w-4 h-4 text-[#D9A441]" /> : <RiMoonLine className="w-4 h-4 text-[#A83E68]" />}
                 {darkMode ? 'Dark Theme' : 'Light Theme'}
               </span>
               <button

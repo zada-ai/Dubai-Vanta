@@ -659,12 +659,12 @@ const Admin = () => {
   };
 
   const gradientPresets = [
-    { label: 'Violet Indigo', value: 'from-violet-600 to-indigo-900', bg: 'from-violet-600 to-indigo-900' },
-    { label: 'Amber Warm', value: 'from-amber-600 to-amber-900', bg: 'from-amber-600 to-amber-900' },
-    { label: 'Slate Dark', value: 'from-slate-800 to-slate-950', bg: 'from-slate-800 to-slate-950' },
-    { label: 'Emerald Teal', value: 'from-emerald-600 to-teal-900', bg: 'from-emerald-600 to-teal-900' },
-    { label: 'Rose Pink', value: 'from-rose-600 to-pink-900', bg: 'from-rose-600 to-pink-900' },
-    { label: 'Blue Cyan', value: 'from-blue-600 to-cyan-900', bg: 'from-blue-600 to-cyan-900' }
+    { label: 'Royal Plum to Gold (Brand)', value: 'from-[#35152F] via-[#A83E68] to-[#D9A441]', bg: 'from-[#35152F] via-[#A83E68] to-[#D9A441]' },
+    { label: 'Royal Plum & Berry', value: 'from-[#35152F] via-[#551A32] to-[#A83E68]', bg: 'from-[#35152F] via-[#551A32] to-[#A83E68]' },
+    { label: 'Deep Plum & Berry', value: 'from-[#230D1F] via-[#35152F] to-[#A83E68]', bg: 'from-[#230D1F] via-[#35152F] to-[#A83E68]' },
+    { label: 'Berry & Champagne Gold', value: 'from-[#A83E68] via-[#ba8629] to-[#D9A441]', bg: 'from-[#A83E68] via-[#ba8629] to-[#D9A441]' },
+    { label: 'Champagne Warmth', value: 'from-[#35152F] to-[#D9A441]', bg: 'from-[#35152F] to-[#D9A441]' },
+    { label: 'Deep Vanta Night', value: 'from-[#170814] to-[#35152F]', bg: 'from-[#170814] to-[#35152F]' }
   ];
 
   const handleSlideImgChange = async (e) => {
@@ -2399,12 +2399,12 @@ const Admin = () => {
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                   {[
-                    { label: 'Violet Indigo', val: 'from-violet-600 to-indigo-850', preview: 'from-violet-600 to-indigo-850' },
-                    { label: 'Sunset Crimson', val: 'from-rose-600 to-amber-700', preview: 'from-rose-600 to-amber-700' },
-                    { label: 'Emerald Luxury', val: 'from-emerald-600 to-teal-900', preview: 'from-emerald-600 to-teal-900' },
-                    { label: 'Deep Cyan', val: 'from-blue-600 to-cyan-900', preview: 'from-blue-600 to-cyan-900' },
-                    { label: 'Royal Purple', val: 'from-fuchsia-700 to-indigo-950', preview: 'from-fuchsia-700 to-indigo-950' },
-                    { label: 'Obsidian Dark', val: 'from-slate-900 to-zinc-950', preview: 'from-slate-900 to-zinc-950' }
+                    { label: 'Royal Plum to Gold (Brand)', val: 'from-[#35152F] via-[#A83E68] to-[#D9A441]', preview: 'from-[#35152F] via-[#A83E68] to-[#D9A441]' },
+                    { label: 'Royal Plum & Berry', val: 'from-[#35152F] via-[#551A32] to-[#A83E68]', preview: 'from-[#35152F] via-[#551A32] to-[#A83E68]' },
+                    { label: 'Deep Plum & Berry', val: 'from-[#230D1F] via-[#35152F] to-[#A83E68]', preview: 'from-[#230D1F] via-[#35152F] to-[#A83E68]' },
+                    { label: 'Berry & Champagne Gold', val: 'from-[#A83E68] via-[#ba8629] to-[#D9A441]', preview: 'from-[#A83E68] via-[#ba8629] to-[#D9A441]' },
+                    { label: 'Champagne Warmth', val: 'from-[#35152F] to-[#D9A441]', preview: 'from-[#35152F] to-[#D9A441]' },
+                    { label: 'Deep Vanta Night', val: 'from-[#170814] to-[#35152F]', preview: 'from-[#170814] to-[#35152F]' }
                   ].map((grad) => (
                     <button
                       key={grad.val}

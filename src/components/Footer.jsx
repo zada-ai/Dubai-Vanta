@@ -135,7 +135,7 @@ const Footer = () => {
           aria-hidden="true"
           className="absolute top-0 inset-x-0 h-0.5"
           style={{
-            backgroundImage: 'linear-gradient(90deg, #7c3aed, #6366f1, #ec4899, #f59e0b, #7c3aed)',
+            backgroundImage: 'linear-gradient(90deg, #35152F, #A83E68, #D9A441, #A83E68, #35152F)',
             backgroundSize: '200% 100%'
           }}
           animate={{ backgroundPosition: ['0% 0%', '200% 0%'] }}

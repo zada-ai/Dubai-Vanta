@@ -338,7 +338,7 @@ const Home = () => {
                   <RiDoubleQuotesL className="absolute right-5 top-5 h-8 w-8 text-primary-500/15" />
                   <div className="flex items-center gap-2 mb-4">
                     <RatingComponent rating={test.rating} size={14} />
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#D9A441]">
                       <RiShieldCheckFill size={13} />
                       Verified
                     </span>

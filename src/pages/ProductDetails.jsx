@@ -330,7 +330,7 @@ const ProductView = ({ id, product, products }) => {
                 Bought 2
               </span>
               {isDiscounted && discountPercent > 0 && (
-                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/80">
+                <span className="text-xs font-bold text-[#A83E68] bg-[#A83E68]/10 dark:bg-[#A83E68]/20 px-2 py-0.5 rounded border border-[#A83E68]/30">
                   Save {discountPercent}%
                 </span>
               )}
@@ -356,7 +356,7 @@ const ProductView = ({ id, product, products }) => {
               </div>
               <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200">
                 <span>In Stock</span>
-                <RiCheckboxCircleFill className="w-4 h-4 text-emerald-500" />
+                <RiCheckboxCircleFill className="w-4 h-4 text-[#D9A441]" />
                 <span className="text-xs text-slate-400 font-normal">({product.stock || 0} available)</span>
               </div>
             </div>
@@ -498,9 +498,9 @@ const ProductView = ({ id, product, products }) => {
                       addToCart(product, selectedColor, selectedSize, quantity);
                       navigate('/checkout');
                     }}
-                    className="w-full sm:flex-1 h-12 px-5 sm:px-6 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-black text-sm sm:text-base shadow-md hover:shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer group whitespace-nowrap"
+                    className="w-full sm:flex-1 h-12 px-5 sm:px-6 rounded-xl bg-[#35152F] hover:bg-[#A83E68] active:scale-[0.99] dark:bg-[#A83E68] dark:hover:bg-[#35152F] text-white font-black text-sm sm:text-base shadow-md hover:shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer group whitespace-nowrap"
                   >
-                    <span className="w-6 h-6 rounded-md bg-emerald-500/20 text-emerald-400 dark:text-emerald-600 flex items-center justify-center shrink-0">
+                    <span className="w-6 h-6 rounded-md bg-[#D9A441]/20 text-[#D9A441] flex items-center justify-center shrink-0">
                       <RiHandCoinLine className="w-4 h-4" />
                     </span>
                     <span>Order with Cash on Delivery</span>

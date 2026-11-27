@@ -34,7 +34,7 @@ const ProductCard = ({ product }) => {
 
         {/* Discount Badge */}
         {isDiscounted && (
-          <span className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 bg-rose-500 text-white text-[8px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-xs z-10">
+          <span className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 bg-[#A83E68] text-white text-[8px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-xs z-10">
             -{product.discountPercentage || Math.round((1 - discountPrice / product.price) * 100)}%
           </span>
         )}
@@ -42,11 +42,11 @@ const ProductCard = ({ product }) => {
         {/* Wishlist Button */}
         <button
           onClick={() => toggleWishlist(product)}
-          className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 p-1 sm:p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs text-slate-600 dark:text-slate-300 hover:text-rose-500 dark:hover:text-rose-500 shadow-2xs hover:shadow-xs transition-all duration-200 z-10 cursor-pointer"
+          className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 p-1 sm:p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs text-slate-600 dark:text-slate-300 hover:text-[#A83E68] dark:hover:text-[#A83E68] shadow-2xs hover:shadow-xs transition-all duration-200 z-10 cursor-pointer"
           aria-label="Add to wishlist"
         >
           {isWishlisted ? (
-            <RiHeartFill className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-rose-500" />
+            <RiHeartFill className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#A83E68]" />
           ) : (
             <RiHeartLine className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
           )}
@@ -103,12 +103,12 @@ const ProductCard = ({ product }) => {
                 addToCart(product);
                 navigate('/checkout');
               }}
-              className="flex items-center gap-0.5 sm:gap-1 px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-xl bg-primary-700 hover:bg-primary-800 active:scale-95 text-white text-[9px] sm:text-xs font-bold shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              className="flex items-center gap-0.5 sm:gap-1 px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-xl bg-[#35152F] hover:bg-[#A83E68] active:scale-95 text-white text-[9px] sm:text-xs font-bold shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               aria-label="Order with Cash on Delivery"
               disabled={product.stock === 0}
               title={product.stock === 0 ? "Out of Stock" : "Quick Order with Cash on Delivery"}
             >
-              <RiHandCoinLine className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <RiHandCoinLine className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 text-[#D9A441]" />
               <span>COD</span>
             </button>
           </div>

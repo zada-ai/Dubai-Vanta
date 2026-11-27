@@ -12,7 +12,7 @@ export const defaultHeroSlides = [
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
     link: '/product/1',
     btnText: 'Shop Collection',
-    bgColor: 'from-primary-600 to-primary-900',
+    bgColor: 'from-[#35152F] via-[#A83E68] to-[#D9A441]',
     textColor: 'text-white'
   },
   {
@@ -23,7 +23,7 @@ export const defaultHeroSlides = [
     image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800&auto=format&fit=crop&q=80',
     link: '/product/9',
     btnText: 'Shop Collection',
-    bgColor: 'from-amber-600 to-amber-900',
+    bgColor: 'from-[#35152F] via-[#551A32] to-[#A83E68]',
     textColor: 'text-white'
   },
   {
@@ -34,7 +34,7 @@ export const defaultHeroSlides = [
     image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&auto=format&fit=crop&q=80',
     link: '/product/5',
     btnText: 'Shop Collection',
-    bgColor: 'from-slate-800 to-slate-950',
+    bgColor: 'from-[#230D1F] via-[#35152F] to-[#A83E68]',
     textColor: 'text-white'
   }
 ];
@@ -57,7 +57,7 @@ export const defaultPromoBanner = {
   btnLink: '/shop',
   image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
   imageAlt: 'Nike red shoe discount promotional graphic',
-  bgGradient: 'from-primary-600 to-primary-900',
+  bgGradient: 'from-[#35152F] via-[#A83E68] to-[#D9A441]',
   isVisible: true
 };
 

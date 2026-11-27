@@ -5,33 +5,93 @@
   --font-sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
 
-  /* Brand: deep "Gulf" teal */
-  --color-primary-50: #f0f8f6;
-  --color-primary-100: #d9eee9;
-  --color-primary-200: #b3ddd3;
-  --color-primary-300: #82c4b6;
-  --color-primary-400: #52a695;
-  --color-primary-500: #33897a;
-  --color-primary-600: #246f63;
-  --color-primary-700: #1e5a51;
-  --color-primary-800: #1b4943;
-  --color-primary-900: #183d38;
-  --color-primary-950: #0a2220;
+  /* The 4 Official Brand Colors of Vanta Dubai */
+  --color-royal-plum: #35152F;
+  --color-rich-berry: #A83E68;
+  --color-champagne-gold: #D9A441;
+  --color-warm-ivory: #F7F5F1;
 
-  /* Warm neutrals replace Tailwind's cool slate everywhere (stone-like) */
-  --color-slate-50: #faf9f7;
-  --color-slate-100: #f4f2ef;
-  --color-slate-200: #e7e4df;
-  --color-slate-300: #d5d0c9;
-  --color-slate-400: #a59f96;
-  --color-slate-500: #77716a;
-  --color-slate-600: #58534d;
-  --color-slate-700: #433f3a;
-  --color-slate-800: #2a2724;
-  --color-slate-900: #1c1a18;
-  --color-slate-950: #0e0d0c;
+  /* Primary Scale: anchored on Royal Plum (#35152F) and Rich Berry (#A83E68) */
+  --color-primary-50: #fcf8fa;
+  --color-primary-100: #f7ebf2;
+  --color-primary-200: #eed5e3;
+  --color-primary-300: #e0b0cd;
+  --color-primary-400: #cc78a7;
+  --color-primary-500: #A83E68;
+  --color-primary-600: #8c2f53;
+  --color-primary-700: #551a32;
+  --color-primary-800: #35152F;
+  --color-primary-900: #270f23;
+  --color-primary-950: #170814;
 
-  /* Calmer corner radii (less "bubbly") */
+  /* Secondary Scale: Rich Berry (#A83E68) */
+  --color-secondary-50: #fdf5f8;
+  --color-secondary-100: #fae8f0;
+  --color-secondary-200: #f4d0e0;
+  --color-secondary-300: #e8a8c4;
+  --color-secondary-400: #d775a2;
+  --color-secondary-500: #A83E68;
+  --color-secondary-600: #932f57;
+  --color-secondary-700: #7b2447;
+  --color-secondary-800: #66203b;
+  --color-secondary-900: #35152F;
+  --color-secondary-950: #170814;
+
+  /* Warm neutrals: Warm Ivory (#F7F5F1) to Royal Plum (#35152F) */
+  --color-slate-50: #F7F5F1;
+  --color-slate-100: #EFECE5;
+  --color-slate-200: #E2DDD3;
+  --color-slate-300: #CEC6B8;
+  --color-slate-400: #9E9383;
+  --color-slate-500: #75695A;
+  --color-slate-600: #554A3D;
+  --color-slate-700: #3F3429;
+  --color-slate-800: #35152F;
+  --color-slate-900: #230D1F;
+  --color-slate-950: #170814;
+
+  /* Champagne Gold (#D9A441) mapped across amber/yellow/emerald */
+  --color-amber-50: #fdfaf3;
+  --color-amber-100: #faf1de;
+  --color-amber-200: #f4dfb5;
+  --color-amber-300: #ebc680;
+  --color-amber-400: #D9A441;
+  --color-amber-500: #D9A441;
+  --color-amber-600: #ba8629;
+  --color-amber-700: #96661c;
+  --color-amber-800: #7a4f1a;
+  --color-amber-900: #5b391a;
+  --color-amber-950: #341d0b;
+
+  --color-yellow-400: #D9A441;
+  --color-yellow-500: #D9A441;
+
+  /* Rose mapped to Rich Berry (#A83E68) */
+  --color-rose-50: #fcf8fa;
+  --color-rose-100: #f7ebf2;
+  --color-rose-200: #eed5e3;
+  --color-rose-300: #e0b0cd;
+  --color-rose-400: #cc78a7;
+  --color-rose-500: #A83E68;
+  --color-rose-600: #8c2f53;
+  --color-rose-700: #551a32;
+  --color-rose-800: #35152F;
+  --color-rose-900: #270f23;
+  --color-rose-950: #170814;
+
+  /* Emerald mapped to Champagne Gold & Rich Berry */
+  --color-emerald-50: #fdfaf3;
+  --color-emerald-100: #faf1de;
+  --color-emerald-200: #f4dfb5;
+  --color-emerald-300: #ebc680;
+  --color-emerald-400: #D9A441;
+  --color-emerald-500: #D9A441;
+  --color-emerald-600: #ba8629;
+  --color-emerald-700: #96661c;
+  --color-emerald-800: #7a4f1a;
+  --color-emerald-950: #341d0b;
+
+  /* Calmer corner radii */
   --radius-2xl: 0.875rem;
   --radius-3xl: 1.125rem;
 }
@@ -52,12 +112,12 @@ h2.uppercase {
 }
 
 ::selection {
-  background: #b3ddd3;
-  color: #0a2220;
+  background: #D9A441;
+  color: #35152F;
 }
 
 :focus-visible {
-  outline: 2px solid #33897a;
+  outline: 2px solid #A83E68;
   outline-offset: 2px;
 }
 
@@ -107,8 +167,8 @@ html {
 }
 
 body {
-  background-color: #faf9f7; /* slate-50 (warm) */
-  color: #1c1a18; /* slate-900 (warm) */
+  background-color: #F7F5F1; /* Warm Ivory */
+  color: #35152F; /* Royal Plum */
   font-family: var(--font-sans);
   transition-property: color, background-color;
   transition-duration: 200ms;
@@ -118,8 +178,8 @@ body {
 
 /* When dark mode class is applied to html */
 .dark body {
-  background-color: #0e0d0c; /* slate-950 (warm) */
-  color: #faf9f7; /* slate-50 (warm) */
+  background-color: #170814; /* Deepest Royal Plum */
+  color: #F7F5F1; /* Warm Ivory */
 }
 
 /* Custom styles for Webkit scrollbars */
@@ -133,20 +193,20 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d5d0c9; /* slate-300 */
+  background: #CEC6B8;
   border-radius: 9999px;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #2a2724; /* slate-800 */
+  background: #35152F;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a59f96; /* slate-400 */
+  background: #9E9383;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #433f3a; /* slate-700 */
+  background: #A83E68;
 }
 
 /* Custom CSS helper animations */

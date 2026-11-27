@@ -254,7 +254,7 @@ const OrderChatbot = () => {
                 onClick={() => setIsOpen(true)}
                 className="hidden sm:flex items-center gap-1.5 mr-3 px-3 py-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md text-xs font-bold text-slate-800 dark:text-slate-100 cursor-pointer hover:scale-105 transition-transform"
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[#D9A441] animate-pulse" />
                 <span>Track Your Order</span>
               </div>
 
@@ -262,11 +262,11 @@ const OrderChatbot = () => {
               <button
                 type="button"
                 onClick={() => setIsOpen(true)}
-                className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-primary-600 to-primary-600 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 flex items-center justify-center transition-all duration-200 cursor-pointer focus:outline-hidden ring-4 ring-primary-500/20"
+                className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-[#35152F] to-[#A83E68] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 flex items-center justify-center transition-all duration-200 cursor-pointer focus:outline-hidden ring-4 ring-[#A83E68]/20"
                 aria-label="Open Order Tracking Chatbot"
               >
                 <RiChat1Line className="w-6 h-6 sm:w-7 sm:h-7" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#D9A441] border-2 border-white dark:border-slate-900 rounded-full" />
               </button>
             </motion.div>
           )}
@@ -284,7 +284,7 @@ const OrderChatbot = () => {
             className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[calc(100vw-32px)] sm:w-[390px] h-[540px] max-h-[85vh] bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden text-left"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-primary-600 via-primary-600 to-primary-700 p-4 text-white flex items-center justify-between shrink-0 shadow-sm">
+            <div className="bg-gradient-to-r from-[#35152F] via-[#A83E68] to-[#35152F] p-4 text-white flex items-center justify-between shrink-0 shadow-sm">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20">
                   <RiRobot2Line className="w-5 h-5 text-white" />
@@ -292,9 +292,9 @@ const OrderChatbot = () => {
                 <div>
                   <h3 className="text-sm font-black leading-tight flex items-center gap-1.5">
                     Order Assistant
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-[#D9A441] animate-pulse" />
                   </h3>
-                  <p className="text-[10px] text-primary-100 font-medium">Vanta Dubai Live Order Tracker</p>
+                  <p className="text-[10px] text-white/80 font-medium">Vanta Dubai Live Order Tracker</p>
                 </div>
               </div>
 

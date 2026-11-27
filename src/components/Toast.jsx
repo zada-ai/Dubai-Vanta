@@ -24,24 +24,24 @@ const ToastContainer = () => {
 
         switch (toast.type) {
           case 'success':
-            borderColor = 'border-emerald-500/50 dark:border-emerald-500/40';
+            borderColor = 'border-[#D9A441]/50 dark:border-[#D9A441]/40';
             Icon = RiCheckboxCircleFill;
-            iconColor = 'text-emerald-500';
+            iconColor = 'text-[#D9A441]';
             break;
           case 'error':
-            borderColor = 'border-rose-500/50 dark:border-rose-500/40';
+            borderColor = 'border-[#A83E68]/50 dark:border-[#A83E68]/40';
             Icon = RiCloseCircleFill;
-            iconColor = 'text-rose-500';
+            iconColor = 'text-[#A83E68]';
             break;
           case 'warning':
-            borderColor = 'border-amber-500/50 dark:border-amber-500/40';
+            borderColor = 'border-[#D9A441]/50 dark:border-[#D9A441]/40';
             Icon = RiErrorWarningFill;
-            iconColor = 'text-amber-500';
+            iconColor = 'text-[#D9A441]';
             break;
           case 'info':
-            borderColor = 'border-sky-500/50 dark:border-sky-500/40';
+            borderColor = 'border-[#A83E68]/50 dark:border-[#A83E68]/40';
             Icon = RiInformationFill;
-            iconColor = 'text-sky-500';
+            iconColor = 'text-[#A83E68]';
             break;
           default:
             break;
