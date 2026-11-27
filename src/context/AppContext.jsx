@@ -6,35 +6,35 @@ const AppContext = createContext();
 export const defaultHeroSlides = [
   {
     id: 1,
-    title: 'AeroSound Max',
+    title: 'AeroSound Max Pro',
     subtitle: 'THE FUTURE OF ACOUSTICS',
-    description: 'Experience pure acoustic bliss with active noise cancellation and up to 40 hours of battery life.',
+    description: 'Experience pure acoustic bliss with active noise cancellation and bespoke Champagne Gold detailing. Up to 40 hours of battery life.',
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
-    link: '/product/1',
+    link: '/shop',
     btnText: 'Shop Collection',
     bgColor: 'from-[#35152F] via-[#A83E68] to-[#D9A441]',
     textColor: 'text-white'
   },
   {
     id: 2,
-    title: 'Minimalist Oak Chair',
-    subtitle: 'HANDCRAFTED NORDIC COMFORT',
-    description: 'Bring clean lines and organic warmth to your living room. FSC-certified solid European oak.',
-    image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800&auto=format&fit=crop&q=80',
-    link: '/product/9',
+    title: 'Vanta Chrono Elegance',
+    subtitle: 'HAUTE HORLOGERIE DUBAI',
+    description: 'Precision engineered timepiece with surgical-grade stainless steel, sapphire crystal glass, and timeless aesthetics.',
+    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80',
+    link: '/shop',
     btnText: 'Shop Collection',
-    bgColor: 'from-[#35152F] via-[#551A32] to-[#A83E68]',
+    bgColor: 'from-[#35152F] via-[#A83E68] to-[#D9A441]',
     textColor: 'text-white'
   },
   {
     id: 3,
-    title: 'Classic Leather Sneakers',
-    subtitle: 'ITALIAN LEATHER ESSENTIALS',
-    description: 'Crafted from premium full-grain leather, designed to fit seamlessly from the boardroom to weekends.',
-    image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&auto=format&fit=crop&q=80',
-    link: '/product/5',
+    title: 'Royal Oud & Amber Noir',
+    subtitle: 'SIGNATURE ARABIAN ESSENCE',
+    description: 'Handcrafted in Dubai from rare aged Cambodian oud, Moroccan damask rose, and warm golden amber.',
+    image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=800&auto=format&fit=crop&q=80',
+    link: '/shop',
     btnText: 'Shop Collection',
-    bgColor: 'from-[#230D1F] via-[#35152F] to-[#A83E68]',
+    bgColor: 'from-[#35152F] via-[#A83E68] to-[#D9A441]',
     textColor: 'text-white'
   }
 ];
@@ -540,7 +540,10 @@ export const AppProvider = ({ children }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const isOld = parsed.some(s => s.title?.includes('Sneakers') || s.title?.includes('Oak Chair') || !s.bgColor?.includes('#35152F'));
+          if (!isOld) return parsed;
+        }
       } catch (_) {}
     }
     return defaultHeroSlides;

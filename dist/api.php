@@ -119,17 +119,31 @@ function get_pdo_connection() {
     $dbUser = $cfg['DB_USER'] ?? '';
     $dbPass = $cfg['DB_PASSWORD'] ?? '';
 
-    try {
-        $dsn = "mysql:host=$dbHost;port=$dbPort;dbname=$dbName;charset=utf8mb4";
-        $pdo = new PDO($dsn, $dbUser, $dbPass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ]);
-        return $pdo;
-    } catch (Throwable $e) {
-        $pdo_error = $e->getMessage();
-        return null;
+    $candidates = [];
+    // 1. Configured .env credentials (if valid production ones)
+    if (!empty($dbName) && !empty($dbUser) && $dbName !== 'aerostore_db') {
+        $candidates[] = ['host' => $dbHost, 'port' => $dbPort, 'name' => $dbName, 'user' => $dbUser, 'pass' => $dbPass];
     }
+    // 2. Hostinger production MySQL credentials (primary database)
+    $candidates[] = ['host' => 'localhost', 'port' => 3306, 'name' => 'u383896879_dubai_vanta', 'user' => 'u383896879_vanta_user', 'pass' => 'Dubai2026Vanta@'];
+    $candidates[] = ['host' => '127.0.0.1', 'port' => 3306, 'name' => 'u383896879_dubai_vanta', 'user' => 'u383896879_vanta_user', 'pass' => 'Dubai2026Vanta@'];
+    // 3. Local development fallback
+    $candidates[] = ['host' => $dbHost ?: 'localhost', 'port' => $dbPort ?: 3306, 'name' => $dbName ?: 'aerostore_db', 'user' => $dbUser ?: 'root', 'pass' => $dbPass ?: ''];
+
+    foreach ($candidates as $c) {
+        if (empty($c['name']) || empty($c['user'])) continue;
+        try {
+            $dsn = "mysql:host={$c['host']};port={$c['port']};dbname={$c['name']};charset=utf8mb4";
+            $pdo = new PDO($dsn, $c['user'], $c['pass'], [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+            ]);
+            return $pdo;
+        } catch (Throwable $e) {
+            $pdo_error = $e->getMessage();
+        }
+    }
+    return null;
 }
 
 $pdo = get_pdo_connection();

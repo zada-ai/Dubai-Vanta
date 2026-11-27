@@ -73,7 +73,7 @@ const Hero = () => {
       {slides.map((slide, idx) => (
         <div
           key={`bg-${slide.id ?? idx}`}
-          className={`absolute inset-0 bg-gradient-to-br ${brandGradient(slide.bgColor)} transition-opacity duration-1000 ease-in-out ${
+          className={`absolute inset-0 bg-gradient-to-r ${brandGradient(slide.bgColor)} transition-opacity duration-1000 ease-in-out ${
             idx === currentSlide ? 'opacity-100' : 'opacity-0'
           }`}
         />
