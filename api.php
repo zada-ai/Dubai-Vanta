@@ -1219,7 +1219,101 @@ if ($method === 'POST' && preg_match('#^/api/auth/google/?$#', $path)) {
     }
 }
 
-// 7.2. GET /api/test-email (Instant SMTP Diagnostics)
+// 7.2. POST /api/auth/refresh (Session Keep-Alive & Token Rotation)
+if ($method === 'POST' && preg_match('#^/api/auth/refresh/?$#', $path)) {
+    $token = $_COOKIE['refreshToken'] ?? ($_SERVER['HTTP_X_REFRESH_TOKEN'] ?? null);
+    if (empty($token)) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'message' => 'No active session or refresh token provided.'
+        ]);
+        exit;
+    }
+
+    $cfg = env_config();
+    $refreshSecret = $cfg['JWT_REFRESH_SECRET'] ?? 'aerostore_refresh_secret_key_2026_super_secure';
+    $accessSecret = $cfg['JWT_ACCESS_SECRET'] ?? 'aerostore_access_secret_key_2026_secure';
+
+    $payload = verify_jwt_hs256($token, $refreshSecret);
+    if (!$payload || empty($payload['id'])) {
+        setcookie('refreshToken', '', ['expires' => time() - 3600, 'path' => '/']);
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Session expired. Please log in again.']);
+        exit;
+    }
+
+    try {
+        $stmt = $pdo->prepare('SELECT id, name, email, role, avatar FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute([':id' => $payload['id']]);
+        $user = $stmt->fetch();
+        if (!$user) {
+            setcookie('refreshToken', '', ['expires' => time() - 3600, 'path' => '/']);
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'User account not found.']);
+            exit;
+        }
+
+        $newAccessToken = generate_jwt_hs256([
+            'id' => (int)$user['id'],
+            'email' => $user['email'],
+            'role' => $user['role'],
+            'name' => $user['name'],
+            'exp' => time() + (15 * 60)
+        ], $accessSecret);
+
+        $newRefreshToken = generate_jwt_hs256([
+            'id' => (int)$user['id'],
+            'email' => $user['email'],
+            'role' => $user['role'],
+            'exp' => time() + (24 * 3600)
+        ], $refreshSecret);
+
+        setcookie('refreshToken', $newRefreshToken, [
+            'expires' => time() + (24 * 3600),
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+            'secure' => false
+        ]);
+
+        echo json_encode([
+            'success' => true,
+            'accessToken' => $newAccessToken,
+            'user' => [
+                'id' => (int)$user['id'],
+                'name' => $user['name'],
+                'email' => $user['email'],
+                'role' => $user['role'],
+                'avatar' => $user['avatar'] ?? null
+            ]
+        ]);
+        exit;
+    } catch (Exception $e) {
+        server_error($e);
+    }
+}
+
+// 7.3. POST /api/auth/logout
+if ($method === 'POST' && preg_match('#^/api/auth/logout/?$#', $path)) {
+    setcookie('refreshToken', '', ['expires' => time() - 3600, 'path' => '/']);
+    echo json_encode(['success' => true, 'message' => 'Logged out successfully.']);
+    exit;
+}
+
+// 7.4. GET /api/auth/me
+if ($method === 'GET' && preg_match('#^/api/auth/me/?$#', $path)) {
+    $authUser = current_user($pdo);
+    if (!$authUser) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Not authenticated.']);
+        exit;
+    }
+    echo json_encode(['success' => true, 'user' => $authUser]);
+    exit;
+}
+
+// 7.5. GET /api/test-email (Instant SMTP Diagnostics)
 if ($method === 'GET' && preg_match('#^/api/test-email/?$#', $path)) {
     $cfg = env_config();
     $adminEmail = $cfg['ADMIN_NOTIFICATION_EMAIL'] ?? ($cfg['SMTP_USER'] ?? 'sohaibmehmood0067@gmail.com');
@@ -1278,10 +1372,11 @@ if ($method === 'GET' && preg_match('#^/api/health/?$#', $path)) {
     exit;
 }
 
-// Default Fallback Response
-http_response_code(502);
+// Default Fallback Response: Return clean 404 instead of 502 Bad Gateway
+http_response_code(404);
 echo json_encode([
     'success' => false,
-    'message' => 'Node.js backend is starting up. Please reload.',
+    'message' => 'API endpoint not found or method not allowed.',
     'path' => $path
 ]);
+exit;

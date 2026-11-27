@@ -397,6 +397,7 @@ export const AppProvider = ({ children }) => {
         method: 'POST',
         credentials: 'include'
       });
+      if (!res.ok) return null;
       const data = await res.json();
       if (data.success && data.user) {
         setUser(data.user);
