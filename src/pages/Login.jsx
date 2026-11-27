@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { RiGoogleFill, RiMailLine, RiLockPasswordLine } from 'react-icons/ri';
+import { RiGoogleFill, RiMailLine, RiLockPasswordLine, RiShieldKeyholeLine } from 'react-icons/ri';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -15,6 +15,43 @@ const Login = () => {
     password: '',
     rememberMe: false
   });
+
+  const [failedAttempts, setFailedAttempts] = useState(() => {
+    try {
+      return parseInt(localStorage.getItem('login_fails') || '0', 10);
+    } catch {
+      return 0;
+    }
+  });
+
+  const [lockoutTimer, setLockoutTimer] = useState(() => {
+    try {
+      const lockUntil = parseInt(localStorage.getItem('login_locked_until') || '0', 10);
+      const remaining = Math.max(0, Math.ceil((lockUntil - Date.now()) / 1000));
+      return remaining;
+    } catch {
+      return 0;
+    }
+  });
+
+  useEffect(() => {
+    if (lockoutTimer <= 0) return;
+    const interval = setInterval(() => {
+      setLockoutTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          try {
+            localStorage.removeItem('login_locked_until');
+            localStorage.setItem('login_fails', '0');
+          } catch {}
+          setFailedAttempts(0);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutTimer]);
 
   // If already logged in, navigate away
   if (user) {
@@ -34,6 +71,10 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (lockoutTimer > 0) {
+      triggerToast(`Rate limit active. Please wait ${lockoutTimer}s before retrying.`, 'warning');
+      return;
+    }
     if (!formData.email || !formData.password) {
       triggerToast('Please enter both email and password.', 'warning');
       return;
@@ -41,6 +82,10 @@ const Login = () => {
 
     const success = await login(formData.email, formData.password);
     if (success) {
+      try {
+        localStorage.removeItem('login_fails');
+        localStorage.removeItem('login_locked_until');
+      } catch {}
       const emailLower = formData.email.toLowerCase();
       const isPrivileged = 
         emailLower === 'sohaibmehmood0067@gmail.com' ||
@@ -52,6 +97,22 @@ const Login = () => {
 
       const target = isPrivileged && redirectUrl === '/' ? '/admin' : redirectUrl;
       navigate(target);
+    } else {
+      const nextFails = failedAttempts + 1;
+      setFailedAttempts(nextFails);
+      try {
+        localStorage.setItem('login_fails', nextFails.toString());
+      } catch {}
+
+      if (nextFails >= 5) {
+        const lockDuration = 60; // 60s security cooldown
+        const lockUntil = Date.now() + lockDuration * 1000;
+        try {
+          localStorage.setItem('login_locked_until', lockUntil.toString());
+        } catch {}
+        setLockoutTimer(lockDuration);
+        triggerToast('🛡️ Security Alert: Rate limit active. Too many failed attempts. Login locked for 60 seconds.', 'error');
+      }
     }
   };
 
@@ -176,12 +237,21 @@ const Login = () => {
             </label>
           </div>
 
+          {/* Rate Limit Security Lockout Banner */}
+          {lockoutTimer > 0 && (
+            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-xs font-semibold flex items-center justify-center gap-2">
+              <RiShieldKeyholeLine className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span>Rate limit active: Too many failed attempts. Security cooldown: <strong>{lockoutTimer}s</strong></span>
+            </div>
+          )}
+
           {/* Login Button */}
           <button
             type="submit"
-            className="w-full py-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-md mt-2 cursor-pointer"
+            disabled={lockoutTimer > 0}
+            className="w-full py-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-md mt-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Sign In
+            {lockoutTimer > 0 ? `Rate Limited (Retry in ${lockoutTimer}s)` : 'Sign In'}
           </button>
         </form>
 

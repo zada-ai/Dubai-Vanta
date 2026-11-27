@@ -250,15 +250,15 @@ const apiLimiter = rateLimit({
   }
 });
 
-// 2. Sensitive Auth limiter: 15 attempts per 15 minutes (brute-force defense)
+// 2. Sensitive Auth limiter: 5 attempts per 15 minutes (brute-force defense)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 15,
+  limit: 5,
   standardHeaders: 'draft-8',
   legacyHeaders: true,
   message: {
     success: false,
-    message: 'Too many authentication attempts. Please wait 15 minutes before trying again.'
+    message: 'Too many authentication attempts from this IP. Please wait 15 minutes before trying again.'
   }
 });
 

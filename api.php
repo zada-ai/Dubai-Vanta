@@ -82,6 +82,75 @@ try {
 // =========================================================================
 // 🚀 NATIVE PHP PDO FALLBACK (Ensures 100% Uptime for Store even if Node sleeps)
 // =========================================================================
+header('X-Backend-Handler: native-php-pdo');
+header('X-Load-Balancer: failover-active');
+
+// Rate Limiting Helper (Brute-Force & DDoS Protection)
+function get_client_ip() {
+    $headers = [
+        'HTTP_CF_CONNECTING_IP',
+        'HTTP_TRUE_CLIENT_IP',
+        'HTTP_X_REAL_IP',
+        'HTTP_X_FORWARDED_FOR',
+        'REMOTE_ADDR'
+    ];
+    foreach ($headers as $h) {
+        if (!empty($_SERVER[$h])) {
+            $ip = trim(explode(',', $_SERVER[$h])[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) return $ip;
+        }
+    }
+    return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+}
+
+function check_rate_limit($actionKey, $maxAttempts = 5, $windowSeconds = 900) {
+    $ip = get_client_ip();
+    $cacheDir = __DIR__ . '/storage/cache';
+    if (!is_dir($cacheDir)) @mkdir($cacheDir, 0755, true);
+    $file = $cacheDir . '/rl_' . md5($ip . '_' . $actionKey) . '.json';
+    $now = time();
+    if (file_exists($file)) {
+        $data = json_decode(@file_get_contents($file), true);
+        if ($data && ($now - $data['start']) < $windowSeconds) {
+            if ($data['count'] >= $maxAttempts) {
+                $waitMins = max(1, ceil(($windowSeconds - ($now - $data['start'])) / 60));
+                http_response_code(429);
+                header('Retry-After: ' . ($windowSeconds - ($now - $data['start'])));
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'success' => false,
+                    'message' => "Too many attempts from this IP. Rate limit active (5 attempts/15 mins). Please wait {$waitMins} minute(s)."
+                ]);
+                exit;
+            }
+        } else {
+            @unlink($file);
+        }
+    }
+}
+
+function record_rate_limit_failure($actionKey, $windowSeconds = 900) {
+    $ip = get_client_ip();
+    $cacheDir = __DIR__ . '/storage/cache';
+    if (!is_dir($cacheDir)) @mkdir($cacheDir, 0755, true);
+    $file = $cacheDir . '/rl_' . md5($ip . '_' . $actionKey) . '.json';
+    $now = time();
+    $data = ['count' => 1, 'start' => $now];
+    if (file_exists($file)) {
+        $existing = json_decode(@file_get_contents($file), true);
+        if ($existing && ($now - $existing['start']) < $windowSeconds) {
+            $data = $existing;
+            $data['count']++;
+        }
+    }
+    @file_put_contents($file, json_encode($data));
+}
+
+function clear_rate_limit($actionKey) {
+    $ip = get_client_ip();
+    $file = __DIR__ . '/storage/cache/rl_' . md5($ip . '_' . $actionKey) . '.json';
+    if (file_exists($file)) @unlink($file);
+}
 
 // Read configuration from .env only (no credentials are hard-coded in this file).
 function env_config() {
@@ -507,86 +576,9 @@ if (preg_match('#^/api/admin-import-products/?$#', $path)) {
     }
 }
 
-// 0.1. GET/POST /api/admin-import-reviews & /api/setup-reviews (Runs reviews_table_and_data.sql)
-if (preg_match('#^/api/(admin-import-reviews|setup-reviews)/?$#', $path)) {
-    try {
-        $sqlFile = __DIR__ . '/reviews_table_and_data.sql';
-        if (!file_exists($sqlFile)) {
-            $sqlFile = dirname(__DIR__) . '/reviews_table_and_data.sql';
-        }
-        if (!file_exists($sqlFile)) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'reviews_table_and_data.sql not found']);
-            exit;
-        }
-        $sql = file_get_contents($sqlFile);
-        $statements = explode(";\n", $sql);
-        $pdo->beginTransaction();
-        foreach ($statements as $st) {
-            $st = trim($st);
-            if (!empty($st)) {
-                $pdo->exec($st);
-            }
-        }
-        $pdo->commit();
-        $count = $pdo->query("SELECT COUNT(*) FROM reviews")->fetchColumn();
-        echo json_encode([
-            'success' => true,
-            'message' => "Successfully imported all reviews! Total reviews now in database: {$count}",
-            'count' => (int)$count
-        ]);
-        exit;
-    } catch (Throwable $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        exit;
-    }
-}
-
-// 0.1. GET/POST /api/admin-import-reviews & /api/setup-reviews (Runs reviews_table_and_data.sql)
-if (preg_match('#^/api/(admin-import-reviews|setup-reviews)/?$#', $path)) {
-    try {
-        $sqlFile = __DIR__ . '/reviews_table_and_data.sql';
-        if (!file_exists($sqlFile)) {
-            $sqlFile = dirname(__DIR__) . '/reviews_table_and_data.sql';
-        }
-        if (!file_exists($sqlFile)) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'reviews_table_and_data.sql not found']);
-            exit;
-        }
-        $sql = file_get_contents($sqlFile);
-        $statements = explode(";\n", $sql);
-        $pdo->beginTransaction();
-        foreach ($statements as $st) {
-            $st = trim($st);
-            if (!empty($st)) {
-                $pdo->exec($st);
-            }
-        }
-        $pdo->commit();
-        $count = $pdo->query("SELECT COUNT(*) FROM reviews")->fetchColumn();
-        echo json_encode([
-            'success' => true,
-            'message' => "Successfully imported all reviews! Total reviews now in database: {$count}",
-            'count' => (int)$count
-        ]);
-        exit;
-    } catch (Throwable $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        exit;
-    }
-}
-
 // 1. GET /api/products
 if ($method === 'GET' && preg_match('#^/api/products/?$#', $path)) {
+    header('Cache-Control: public, max-age=180, stale-while-revalidate=300');
     try {
         $stmt = $pdo->query('SELECT * FROM products ORDER BY created_at DESC, id DESC');
         $rows = $stmt->fetchAll();
@@ -841,6 +833,7 @@ if ($method === 'GET' && preg_match('#^/api/products/([^/]+)$#', $path, $matches
 
 // 3. GET /api/categories
 if ($method === 'GET' && preg_match('#^/api/categories/?$#', $path)) {
+    header('Cache-Control: public, max-age=600, stale-while-revalidate=1200');
     try {
         $stmt = $pdo->query("SELECT id, name, icon, image, count, description FROM categories WHERE count > 0 AND id NOT IN ('groceries', 'sneakers', 'gaming-vr') ORDER BY name ASC");
         $categories = $stmt->fetchAll();
@@ -853,6 +846,7 @@ if ($method === 'GET' && preg_match('#^/api/categories/?$#', $path)) {
 
 // 4. GET /api/settings
 if ($method === 'GET' && preg_match('#^/api/settings/?$#', $path)) {
+    header('Cache-Control: public, max-age=300, stale-while-revalidate=600');
     try {
         $stmt = $pdo->query("SELECT `key`, `value` FROM settings");
         $rows = $stmt->fetchAll();
@@ -1040,6 +1034,92 @@ if ($method === 'POST' && preg_match('#^/api/orders/?$#', $path)) {
             'order' => [
                 'orderId' => $orderId,
                 'id' => $orderId
+            ]
+        ]);
+        exit;
+    } catch (Exception $e) {
+        server_error($e);
+    }
+}
+
+// 7.0. POST /api/auth/login (With Rate Limiting: 5 attempts per 15 minutes)
+if ($method === 'POST' && preg_match('#^/api/auth/login/?$#', $path)) {
+    check_rate_limit('login', 5, 900);
+    $inputData = json_decode($input, true) ?: $_POST;
+    $email = trim(strtolower($inputData['email'] ?? ''));
+    $password = $inputData['password'] ?? '';
+
+    if (empty($email) || empty($password)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Email and password are required.']);
+        exit;
+    }
+
+    try {
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE LOWER(email) = :email LIMIT 1');
+        $stmt->execute([':email' => $email]);
+        $user = $stmt->fetch();
+
+        $valid = false;
+        if ($user) {
+            if (password_verify($password, $user['password'])) {
+                $valid = true;
+            } elseif ($user['password'] === $password) {
+                // Auto-upgrade plain-text password to bcrypt
+                $valid = true;
+                $newHash = password_hash($password, PASSWORD_BCRYPT);
+                $upd = $pdo->prepare('UPDATE users SET password = :p WHERE id = :id');
+                $upd->execute([':p' => $newHash, ':id' => $user['id']]);
+            }
+        }
+
+        if (!$valid) {
+            record_rate_limit_failure('login', 900);
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Invalid email or password.']);
+            exit;
+        }
+
+        // Success: clear rate limit
+        clear_rate_limit('login');
+
+        $cfg = env_config();
+        $accessSecret = $cfg['JWT_ACCESS_SECRET'] ?? 'aerostore_access_secret_key_2026_secure';
+        $refreshSecret = $cfg['JWT_REFRESH_SECRET'] ?? 'aerostore_refresh_secret_key_2026_super_secure';
+
+        $accessToken = generate_jwt_hs256([
+            'id' => (int)$user['id'],
+            'email' => $user['email'],
+            'role' => $user['role'],
+            'name' => $user['name'],
+            'exp' => time() + (15 * 60)
+        ], $accessSecret);
+
+        $refreshToken = generate_jwt_hs256([
+            'id' => (int)$user['id'],
+            'email' => $user['email'],
+            'role' => $user['role'],
+            'exp' => time() + (24 * 3600)
+        ], $refreshSecret);
+
+        setcookie('refreshToken', $refreshToken, [
+            'expires' => time() + (24 * 3600),
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+            'secure' => false
+        ]);
+
+        echo json_encode([
+            'success' => true,
+            'message' => "Welcome back, {$user['name']}!",
+            'accessToken' => $accessToken,
+            'user' => [
+                'id' => (int)$user['id'],
+                'name' => $user['name'],
+                'email' => $user['email'],
+                'role' => $user['role'],
+                'avatar' => $user['avatar'] ?? null
             ]
         ]);
         exit;

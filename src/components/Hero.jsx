@@ -173,30 +173,40 @@ const Hero = () => {
             </motion.div>
           </motion.div>
 
-          {/* Image with 3D Float Animation */}
+          {/* Image inside Circular Luxury Border Frame with 3D Float Animation */}
           <div className="relative flex h-full min-h-0 items-center justify-center">
-            <div className="absolute aspect-square h-[70%] max-h-[340px] rounded-full bg-white/15 blur-2xl" />
-            <div className="absolute aspect-square h-[78%] max-h-[380px] rounded-full border border-white/15" />
+            {/* Glowing Champagne Gold Halo */}
+            <div className="absolute aspect-square w-48 sm:w-64 md:w-80 rounded-full bg-[#D9A441]/25 blur-3xl pointer-events-none" />
+            
+            {/* Outer Decorative Concentric Rings */}
+            <div className="absolute aspect-square w-52 sm:w-72 md:w-88 rounded-full border border-white/20 ring-1 ring-[#D9A441]/40 pointer-events-none" />
+            <div className="absolute aspect-square w-56 sm:w-76 md:w-96 rounded-full border border-dashed border-white/15 pointer-events-none" />
+
+            {/* Main Circular Container that clips images into a flawless circle */}
             {active.image && (
-              <motion.img
-                key={`img-${currentSlide}`}
-                src={active.image}
-                alt={active.title}
-                fetchPriority="high"
-                decoding="sync"
-                initial={{ opacity: 0, scale: 0.9 }}
+              <motion.div
+                key={`img-circle-${currentSlide}`}
+                initial={{ opacity: 0, scale: 0.88 }}
                 animate={{ 
                   opacity: 1, 
                   scale: 1,
-                  y: [0, -10, 0]
+                  y: [0, -8, 0]
                 }}
                 transition={{
                   opacity: { duration: 0.5 },
                   scale: { duration: 0.5 },
-                  y: { repeat: Infinity, duration: 3.5, ease: 'easeInOut' }
+                  y: { repeat: Infinity, duration: 3.8, ease: 'easeInOut' }
                 }}
-                className="relative z-10 max-h-[160px] sm:max-h-[210px] md:max-h-[380px] max-w-full object-contain drop-shadow-[0_25px_35px_rgba(0,0,0,0.45)]"
-              />
+                className="relative z-10 aspect-square w-44 h-44 sm:w-60 sm:h-60 md:w-72 md:h-72 lg:w-80 lg:h-80 rounded-full overflow-hidden border-4 border-[#D9A441] shadow-[0_20px_50px_rgba(0,0,0,0.6)] ring-4 ring-white/30 bg-black/30 flex items-center justify-center p-1"
+              >
+                <img
+                  src={active.image}
+                  alt={active.title}
+                  fetchPriority="high"
+                  decoding="sync"
+                  className="w-full h-full object-cover object-center rounded-full transition-transform duration-700 hover:scale-105"
+                />
+              </motion.div>
             )}
           </div>
         </motion.div>
