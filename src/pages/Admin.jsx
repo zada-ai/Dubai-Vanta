@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import FeatureIcon, { PRESET_ICONS } from '../components/FeatureIcon';
 import {
@@ -180,7 +180,23 @@ const Admin = () => {
     setEditingCategory(null);
   };
 
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'hero' | 'features' | 'seo' | 'products' | 'orders'
+  const routeParams = useParams();
+  const [searchParams] = useSearchParams();
+  const initialTab = routeParams.tab || searchParams.get('tab') || 'overview';
+  const [activeTab, setActiveTabState] = useState(initialTab);
+
+  const setActiveTab = (tabName) => {
+    setActiveTabState(tabName);
+    try {
+      window.history.pushState(null, '', `/admin/${tabName}`);
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    if (routeParams.tab && routeParams.tab !== activeTab) {
+      setActiveTabState(routeParams.tab);
+    }
+  }, [routeParams.tab]);
 
   // Sync database orders on mount and tab switch
   useEffect(() => {
@@ -1255,17 +1271,47 @@ const Admin = () => {
           onClick={() => setActiveTab('overview')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
             activeTab === 'overview'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+              ? 'bg-[#35152F] text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
           <RiDashboardLine className="w-4 h-4" /> Overview
         </button>
         <button
+          onClick={() => setActiveTab('orders')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer border ${
+            activeTab === 'orders'
+              ? 'bg-[#35152F] text-[#D9A441] border-[#D9A441] shadow-md'
+              : 'border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
+          }`}
+        >
+          <RiFileList3Line className="w-4 h-4 text-[#D9A441]" /> Customer Orders ({totalOrdersCount})
+        </button>
+        <button
+          onClick={() => setActiveTab('products')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+            activeTab === 'products'
+              ? 'bg-[#35152F] text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <RiShoppingBag3Line className="w-4 h-4" /> Products ({totalProductsCount})
+        </button>
+        <button
+          onClick={() => setActiveTab('categories')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+            activeTab === 'categories'
+              ? 'bg-[#35152F] text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <RiGridFill className="w-4 h-4 text-emerald-500" /> Categories ({categories?.length || 0})
+        </button>
+        <button
           onClick={() => setActiveTab('hero')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
             activeTab === 'hero'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+              ? 'bg-[#35152F] text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
@@ -1275,7 +1321,7 @@ const Admin = () => {
           onClick={() => setActiveTab('features')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
             activeTab === 'features'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+              ? 'bg-[#35152F] text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
@@ -1285,7 +1331,7 @@ const Admin = () => {
           onClick={() => setActiveTab('promo')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
             activeTab === 'promo'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+              ? 'bg-[#35152F] text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
@@ -1295,7 +1341,7 @@ const Admin = () => {
           onClick={() => setActiveTab('seo')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
             activeTab === 'seo'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+              ? 'bg-[#35152F] text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
@@ -1310,26 +1356,6 @@ const Admin = () => {
           }`}
         >
           <RiShareLine className="w-4 h-4 text-sky-500" /> Social Links ({adminSocials.filter(s => s.enabled !== false).length})
-        </button>
-        <button
-          onClick={() => setActiveTab('products')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'products'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <RiShoppingBag3Line className="w-4 h-4" /> Products ({totalProductsCount})
-        </button>
-        <button
-          onClick={() => setActiveTab('orders')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'orders'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <RiFileList3Line className="w-4 h-4" /> Orders ({totalOrdersCount})
         </button>
         <button
           onClick={() => setActiveTab('categories')}

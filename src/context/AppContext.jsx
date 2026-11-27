@@ -472,6 +472,9 @@ export const AppProvider = ({ children }) => {
   // Fetch orders from backend database API & sync
   const fetchOrdersFromApi = async () => {
     try {
+      if (!accessToken) {
+        await silentRefresh();
+      }
       const res = await (authFetch ? authFetch('/api/orders') : fetch('/api/orders', { credentials: 'include' }));
       if (!res.ok) return;
       const text = await res.text();
@@ -552,7 +555,7 @@ export const AppProvider = ({ children }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed) && parsed.length >= 2) {
           const isOld = parsed.some(s => s.title?.includes('Sneakers') || s.title?.includes('Oak Chair') || !s.bgColor?.includes('#35152F'));
           if (!isOld) return parsed;
         }
@@ -758,9 +761,12 @@ export const AppProvider = ({ children }) => {
             setShowLogoText(data.settings.showLogoText);
             localStorage.setItem('showLogoText', JSON.stringify(data.settings.showLogoText));
           }
-          if (data.settings.heroSlides && Array.isArray(data.settings.heroSlides)) {
+          if (data.settings.heroSlides && Array.isArray(data.settings.heroSlides) && data.settings.heroSlides.length >= 2) {
             setHeroSlides(data.settings.heroSlides);
             localStorage.setItem('heroSlides', JSON.stringify(data.settings.heroSlides));
+          } else {
+            setHeroSlides(defaultHeroSlides);
+            localStorage.setItem('heroSlides', JSON.stringify(defaultHeroSlides));
           }
           if (data.settings.seo && data.settings.seo.metaTitle) {
             setSeoSettings(data.settings.seo);

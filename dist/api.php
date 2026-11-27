@@ -224,6 +224,206 @@ function verify_jwt_hs256($token, $secret) {
     return $payload;
 }
 
+function generate_jwt_hs256($payload, $secret) {
+    $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+    $payloadJson = json_encode($payload);
+    $b64Header = rtrim(strtr(base64_encode($header), '+/', '-_'), '=');
+    $b64Payload = rtrim(strtr(base64_encode($payloadJson), '+/', '-_'), '=');
+    $signature = hash_hmac('sha256', "$b64Header.$b64Payload", $secret, true);
+    $b64Sig = rtrim(strtr(base64_encode($signature), '+/', '-_'), '=');
+    return "$b64Header.$b64Payload.$b64Sig";
+}
+
+// ---- Google SMTP Email Client (fsockopen SSL/TLS) ----
+function send_smtp_email($to, $toName, $subject, $htmlContent) {
+    $cfg = env_config();
+    $smtpHost = $cfg['SMTP_HOST'] ?? 'smtp.gmail.com';
+    $smtpPort = (int)($cfg['SMTP_PORT'] ?? 465);
+    $smtpUser = $cfg['SMTP_USER'] ?? '';
+    $smtpPass = str_replace(' ', '', $cfg['SMTP_PASS'] ?? '');
+    $fromEmail = $smtpUser ?: 'orders@vantadubai.com';
+    $fromName = 'Vanta Dubai';
+
+    if (empty($smtpUser) || empty($smtpPass)) {
+        // Fallback to PHP native mail() if no SMTP credentials in .env
+        $headers = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $headers .= "From: {$fromName} <{$fromEmail}>\r\n";
+        @mail($to, $subject, $htmlContent, $headers);
+        return false;
+    }
+
+    try {
+        $protocol = ($smtpPort === 465) ? 'ssl://' : '';
+        $socket = @fsockopen($protocol . $smtpHost, $smtpPort, $errno, $errstr, 8);
+        if (!$socket) {
+            error_log("[SMTP] Connection to {$smtpHost}:{$smtpPort} failed: {$errstr} ({$errno})");
+            return false;
+        }
+
+        $getResponse = function($sock) {
+            $data = '';
+            while ($str = fgets($sock, 515)) {
+                $data .= $str;
+                if (substr($str, 3, 1) === ' ') break;
+            }
+            return $data;
+        };
+
+        $sendCommand = function($sock, $cmd) use ($getResponse) {
+            fputs($sock, $cmd . "\r\n");
+            return $getResponse($sock);
+        };
+
+        $getResponse($socket); // read 220 banner
+        $sendCommand($socket, "EHLO " . gethostname());
+
+        if ($smtpPort === 587) {
+            $sendCommand($socket, "STARTTLS");
+            stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT);
+            $sendCommand($socket, "EHLO " . gethostname());
+        }
+
+        $sendCommand($socket, "AUTH LOGIN");
+        $sendCommand($socket, base64_encode($smtpUser));
+        $resAuth = $sendCommand($socket, base64_encode($smtpPass));
+        if (substr($resAuth, 0, 3) !== '235') {
+            error_log("[SMTP] Google Auth failed: " . trim($resAuth));
+            fclose($socket);
+            return false;
+        }
+
+        $sendCommand($socket, "MAIL FROM: <{$smtpUser}>");
+        $sendCommand($socket, "RCPT TO: <{$to}>");
+        $sendCommand($socket, "DATA");
+
+        $message = "Date: " . date('r') . "\r\n";
+        $message .= "To: =?UTF-8?B?" . base64_encode($toName) . "?= <{$to}>\r\n";
+        $message .= "From: =?UTF-8?B?" . base64_encode($fromName) . "?= <{$smtpUser}>\r\n";
+        $message .= "Subject: =?UTF-8?B?" . base64_encode($subject) . "?=\r\n";
+        $message .= "MIME-Version: 1.0\r\n";
+        $message .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $message .= "Content-Transfer-Encoding: base64\r\n\r\n";
+        $message .= chunk_split(base64_encode($htmlContent)) . "\r\n.\r\n";
+
+        fputs($socket, $message);
+        $resData = $getResponse($socket);
+        $sendCommand($socket, "QUIT");
+        fclose($socket);
+        return (substr($resData, 0, 3) === '250');
+    } catch (Throwable $e) {
+        error_log("[SMTP] Exception: " . $e->getMessage());
+        return false;
+    }
+}
+
+function send_order_notification_emails($orderId, $custName, $custEmail, $custPhone, $shippingAddress, $items, $totalAmount, $payMethod) {
+    $cfg = env_config();
+    $adminEmail = $cfg['ADMIN_NOTIFICATION_EMAIL'] ?? ($cfg['SMTP_USER'] ?? 'sohaibmehmood0067@gmail.com');
+
+    $itemList = is_string($items) ? json_decode($items, true) : $items;
+    $itemList = is_array($itemList) ? $itemList : [];
+
+    $itemsRows = '';
+    foreach ($itemList as $it) {
+        $name = htmlspecialchars($it['name'] ?? 'Product');
+        $qty = (int)($it['quantity'] ?? 1);
+        $price = number_format((float)($it['price'] ?? 0), 2);
+        $color = !empty($it['selectedColor']) ? "<span style='font-size:11px;color:#888;'>Color: " . htmlspecialchars($it['selectedColor']) . "</span><br>" : "";
+        $itemsRows .= "<tr style='border-bottom:1px solid #f1ece4;'><td style='padding:12px 8px;font-size:14px;color:#1e293b;'><strong>{$name}</strong><br>{$color}</td><td style='padding:12px 8px;font-size:14px;color:#1e293b;text-align:center;'>{$qty}</td><td style='padding:12px 8px;font-size:14px;color:#1e293b;text-align:right;font-weight:bold;'>AED {$price}</td></tr>";
+    }
+
+    $formattedTotal = number_format((float)$totalAmount, 2);
+
+    $buildHtml = function($isForAdmin) use ($orderId, $custName, $custEmail, $custPhone, $shippingAddress, $itemsRows, $formattedTotal, $payMethod) {
+        $title = $isForAdmin ? "🛍️ New Order Received: #{$orderId}" : "✨ Order Confirmed: #{$orderId}";
+        $sub = $isForAdmin ? "A new order was placed on Vanta Dubai store." : "Thank you for shopping at Vanta Dubai! Your order is being processed.";
+        $badge = htmlspecialchars($payMethod);
+        $address = htmlspecialchars($shippingAddress);
+        $name = htmlspecialchars($custName);
+        $phone = htmlspecialchars($custPhone);
+        $email = htmlspecialchars($custEmail);
+
+        return "
+        <!DOCTYPE html>
+        <html>
+        <body style='font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;background-color:#f7f5f1;margin:0;padding:24px;color:#35152F;'>
+          <div style='max-width:600px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(53,21,47,0.08);border:1px solid #e7ded2;'>
+            <div style='background:linear-gradient(135deg, #35152F 0%, #A83E68 50%, #D9A441 100%);padding:28px 24px;text-align:center;color:#ffffff;'>
+              <h1 style='margin:0;font-size:24px;font-weight:900;letter-spacing:2px;'>VANTA DUBAI</h1>
+              <p style='margin:6px 0 0 0;font-size:14px;opacity:0.95;'>{$sub}</p>
+            </div>
+            <div style='padding:26px 24px;'>
+              <div style='display:flex;justify-content:space-between;margin-bottom:18px;border-bottom:2px solid #f7f5f1;padding-bottom:12px;'>
+                <div>
+                  <span style='font-size:11px;font-weight:bold;text-transform:uppercase;color:#A83E68;'>Order Reference</span>
+                  <h2 style='margin:2px 0 0 0;font-size:18px;color:#35152F;font-family:monospace;'>#{$orderId}</h2>
+                </div>
+                <div>
+                  <span style='display:inline-block;padding:4px 12px;border-radius:9999px;background:#fdf6ec;color:#D9A441;border:1px solid #D9A441;font-size:12px;font-weight:bold;'>💵 {$badge}</span>
+                </div>
+              </div>
+              <div style='background:#fbf9f6;border-radius:12px;padding:16px;margin-bottom:20px;border:1px solid #eee7dd;'>
+                <h3 style='margin:0 0 8px 0;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#A83E68;'>Customer & Delivery Details</h3>
+                <p style='margin:4px 0;font-size:14px;'><strong>Customer:</strong> {$name}</p>
+                " . (!empty($phone) ? "<p style='margin:4px 0;font-size:14px;'><strong>Phone / WhatsApp:</strong> {$phone}</p>" : "") . "
+                " . (!empty($email) ? "<p style='margin:4px 0;font-size:14px;'><strong>Email:</strong> {$email}</p>" : "") . "
+                <p style='margin:4px 0;font-size:14px;'><strong>Address:</strong> {$address}</p>
+              </div>
+              <table style='width:100%;border-collapse:collapse;margin-bottom:20px;'>
+                <thead>
+                  <tr style='border-bottom:2px solid #35152F;text-align:left;'>
+                    <th style='padding:8px;font-size:11px;text-transform:uppercase;color:#35152F;'>Item</th>
+                    <th style='padding:8px;font-size:11px;text-transform:uppercase;color:#35152F;text-align:center;'>Qty</th>
+                    <th style='padding:8px;font-size:11px;text-transform:uppercase;color:#35152F;text-align:right;'>Price</th>
+                  </tr>
+                </thead>
+                <tbody>{$itemsRows}</tbody>
+              </table>
+              <div style='border-top:2px solid #35152F;padding-top:12px;text-align:right;'>
+                <p style='margin:0;font-size:13px;color:#64748b;'>Total Payable</p>
+                <p style='margin:4px 0 0 0;font-size:22px;font-weight:900;color:#35152F;'>AED {$formattedTotal}</p>
+              </div>
+              " . (!$isForAdmin ? "
+                <div style='margin-top:20px;padding:14px;border-radius:12px;background:#faf5ea;border-left:4px solid #D9A441;'>
+                  <p style='margin:0;font-size:13px;color:#5a4214;line-height:1.5;'>
+                    <strong>Cash on Delivery:</strong> Please keep exact cash of <strong>AED {$formattedTotal}</strong> ready for the courier rider upon delivery.
+                  </p>
+                </div>
+              " : "
+                <div style='margin-top:20px;text-align:center;'>
+                  <a href='https://forestgreen-bison-920236.hostingersite.com/admin/orders' style='display:inline-block;background:#35152F;color:#D9A441;padding:12px 24px;border-radius:10px;font-weight:bold;text-decoration:none;font-size:14px;'>View in Admin Dashboard &rarr;</a>
+                </div>
+              ") . "
+            </div>
+            <div style='background:#f7f5f1;border-top:1px solid #eee7dd;padding:16px;text-align:center;font-size:12px;color:#887b6e;'>
+              <p style='margin:0;'>Vanta Dubai • Premium Shopping Delivered Across UAE</p>
+            </div>
+          </div>
+        </body>
+        </html>
+        ";
+    };
+
+    // 1. Send Admin Email
+    send_smtp_email(
+        $adminEmail,
+        'Vanta Store Admin',
+        "🛍️ New Order Received: #{$orderId} - AED {$formattedTotal}",
+        $buildHtml(true)
+    );
+
+    // 2. Send Customer Email
+    if (!empty($custEmail) && strpos($custEmail, '@') !== false && !str_ends_with($custEmail, '@example.com')) {
+        send_smtp_email(
+            $custEmail,
+            $custName ?: 'Valued Customer',
+            "✨ Your Vanta Dubai Order is Confirmed: #{$orderId}",
+            $buildHtml(false)
+        );
+    }
+}
+
 function current_user($pdo) {
     $cfg = env_config();
     $accessSecret = $cfg['JWT_ACCESS_SECRET'] ?? '';
@@ -352,6 +552,45 @@ if (preg_match('#^/api/(admin-import-reviews|setup-reviews)/?$#', $path)) {
     }
 }
 
+// 0.1. GET/POST /api/admin-import-reviews & /api/setup-reviews (Runs reviews_table_and_data.sql)
+if (preg_match('#^/api/(admin-import-reviews|setup-reviews)/?$#', $path)) {
+    try {
+        $sqlFile = __DIR__ . '/reviews_table_and_data.sql';
+        if (!file_exists($sqlFile)) {
+            $sqlFile = dirname(__DIR__) . '/reviews_table_and_data.sql';
+        }
+        if (!file_exists($sqlFile)) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'reviews_table_and_data.sql not found']);
+            exit;
+        }
+        $sql = file_get_contents($sqlFile);
+        $statements = explode(";\n", $sql);
+        $pdo->beginTransaction();
+        foreach ($statements as $st) {
+            $st = trim($st);
+            if (!empty($st)) {
+                $pdo->exec($st);
+            }
+        }
+        $pdo->commit();
+        $count = $pdo->query("SELECT COUNT(*) FROM reviews")->fetchColumn();
+        echo json_encode([
+            'success' => true,
+            'message' => "Successfully imported all reviews! Total reviews now in database: {$count}",
+            'count' => (int)$count
+        ]);
+        exit;
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        exit;
+    }
+}
+
 // 1. GET /api/products
 if ($method === 'GET' && preg_match('#^/api/products/?$#', $path)) {
     try {
@@ -390,6 +629,8 @@ if ($method === 'GET' && preg_match('#^/api/products/?$#', $path)) {
             $mainImg = !empty($images) ? $images[0] : '';
             $pidStr = (string)$r['id'];
             $revSummary = $revSummaries[$pidStr] ?? ['rating' => 4.9, 'reviewsCount' => 11];
+            $pidStr = (string)$r['id'];
+            $revSummary = $revSummaries[$pidStr] ?? ['rating' => 4.9, 'reviewsCount' => 11];
             return [
                 'id' => $pidStr,
                 'sku' => !empty($r['sku']) ? $r['sku'] : 'VNT-GEN-' . substr($pidStr, 0, 4),
@@ -404,6 +645,8 @@ if ($method === 'GET' && preg_match('#^/api/products/?$#', $path)) {
                 'image' => $mainImg,
                 'altText' => $r['alt_text'] ?? $r['name'],
                 'description' => $r['description'] ?? '',
+                'rating' => $revSummary['rating'],
+                'reviewsCount' => $revSummary['reviewsCount'],
                 'rating' => $revSummary['rating'],
                 'reviewsCount' => $revSummary['reviewsCount'],
                 'isFeatured' => (bool)$r['is_featured'],
@@ -541,6 +784,31 @@ if ($method === 'GET' && preg_match('#^/api/products/([^/]+)$#', $path, $matches
                 }
             } catch (Throwable $e) {}
 
+
+            // Fetch actual reviews from reviews database table
+            $prodReviews = [];
+            $avgRating = 4.9;
+            $revCount = 0;
+            try {
+                $revStmt = $pdo->prepare("SELECT id, customer_name AS name, location, rating, comment, is_verified AS verified, DATE(created_at) AS date FROM reviews WHERE product_id = :pid ORDER BY created_at DESC");
+                $revStmt->execute([':pid' => (string)$r['id']]);
+                $prodReviews = $revStmt->fetchAll();
+                $revCount = count($prodReviews);
+                if ($revCount > 0) {
+                    $totalR = 0;
+                    foreach ($prodReviews as &$pv) {
+                        $pv['rating'] = (float)$pv['rating'];
+                        $pv['verified'] = (bool)$pv['verified'];
+                        $totalR += $pv['rating'];
+                    }
+                    unset($pv);
+                    $avgRating = round($totalR / $revCount, 1);
+                } else {
+                    $avgRating = 4.9;
+                    $revCount = 11;
+                }
+            } catch (Throwable $e) {}
+
             $product = [
                 'id' => (string)$r['id'],
                 'sku' => !empty($r['sku']) ? $r['sku'] : 'VNT-GEN-' . substr((string)$r['id'], 0, 4),
@@ -554,6 +822,9 @@ if ($method === 'GET' && preg_match('#^/api/products/([^/]+)$#', $path, $matches
                 'image' => !empty($images) ? $images[0] : '',
                 'altText' => $r['alt_text'] ?? $r['name'],
                 'description' => $r['description'] ?? '',
+                'rating' => $avgRating,
+                'reviewsCount' => $revCount,
+                'reviews' => $prodReviews,
                 'rating' => $avgRating,
                 'reviewsCount' => $revCount,
                 'reviews' => $prodReviews,
@@ -753,6 +1024,22 @@ if ($method === 'POST' && preg_match('#^/api/orders/?$#', $path)) {
             ':order_status' => $orderStatus
         ]);
 
+        // Send Email Notifications
+        try {
+            send_order_notification_emails(
+                $orderId,
+                $custName,
+                $custEmail,
+                $custPhone,
+                $shippingAddress,
+                $items,
+                $totalAmount,
+                $payMethod
+            );
+        } catch (Throwable $mailErr) {
+            error_log('[api.php] Mail notice: ' . $mailErr->getMessage());
+        }
+
         http_response_code(201);
         echo json_encode([
             'success' => true,
@@ -765,6 +1052,128 @@ if ($method === 'POST' && preg_match('#^/api/orders/?$#', $path)) {
     } catch (Exception $e) {
         server_error($e);
     }
+}
+
+// 7.1. POST /api/auth/google
+if ($method === 'POST' && preg_match('#^/api/auth/google/?$#', $path)) {
+    $inputData = json_decode($input, true) ?: [];
+    $email = trim(strtolower($inputData['email'] ?? ''));
+    $name = trim($inputData['name'] ?? '');
+    $avatar = trim($inputData['picture'] ?? ($inputData['avatar'] ?? ''));
+
+    if (empty($email)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Email is required from Google.']);
+        exit;
+    }
+
+    try {
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE LOWER(email) = :email LIMIT 1');
+        $stmt->execute([':email' => $email]);
+        $existing = $stmt->fetch();
+
+        if ($existing) {
+            $user = $existing;
+            if (!empty($avatar) && empty($user['avatar'])) {
+                $upd = $pdo->prepare('UPDATE users SET avatar = :avatar WHERE id = :id');
+                $upd->execute([':avatar' => $avatar, ':id' => $user['id']]);
+                $user['avatar'] = $avatar;
+            }
+        } else {
+            $safeName = !empty($name) ? $name : explode('@', $email)[0];
+            $hashedPass = password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT);
+            $role = 'customer';
+            $ins = $pdo->prepare('INSERT INTO users (name, email, password, role, avatar, created_at) VALUES (:name, :email, :pass, :role, :avatar, NOW())');
+            $ins->execute([
+                ':name' => $safeName,
+                ':email' => $email,
+                ':pass' => $hashedPass,
+                ':role' => $role,
+                ':avatar' => $avatar
+            ]);
+            $newId = (int)$pdo->lastInsertId();
+            $user = [
+                'id' => $newId,
+                'name' => $safeName,
+                'email' => $email,
+                'role' => $role,
+                'avatar' => $avatar
+            ];
+        }
+
+        $cfg = env_config();
+        $accessSecret = $cfg['JWT_ACCESS_SECRET'] ?? 'aerostore_access_secret_key_2026_secure';
+        $refreshSecret = $cfg['JWT_REFRESH_SECRET'] ?? 'aerostore_refresh_secret_key_2026_super_secure';
+
+        $accessToken = generate_jwt_hs256([
+            'id' => (int)$user['id'],
+            'email' => $user['email'],
+            'role' => $user['role'],
+            'exp' => time() + (15 * 60)
+        ], $accessSecret);
+
+        $refreshToken = generate_jwt_hs256([
+            'id' => (int)$user['id'],
+            'email' => $user['email'],
+            'role' => $user['role'],
+            'exp' => time() + (24 * 3600)
+        ], $refreshSecret);
+
+        setcookie('refreshToken', $refreshToken, [
+            'expires' => time() + (24 * 3600),
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+            'secure' => false
+        ]);
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Signed in with Google successfully!',
+            'accessToken' => $accessToken,
+            'user' => [
+                'id' => (int)$user['id'],
+                'name' => $user['name'],
+                'email' => $user['email'],
+                'role' => $user['role'],
+                'avatar' => $user['avatar'] ?? null
+            ]
+        ]);
+        exit;
+    } catch (Exception $e) {
+        server_error($e);
+    }
+}
+
+// 7.2. GET /api/test-email (Instant SMTP Diagnostics)
+if ($method === 'GET' && preg_match('#^/api/test-email/?$#', $path)) {
+    $cfg = env_config();
+    $adminEmail = $cfg['ADMIN_NOTIFICATION_EMAIL'] ?? ($cfg['SMTP_USER'] ?? 'sohaibmehmood0067@gmail.com');
+    $smtpUser = $cfg['SMTP_USER'] ?? '';
+    $smtpPass = $cfg['SMTP_PASS'] ?? '';
+
+    if (empty($smtpUser) || empty($smtpPass)) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'SMTP_USER or SMTP_PASS is missing in .env file. Please add your Gmail and App Password.',
+            'configured_admin_email' => $adminEmail
+        ]);
+        exit;
+    }
+
+    $res = send_smtp_email(
+        $adminEmail,
+        'Admin',
+        '✅ Google SMTP Test from Vanta Dubai',
+        '<h2>Google SMTP is working perfectly!</h2><p>Your store is ready to receive order alerts at this email.</p>'
+    );
+
+    echo json_encode([
+        'success' => $res,
+        'message' => $res ? "Test email sent successfully to {$adminEmail}!" : "Failed to deliver email through SMTP. Check SMTP_PASS (Google App Password).",
+        'adminEmail' => $adminEmail
+    ]);
+    exit;
 }
 
 // 8. PUT /api/orders/:id/status (Super Admin update order status)

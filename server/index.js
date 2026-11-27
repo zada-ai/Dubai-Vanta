@@ -44,6 +44,7 @@ import {
   deleteSettingKey 
 } from './db.js';
 import { registerSeoRoutes } from './seo.js';
+import { sendOrderEmails } from './mailer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -380,6 +381,47 @@ app.get('/api/health', (req, res) => {
 // ==========================================
 // 2. Authentication API (JWT + httpOnly Refresh Token)
 // ==========================================
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { email, name, picture, sub } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required from Google.' });
+    }
+
+    let user = await getUserByEmail(email);
+    if (!user) {
+      user = await createUser({
+        name: name || email.split('@')[0],
+        email: email.toLowerCase(),
+        password: crypto.randomBytes(16).toString('hex'),
+        role: 'customer',
+        avatar: picture || null
+      });
+    }
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    await saveUserRefreshToken(user.id, refreshToken);
+    setRefreshTokenCookie(res, refreshToken);
+
+    res.json({
+      success: true,
+      message: 'Logged in with Google successfully!',
+      accessToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar || picture || null
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 app.post('/api/auth/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -1065,6 +1107,18 @@ app.post('/api/orders', orderLimiter, authenticateOptionalToken, async (req, res
       paymentStatus: chosenPaymentMethod === 'Cash on Delivery' ? 'Pending (Pay upon arrival)' : 'Pending',
       orderStatus: 'Processing'
     });
+
+    // Send Google SMTP Order Notifications in Background
+    sendOrderEmails({
+      orderId: result.orderId,
+      customerName: customerName || shippingDetails?.fullName || req.user?.name || 'Customer',
+      customerEmail: customerEmail || shippingDetails?.email || req.user?.email || '',
+      customerPhone: customerPhone || shippingDetails?.phone || '',
+      shippingAddress: typeof shippingAddress === 'string' ? shippingAddress : (shippingDetails?.street ? `${shippingDetails.street}, ${shippingDetails.city || 'Dubai'}` : 'Dubai, UAE'),
+      items: items || [],
+      totalAmount: totalAmount || totals?.total || 0,
+      paymentMethod: chosenPaymentMethod
+    }).catch((err) => console.error('[Mailer] Background email error:', err.message));
 
     res.status(201).json({
       success: true,

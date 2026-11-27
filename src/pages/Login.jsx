@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { RiGoogleFill, RiAppleFill, RiMailLine, RiLockPasswordLine } from 'react-icons/ri';
+import { RiGoogleFill, RiMailLine, RiLockPasswordLine } from 'react-icons/ri';
 
 const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectUrl = searchParams.get('redirect') || '/';
 
-  const { login, user, triggerToast } = useApp();
+  const { login, user, triggerToast, setAccessToken } = useApp();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -60,9 +60,49 @@ const Login = () => {
     triggerToast('Password reset link sent to your email!', 'info');
   };
 
-  const handleSocialLoginMock = (provider) => {
-    login(`${provider.toLowerCase()}User@example.com`, 'password123');
-    navigate(redirectUrl);
+  const handleGoogleLogin = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (clientId && window.google?.accounts?.oauth2) {
+      try {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse) => {
+            if (tokenResponse?.access_token) {
+              try {
+                const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                }).then((r) => r.json());
+
+                if (userInfo?.email) {
+                  const apiRes = await fetch('/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userInfo)
+                  }).then((r) => r.json());
+
+                  if (apiRes?.success && apiRes.user) {
+                    if (apiRes.accessToken && setAccessToken) setAccessToken(apiRes.accessToken);
+                    localStorage.setItem('user', JSON.stringify(apiRes.user));
+                    triggerToast(`Welcome back, ${apiRes.user.name}!`, 'success');
+                    navigate(redirectUrl);
+                    return;
+                  }
+                }
+              } catch (err) {
+                console.error('Google OAuth error:', err);
+              }
+            }
+          }
+        });
+        client.requestAccessToken();
+        return;
+      } catch (err) {
+        console.error('GIS init error:', err);
+      }
+    }
+
+    triggerToast('Google OAuth: Please add VITE_GOOGLE_CLIENT_ID to your .env file to enable live Google Sign-in.', 'info');
   };
 
   return (
@@ -153,23 +193,15 @@ const Login = () => {
           </span>
         </div>
 
-        {/* Social logins */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Social login */}
+        <div>
           <button
-            onClick={() => handleSocialLoginMock('Google')}
+            onClick={handleGoogleLogin}
             type="button"
-            className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer shadow-xs"
           >
             <RiGoogleFill className="w-5 h-5 text-rose-500" />
-            Google
-          </button>
-          <button
-            onClick={() => handleSocialLoginMock('Apple')}
-            type="button"
-            className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
-          >
-            <RiAppleFill className="w-5 h-5 text-slate-900 dark:text-white" />
-            Apple
+            Continue with Google
           </button>
         </div>
 

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { RiUser3Line, RiMailLine, RiLockPasswordLine, RiPhoneLine } from 'react-icons/ri';
+import { RiUser3Line, RiMailLine, RiLockPasswordLine, RiPhoneLine, RiGoogleFill } from 'react-icons/ri';
 
 const Register = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectUrl = searchParams.get('redirect') || '/';
 
-  const { register, user, triggerToast } = useApp();
+  const { register, user, triggerToast, setAccessToken } = useApp();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -52,6 +52,51 @@ const Register = () => {
     if (success) {
       navigate(redirectUrl);
     }
+  };
+
+  const handleGoogleRegister = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (clientId && window.google?.accounts?.oauth2) {
+      try {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse) => {
+            if (tokenResponse?.access_token) {
+              try {
+                const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                }).then((r) => r.json());
+
+                if (userInfo?.email) {
+                  const apiRes = await fetch('/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userInfo)
+                  }).then((r) => r.json());
+
+                  if (apiRes?.success && apiRes.user) {
+                    if (apiRes.accessToken && setAccessToken) setAccessToken(apiRes.accessToken);
+                    localStorage.setItem('user', JSON.stringify(apiRes.user));
+                    triggerToast(`Welcome to Vanta Dubai, ${apiRes.user.name}!`, 'success');
+                    navigate(redirectUrl);
+                    return;
+                  }
+                }
+              } catch (err) {
+                console.error('Google register error:', err);
+              }
+            }
+          }
+        });
+        client.requestAccessToken();
+        return;
+      } catch (err) {
+        console.error('GIS init error:', err);
+      }
+    }
+
+    triggerToast('Google OAuth: Please add VITE_GOOGLE_CLIENT_ID to your .env file to enable live Google Sign-up.', 'info');
   };
 
   return (
@@ -154,11 +199,31 @@ const Register = () => {
           {/* Register Button */}
           <button
             type="submit"
-            className="w-full py-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-md mt-4 cursor-pointer"
+            className="w-full py-3 rounded-xl bg-[#35152F] text-white font-bold hover:bg-[#A83E68] transition-colors shadow-md mt-4 cursor-pointer"
           >
             Create Account
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="relative flex items-center justify-center my-6">
+          <div className="absolute inset-x-0 border-t border-slate-100 dark:border-slate-800/80" />
+          <span className="relative px-3 bg-white dark:bg-slate-900 text-xs font-bold text-slate-400">
+            OR SIGN UP WITH
+          </span>
+        </div>
+
+        {/* Google Sign Up */}
+        <div>
+          <button
+            onClick={handleGoogleRegister}
+            type="button"
+            className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer shadow-xs"
+          >
+            <RiGoogleFill className="w-5 h-5 text-rose-500" />
+            Sign Up with Google
+          </button>
+        </div>
 
         {/* Sign in prompt */}
         <p className="text-center text-xs text-slate-400 mt-6">

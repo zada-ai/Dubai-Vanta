@@ -8,24 +8,48 @@ import { brandGradient } from '../utils/brandGradient';
 const FALLBACK_SLIDES = [
   {
     id: 1,
-    title: 'AeroSound Max',
+    title: 'AeroSound Max Pro',
     subtitle: 'THE FUTURE OF ACOUSTICS',
-    description: 'Experience pure acoustic bliss with active noise cancellation and up to 40 hours of battery life.',
+    description: 'Experience pure acoustic bliss with active noise cancellation and bespoke Champagne Gold detailing. Up to 40 hours of battery life.',
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
-    link: '/product/1',
+    link: '/shop',
     btnText: 'Shop Collection',
-    bgColor: 'from-primary-600 to-primary-900',
+    bgColor: 'from-[#35152F] via-[#A83E68] to-[#D9A441]',
+    textColor: 'text-white'
   },
+  {
+    id: 2,
+    title: 'Vanta Chrono Elegance',
+    subtitle: 'HAUTE HORLOGERIE DUBAI',
+    description: 'Precision engineered timepiece with surgical-grade stainless steel, sapphire crystal glass, and timeless aesthetics.',
+    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80',
+    link: '/shop',
+    btnText: 'Shop Collection',
+    bgColor: 'from-[#35152F] via-[#A83E68] to-[#D9A441]',
+    textColor: 'text-white'
+  },
+  {
+    id: 3,
+    title: 'Royal Oud & Amber Noir',
+    subtitle: 'SIGNATURE ARABIAN ESSENCE',
+    description: 'Handcrafted in Dubai from rare aged Cambodian oud, Moroccan damask rose, and warm golden amber.',
+    image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=800&auto=format&fit=crop&q=80',
+    link: '/shop',
+    btnText: 'Shop Collection',
+    bgColor: 'from-[#35152F] via-[#A83E68] to-[#D9A441]',
+    textColor: 'text-white'
+  }
 ];
 
-const AUTOPLAY_MS = 6000;
+const AUTOPLAY_MS = 4500;
 
 const Hero = () => {
   const { heroSlides } = useApp();
-  const slides = heroSlides && heroSlides.length > 0 ? heroSlides : FALLBACK_SLIDES;
+  const slides = (heroSlides && Array.isArray(heroSlides) && heroSlides.length > 1) 
+    ? heroSlides 
+    : (heroSlides && heroSlides.length === 1 ? [...heroSlides, ...FALLBACK_SLIDES.filter(f => f.id !== heroSlides[0].id)] : FALLBACK_SLIDES);
 
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [paused, setPaused] = useState(false);
   const touchStartX = useRef(null);
 
   const total = slides.length;
@@ -35,11 +59,14 @@ const Hero = () => {
     if (currentSlide >= total) setCurrentSlide(0);
   }, [total, currentSlide]);
 
+  // Smooth continuous autoplay
   useEffect(() => {
-    if (total <= 1 || paused) return;
-    const timer = setTimeout(() => setCurrentSlide((prev) => (prev + 1) % total), AUTOPLAY_MS);
-    return () => clearTimeout(timer);
-  }, [total, paused, currentSlide]);
+    if (total <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % total);
+    }, AUTOPLAY_MS);
+    return () => clearInterval(interval);
+  }, [total]);
 
   const goTo = (idx) => setCurrentSlide(((idx % total) + total) % total);
   const nextSlide = () => goTo(currentSlide + 1);
@@ -64,8 +91,6 @@ const Hero = () => {
       aria-roledescription="carousel"
       aria-label="Featured offers"
       className="relative w-full overflow-hidden rounded-2xl md:rounded-3xl shadow-xl shadow-slate-900/10 h-[440px] sm:h-[460px] md:h-[500px]"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -88,19 +113,21 @@ const Hero = () => {
       {/* Slide content */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={active.id ?? currentSlide}
+          key={currentSlide}
           className="relative z-10 grid h-full grid-rows-[auto_1fr] md:grid-rows-1 md:grid-cols-2 items-center gap-2 px-6 pt-8 pb-14 sm:px-10 md:px-14 lg:px-16 md:py-12"
-          initial="hidden"
-          animate="show"
-          exit="exit"
+          initial={{ opacity: 0, x: 25 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -25 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
         >
           {/* Copy */}
           <motion.div
             className="flex flex-col items-start text-left"
+            initial="hidden"
+            animate="show"
             variants={{
               hidden: { opacity: 0, y: 16 },
-              show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut', staggerChildren: 0.07 } },
-              exit: { opacity: 0, y: -10, transition: { duration: 0.25 } },
+              show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut', staggerChildren: 0.08 } },
             }}
           >
             {active.subtitle && (
@@ -132,7 +159,7 @@ const Hero = () => {
             >
               <Link
                 to={active.link || '/shop'}
-                className="group inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 md:px-7 md:py-3.5 text-sm md:text-base font-bold text-slate-900 shadow-lg shadow-black/10 hover:bg-slate-100 transition-colors"
+                className="group inline-flex items-center gap-2 rounded-full bg-[#D9A441] text-[#35152F] px-5 py-2.5 md:px-7 md:py-3.5 text-sm md:text-base font-extrabold shadow-lg shadow-black/20 hover:brightness-110 transition-all cursor-pointer"
               >
                 {active.btnText || 'Shop Collection'}
                 <RiArrowRightLine className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -146,25 +173,30 @@ const Hero = () => {
             </motion.div>
           </motion.div>
 
-          {/* Image */}
-          <motion.div
-            className="relative flex h-full min-h-0 items-center justify-center"
-            variants={{
-              hidden: { opacity: 0, scale: 0.92, x: 20 },
-              show: { opacity: 1, scale: 1, x: 0, transition: { duration: 0.6, ease: 'easeOut' } },
-              exit: { opacity: 0, scale: 0.96, transition: { duration: 0.25 } },
-            }}
-          >
+          {/* Image with 3D Float Animation */}
+          <div className="relative flex h-full min-h-0 items-center justify-center">
             <div className="absolute aspect-square h-[70%] max-h-[340px] rounded-full bg-white/15 blur-2xl" />
             <div className="absolute aspect-square h-[78%] max-h-[380px] rounded-full border border-white/15" />
             {active.image && (
-              <img
+              <motion.img
+                key={`img-${currentSlide}`}
                 src={active.image}
                 alt={active.title}
-                className="relative z-10 max-h-[150px] sm:max-h-[190px] md:max-h-[380px] max-w-full object-contain drop-shadow-[0_25px_35px_rgba(0,0,0,0.35)]"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  y: [0, -10, 0]
+                }}
+                transition={{
+                  opacity: { duration: 0.5 },
+                  scale: { duration: 0.5 },
+                  y: { repeat: Infinity, duration: 3.5, ease: 'easeInOut' }
+                }}
+                className="relative z-10 max-h-[160px] sm:max-h-[210px] md:max-h-[380px] max-w-full object-contain drop-shadow-[0_25px_35px_rgba(0,0,0,0.45)]"
               />
             )}
-          </motion.div>
+          </div>
         </motion.div>
       </AnimatePresence>
 
@@ -179,21 +211,14 @@ const Hero = () => {
                 onClick={() => goTo(idx)}
                 aria-label={`Go to slide ${idx + 1}`}
                 aria-current={idx === currentSlide}
-                className={`relative h-1.5 overflow-hidden rounded-full bg-white/30 transition-all duration-300 cursor-pointer ${
-                  idx === currentSlide ? 'w-10' : 'w-4 hover:bg-white/50'
+                className={`relative h-2 overflow-hidden rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === currentSlide ? 'w-10 bg-[#D9A441]' : 'w-4 bg-white/40 hover:bg-white/60'
                 }`}
-              >
-                {idx === currentSlide && (
-                  <span
-                    key={`p-${currentSlide}-${paused}`}
-                    className={`absolute inset-0 rounded-full bg-white ${paused ? '' : 'animate-hero-progress'}`}
-                  />
-                )}
-              </button>
+              />
             ))}
           </div>
 
-          <span className="hidden md:block text-xs font-semibold tabular-nums tracking-wider text-white/70">
+          <span className="hidden md:block text-xs font-semibold tabular-nums tracking-wider text-white/80">
             {String(currentSlide + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
           </span>
         </div>

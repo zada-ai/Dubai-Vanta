@@ -49,6 +49,7 @@ function App() {
             <Route path="about" element={<About />} />
             <Route path="faq" element={<FAQ />} />
             <Route path="admin" element={<Admin />} />
+            <Route path="admin/:tab" element={<Admin />} />
             
             {/* 404 Fallback page */}
             <Route path="*" element={<NotFound />} />

@@ -490,14 +490,29 @@ const Navbar = () => {
                         )}
                       </div>
                       {(user.role === 'admin' || user.role === 'superadmin' || user.role === 'supermanager') && (
-                        <Link
-                          to="/admin"
-                          onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-950/20 hover:bg-primary-50 dark:hover:bg-primary-950/40"
-                        >
-                          <RiShieldCheckLine className="w-4 h-4" />
-                          Admin Dashboard
-                        </Link>
+                        <>
+                          <Link
+                            to="/admin"
+                            onClick={() => setUserDropdownOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-950/20 hover:bg-primary-50 dark:hover:bg-primary-950/40"
+                          >
+                            <RiShieldCheckLine className="w-4 h-4" />
+                            Admin Dashboard
+                          </Link>
+                          <Link
+                            to="/admin/orders"
+                            onClick={() => setUserDropdownOpen(false)}
+                            className="flex items-center justify-between px-4 py-2.5 text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <RiFileList3Line className="w-4 h-4 text-emerald-500" />
+                              Customer Orders
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold">
+                              {orders?.length || 0}
+                            </span>
+                          </Link>
+                        </>
                       )}
                       <Link
                         to="/profile"
