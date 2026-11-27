@@ -86,7 +86,16 @@ function extractCleanTitle(rawTitle, rawDesc, rawCategory, imageUrl, idx) {
     'in'
   ];
 
-  // 1. Try extracting from image slug first if informative
+  // 0. A real scraped title (scraper v1.2+) always wins.
+  if (rawTitle) {
+    const t = cleanString(rawTitle);
+    const l = t.toLowerCase();
+    if (t.length > 4 && !genericTitles.includes(l) && !l.startsWith('about this item') && !/added to cart/i.test(l)) {
+      return t;
+    }
+  }
+
+  // 1. Try extracting from image slug if informative
   if (imageUrl) {
     const filename = imageUrl.split('/').pop().split('?')[0];
     const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
@@ -295,7 +304,8 @@ async function run() {
       }
 
       const allUrls = rawImagesStr.split('|').map(u => u.trim()).filter(u => u.startsWith('http'));
-      const targetUrls = Array.from(new Set(allUrls)).slice(0, 2);
+      // Keep every gallery image (capped at 20 so one bad row can't explode storage).
+      const targetUrls = Array.from(new Set(allUrls)).slice(0, 20);
 
       let title = extractCleanTitle(rawTitle, rawDesc, rawCategory, targetUrls[0], overallIdx);
       if (existingNames.has(title.toLowerCase().trim())) {
