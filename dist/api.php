@@ -217,6 +217,45 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 header('Content-Type: application/json; charset=utf-8');
 
+// 0. GET/POST /api/admin-import-products (Runs update_products_new.sql)
+if (preg_match('#^/api/admin-import-products/?$#', $path)) {
+    try {
+        $sqlFile = __DIR__ . '/update_products_new.sql';
+        if (!file_exists($sqlFile)) {
+            $sqlFile = dirname(__DIR__) . '/update_products_new.sql';
+        }
+        if (!file_exists($sqlFile)) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'update_products_new.sql not found']);
+            exit;
+        }
+        $sql = file_get_contents($sqlFile);
+        $statements = explode(";\n", $sql);
+        $pdo->beginTransaction();
+        foreach ($statements as $st) {
+            $st = trim($st);
+            if (!empty($st)) {
+                $pdo->exec($st);
+            }
+        }
+        $pdo->commit();
+        $count = $pdo->query("SELECT COUNT(*) FROM products")->fetchColumn();
+        echo json_encode([
+            'success' => true,
+            'message' => "Successfully imported all products! Total products now in database: {$count}",
+            'count' => (int)$count
+        ]);
+        exit;
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        exit;
+    }
+}
+
 // 1. GET /api/products
 if ($method === 'GET' && preg_match('#^/api/products/?$#', $path)) {
     try {
