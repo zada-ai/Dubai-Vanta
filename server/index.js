@@ -37,6 +37,8 @@ import {
   createBlog,
   updateBlog,
   deleteBlog,
+  getReviewsByProductId,
+  addReviewToDb,
   getAllSettings, 
   updateSettings, 
   deleteSettingKey 
@@ -682,6 +684,37 @@ app.get('/api/products', async (req, res) => {
     res.setHeader('X-Cache', 'MISS');
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=60');
     res.json(payload);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.get('/api/products/:id/reviews', async (req, res) => {
+  try {
+    const reviews = await getReviewsByProductId(req.params.id);
+    const count = reviews.length;
+    const avgRating = count > 0 ? Number((reviews.reduce((acc, r) => acc + r.rating, 0) / count).toFixed(1)) : 5.0;
+    res.json({ success: true, count, rating: avgRating, reviews });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/api/products/:id/reviews', async (req, res) => {
+  try {
+    const { name, rating, comment, location } = req.body;
+    if (!name || !comment) {
+      return res.status(400).json({ success: false, message: 'Name and comment are required.' });
+    }
+    const review = await addReviewToDb({
+      productId: req.params.id,
+      name,
+      location,
+      rating,
+      comment
+    });
+    cache.del('products');
+    res.status(201).json({ success: true, message: 'Review submitted successfully', review });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Arabia Dropship Scraper v1.2</title>
+<style>
+  body{font:14px/1.5 system-ui,Segoe UI,sans-serif;max-width:900px;margin:24px auto;padding:0 16px;color:#1c1c20}
+  h1{font-size:20px;margin:0 0 4px}
+  p.sub{color:#666;margin:0 0 16px}
+  fieldset{border:1px solid #ddd;border-radius:10px;margin:0 0 14px;padding:12px 14px}
+  legend{font-weight:700;padding:0 6px}
+  label{display:block;margin:6px 0 2px;font-weight:600}
+  input[type=text],input[type=number]{width:100%;padding:7px 9px;border:1px solid #ccc;border-radius:7px;font:inherit;box-sizing:border-box}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:180px}
+  button{padding:9px 16px;border:0;border-radius:8px;background:#1c1c20;color:#fff;font:600 14px inherit;cursor:pointer;margin:4px 6px 4px 0}
+  button.sec{background:#e9e9ee;color:#1c1c20}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  #cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 12px}
+  #cats label{display:flex;gap:8px;font-weight:400;margin:2px 0;align-items:center}
+  #log{width:100%;height:240px;font:12px/1.4 ui-monospace,Consolas,monospace;padding:8px;border:1px solid #ccc;border-radius:8px;background:#fafafa;box-sizing:border-box}
+  #stats{margin:8px 0;font-weight:700;color:#0a66c2}
+  .hint{color:#666;font-size:12px;font-weight:400}
+</style>
+</head>
+<body>
+<h1>Arabia Dropship Product Scraper <span style="font-size:13px;color:#666">(v1.2 - all images + full details)</span></h1>
+<p class="sub">Pehle isi browser mein new.arabiadropship.com par login rakho, phir yahan se chalao.</p>
+
+<fieldset>
+  <legend>Settings</legend>
+  <div class="row">
+    <div><label>Site URL</label><input type="text" id="base" value="https://new.arabiadropship.com"></div>
+    <div><label>Categories page path</label><input type="text" id="catPath" value="/categories"></div>
+    <div><label>Delay (ms)</label><input type="number" id="delay" value="800" min="200"></div>
+  </div>
+  <label>Category link selector <span class="hint">(khali chhor do = auto, "(91)" jaisi counts wale links)</span></label>
+  <input type="text" id="catSel" placeholder="e.g. .category-card a">
+  <label>Product link selector</label>
+  <input type="text" id="prodSel" value="a[href*='/view/']">
+  <label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="liveMode" checked>
+    Live tab mode <span class="hint">(SKU, color jaisi cheezein page load hone ke baad aati hain, is liye ON rakho. Thora slow hai: ~2-3 sec per product)</span></label>
+  <label>Next page selector</label>
+  <input type="text" id="nextSel" value="a[rel='next'], .pagination .next a, .page-item.next a">
+</fieldset>
+
+<fieldset>
+  <legend>Test: ek product check karo</legend>
+  <div class="row"><div style="flex:4"><input type="text" id="testUrl" placeholder="https://new.arabiadropship.com/view/1906"></div>
+  <div style="flex:1;min-width:120px"><button id="testOne" class="sec" style="width:100%;margin:0">Test</button></div></div>
+</fieldset>
+
+<button id="check">1. Categories check karo</button>
+<button id="start" disabled>2. Scrape shuru</button>
+<button id="stop" class="sec" disabled>Stop</button>
+<button id="csv" class="sec" disabled>CSV download</button>
+<button id="json" class="sec" disabled>JSON download</button>
+
+<fieldset id="catBox" style="display:none;margin-top:10px">
+  <legend>Categories (<a href="#" id="toggleAll" style="font-weight:400;font-size:12px">Select/Deselect All</a>)</legend>
+  <div id="cats"></div>
+</fieldset>
+
+<div id="stats"></div>
+<textarea id="log" readonly></textarea>
+<script src="product-parser.js"></script>
+<script src="scraper.js"></script>
+</body>
+</html>

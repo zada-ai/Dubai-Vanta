@@ -181,6 +181,23 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    // Ensure reviews table exists in MySQL
+    await mysqlPool.query(`
+      CREATE TABLE IF NOT EXISTS reviews (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id VARCHAR(36) NOT NULL,
+        user_id INT NULL,
+        customer_name VARCHAR(255) NOT NULL,
+        location VARCHAR(255) DEFAULT 'Dubai, UAE',
+        rating DECIMAL(2,1) NOT NULL DEFAULT 5.0,
+        comment TEXT NOT NULL,
+        is_verified TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_product_id (product_id),
+        INDEX idx_rating (rating)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
     // Seed default blogs if table is empty
     const [bRows] = await mysqlPool.query('SELECT COUNT(*) as count FROM blogs');
     if (bRows[0].count === 0) {
@@ -1015,3 +1032,34 @@ export async function deleteBlog(id) {
   sqliteDb.prepare('DELETE FROM blogs WHERE id = ?').run(id);
   return true;
 }
+
+export async function getReviewsByProductId(productId) {
+  if (isMysql) {
+    const [rows] = await mysqlPool.query(
+      'SELECT id, customer_name AS name, location, rating, comment, is_verified AS verified, DATE_FORMAT(created_at, "%Y-%m-%d") AS date FROM reviews WHERE product_id = ? ORDER BY created_at DESC',
+      [productId]
+    );
+    return rows.map((r) => ({ ...r, rating: Number(r.rating), verified: Boolean(r.verified) }));
+  }
+  return [];
+}
+
+export async function addReviewToDb({ productId, name, location, rating, comment }) {
+  if (isMysql) {
+    const [result] = await mysqlPool.query(
+      'INSERT INTO reviews (product_id, customer_name, location, rating, comment, is_verified, created_at) VALUES (?, ?, ?, ?, ?, 1, NOW())',
+      [productId, name, location || 'Dubai, UAE', Number(rating) || 5.0, comment]
+    );
+    return {
+      id: result.insertId,
+      name,
+      location: location || 'Dubai, UAE',
+      rating: Number(rating) || 5.0,
+      comment,
+      verified: true,
+      date: new Date().toISOString().split('T')[0]
+    };
+  }
+  return null;
+}
+

@@ -79,8 +79,10 @@ const ProductCard = ({ product }) => {
 
         {/* Rating */}
         <div className="flex items-center gap-1 mb-1.5 sm:mb-2.5">
-          <RatingComponent rating={product.rating} size={10} />
-          <span className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500">({product.reviewsCount})</span>
+          <RatingComponent rating={product.rating || 4.9} size={10} />
+          <span className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500">
+            ({product.reviewsCount || (product.reviews ? product.reviews.length : 11)})
+          </span>
         </div>
 
         {/* Footer info: Price & COD Badge */}

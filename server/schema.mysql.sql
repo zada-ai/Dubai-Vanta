@@ -88,3 +88,19 @@ CREATE TABLE IF NOT EXISTS blogs (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 7. REVIEWS TABLE (Customer Reviews & Ratings)
+CREATE TABLE IF NOT EXISTS reviews (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  product_id VARCHAR(36) NOT NULL,
+  user_id INT NULL,
+  customer_name VARCHAR(255) NOT NULL,
+  location VARCHAR(255) DEFAULT 'Dubai, UAE',
+  rating DECIMAL(2,1) NOT NULL DEFAULT 5.0,
+  comment TEXT NOT NULL,
+  is_verified TINYINT(1) DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_product_id (product_id),
+  INDEX idx_rating (rating)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+

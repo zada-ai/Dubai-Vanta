@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Arabia Dropship Product Scraper",
+  "version": "1.2.0",
+  "description": "Apne logged-in seller account se sab categories ke products CSV/JSON mein export karta hai.",
+  "permissions": ["storage", "tabs", "scripting"],
+  "host_permissions": ["https://*.arabiadropship.com/*"],
+  "action": { "default_title": "Open Scraper" },
+  "background": { "service_worker": "background.js" }
+}
