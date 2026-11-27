@@ -26,6 +26,7 @@ const ProductCard = ({ product }) => {
               alt={product.altText || product.name}
               className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
               loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center p-3 bg-slate-100 dark:bg-slate-950 text-slate-400 group-hover:bg-slate-200/60 dark:group-hover:bg-slate-900 transition-colors">

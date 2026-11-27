@@ -182,6 +182,8 @@ const Hero = () => {
                 key={`img-${currentSlide}`}
                 src={active.image}
                 alt={active.title}
+                fetchPriority="high"
+                decoding="sync"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ 
                   opacity: 1, 

@@ -83,12 +83,6 @@ try {
 // 🚀 NATIVE PHP PDO FALLBACK (Ensures 100% Uptime for Store even if Node sleeps)
 // =========================================================================
 
-// Try to auto-resurrect Node.js daemon in background
-if (function_exists('shell_exec')) {
-    @shell_exec('nohup /home/u383896879/.nvm/versions/node/v20.20.2/bin/node ' . __DIR__ . '/server/index.js > ' . __DIR__ . '/server.log 2>&1 &');
-    @shell_exec('nohup node ' . __DIR__ . '/server/index.js > ' . __DIR__ . '/server.log 2>&1 &');
-}
-
 // Read configuration from .env only (no credentials are hard-coded in this file).
 function env_config() {
     static $cfg = null;
