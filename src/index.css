@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  /* Typography: DM Sans for UI text, Fraunces (serif) for page & section headings */
-  --font-sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  /* Typography: Outfit used across the entire website */
+  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
 
   /* The 4 Official Brand Colors of Vanta Dubai */
   --color-royal-plum: #35152F;
@@ -96,16 +96,20 @@
   --radius-3xl: 1.125rem;
 }
 
-/* Page and section headings use the serif display face with consistent weight */
+/* Page and section headings use Outfit font */
 h1,
-h2 {
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.015em;
   font-optical-sizing: auto;
 }
 
-/* Small uppercase eyebrow labels that happen to be h2 should stay in the UI face */
+/* Small uppercase eyebrow labels */
 h2.uppercase {
   font-family: var(--font-sans);
   letter-spacing: 0.12em;

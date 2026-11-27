@@ -491,6 +491,18 @@ const ProductView = ({ id, product, products }) => {
                     </button>
                   </div>
 
+                  {/* Add to Cart Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      addToCart(product, selectedColor, selectedSize, quantity);
+                    }}
+                    className="w-full sm:w-auto px-5 h-12 rounded-xl border-2 border-[#35152F] dark:border-[#A83E68] text-[#35152F] dark:text-[#F7F5F1] hover:bg-[#35152F]/10 dark:hover:bg-[#A83E68]/15 font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-95"
+                  >
+                    <RiShoppingBag3Line className="w-5 h-5 text-[#A83E68]" />
+                    <span>Add to Cart</span>
+                  </button>
+
                   {/* Direct Cash on Delivery Checkout button - Full width on mobile, flex-1 on desktop */}
                   <button
                     type="button"

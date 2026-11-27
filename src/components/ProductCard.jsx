@@ -13,10 +13,13 @@ const ProductCard = ({ product }) => {
   const isDiscounted = discountPrice && discountPrice < product.price;
 
   return (
-    <div className="group relative bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl sm:rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 flex flex-col h-full">
+    <div 
+      onClick={() => navigate(`/product/${product.id}`)}
+      className="group relative bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl sm:rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 flex flex-col h-full cursor-pointer"
+    >
       {/* Product Image Section */}
       <div className="relative aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-950">
-        <Link to={`/product/${product.id}`} className="block w-full h-full">
+        <div className="block w-full h-full">
           {product.images && product.images[0] ? (
             <img
               src={product.images[0]}
@@ -30,7 +33,7 @@ const ProductCard = ({ product }) => {
               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">VANTA DUBAI</span>
             </div>
           )}
-        </Link>
+        </div>
 
         {/* Discount Badge */}
         {isDiscounted && (
@@ -41,7 +44,10 @@ const ProductCard = ({ product }) => {
 
         {/* Wishlist Button */}
         <button
-          onClick={() => toggleWishlist(product)}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleWishlist(product);
+          }}
           className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 p-1 sm:p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs text-slate-600 dark:text-slate-300 hover:text-[#A83E68] dark:hover:text-[#A83E68] shadow-2xs hover:shadow-xs transition-all duration-200 z-10 cursor-pointer"
           aria-label="Add to wishlist"
         >
@@ -68,7 +74,7 @@ const ProductCard = ({ product }) => {
 
         {/* Product Title */}
         <h3 className="text-[11px] sm:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200 mb-1 sm:mb-1.5 line-clamp-2 min-h-[28px] sm:min-h-[38px] leading-tight">
-          <Link to={`/product/${product.id}`}>{product.name}</Link>
+          {product.name}
         </h3>
 
         {/* Rating */}
@@ -77,7 +83,7 @@ const ProductCard = ({ product }) => {
           <span className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500">({product.reviewsCount})</span>
         </div>
 
-        {/* Footer info: Price & Add to Cart */}
+        {/* Footer info: Price & COD Badge */}
         <div className="flex items-center justify-between mt-auto pt-1.5 sm:pt-2.5 border-t border-slate-100 dark:border-slate-800/80 gap-1">
           <div className="min-w-0 flex-1">
             {isDiscounted ? (
@@ -97,20 +103,11 @@ const ProductCard = ({ product }) => {
           </div>
 
           <div className="flex items-center shrink-0">
-            {/* Direct Cash on Delivery Button */}
-            <button
-              onClick={() => {
-                addToCart(product);
-                navigate('/checkout');
-              }}
-              className="flex items-center gap-0.5 sm:gap-1 px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-xl bg-[#35152F] hover:bg-[#A83E68] active:scale-95 text-white text-[9px] sm:text-xs font-bold shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-              aria-label="Order with Cash on Delivery"
-              disabled={product.stock === 0}
-              title={product.stock === 0 ? "Out of Stock" : "Quick Order with Cash on Delivery"}
-            >
-              <RiHandCoinLine className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 text-[#D9A441]" />
+            {/* Cash on Delivery Badge */}
+            <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md sm:rounded-lg bg-[#35152F]/10 dark:bg-[#35152F]/40 text-[#35152F] dark:text-[#F7F5F1] text-[8px] sm:text-[10px] font-bold border border-[#35152F]/20">
+              <RiHandCoinLine className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#D9A441]" />
               <span>COD</span>
-            </button>
+            </span>
           </div>
         </div>
       </div>
