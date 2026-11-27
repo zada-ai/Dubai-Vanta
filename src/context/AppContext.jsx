@@ -390,8 +390,16 @@ export const AppProvider = ({ children }) => {
     }
   }, [user]);
 
-  // Silent Auth Verification & Session Refresh Helper
-  const silentRefresh = async () => {
+  // Silent Auth Verification & Session Refresh Helper (With Cooldown & Guest Protection)
+  let lastRefreshTime = 0;
+  const silentRefresh = async (force = false) => {
+    const now = Date.now();
+    // Cooldown: prevent duplicate calls within 15 seconds unless forced
+    if (!force && (now - lastRefreshTime < 15000)) {
+      return accessToken;
+    }
+    lastRefreshTime = now;
+
     try {
       const res = await fetch('/api/auth/refresh', {
         method: 'POST',
@@ -411,30 +419,21 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // 1. Session Refresh on Mount + Proactive Keep-Alive Heartbeat + Tab Focus Listener
+  // 1. Session Refresh: Only runs once on initial mount if there was a saved session, plus 10m keep-alive for logged-in users
   useEffect(() => {
-    // Initial mount check
-    silentRefresh();
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      silentRefresh(true);
+    }
 
-    // Proactive refresh every 10 minutes to prevent 15m access token expiry while working
+    // Keep session alive every 10 minutes only for logged-in users
     const heartbeatTimer = setInterval(() => {
-      silentRefresh();
-    }, 10 * 60 * 1000);
-
-    // Refresh immediately when user switches back to this tab after hours / inactive period
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (user) {
         silentRefresh();
       }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleVisibilityChange);
+    }, 10 * 60 * 1000);
 
-    return () => {
-      clearInterval(heartbeatTimer);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleVisibilityChange);
-    };
+    return () => clearInterval(heartbeatTimer);
   }, []);
 
   // Universal authenticated fetch wrapper with automatic 401 retry
@@ -454,8 +453,8 @@ export const AppProvider = ({ children }) => {
 
     let response = await fetch(url, finalOptions);
 
-    // If access token expired (401), automatically silent refresh and retry request
-    if (response.status === 401) {
+    // If access token expired (401), automatically silent refresh and retry request (Only for logged-in users)
+    if (response.status === 401 && user && url !== '/api/auth/refresh') {
       const newToken = await silentRefresh();
       if (newToken) {
         finalOptions.headers['Authorization'] = `Bearer ${newToken}`;
@@ -470,12 +469,10 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('orders', JSON.stringify(orders));
   }, [orders]);
 
-  // Fetch orders from backend database API & sync
+  // Fetch orders from backend database API & sync (Only for logged-in users)
   const fetchOrdersFromApi = async () => {
+    if (!user) return;
     try {
-      if (!accessToken) {
-        await silentRefresh();
-      }
       const res = await (authFetch ? authFetch('/api/orders') : fetch('/api/orders', { credentials: 'include' }));
       if (!res.ok) return;
       const text = await res.text();
@@ -520,10 +517,6 @@ export const AppProvider = ({ children }) => {
       console.warn('Error fetching orders from backend:', e);
     }
   };
-
-  useEffect(() => {
-    fetchOrdersFromApi();
-  }, []);
 
   useEffect(() => {
     if (user) {
