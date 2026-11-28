@@ -1935,6 +1935,9 @@ export const AppProvider = ({ children }) => {
     setWishlist([]);
     setActiveCoupon(null);
     triggerToast('Logged out successfully.', 'info');
+    if (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/profile')) {
+      window.location.href = '/';
+    }
   };
 
   const updateProfile = (updatedData) => {

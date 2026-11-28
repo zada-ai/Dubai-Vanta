@@ -1792,7 +1792,13 @@ if ($method === 'POST' && preg_match('#^/api/auth/refresh/?$#', $path)) {
 
 // 7.3. POST /api/auth/logout
 if ($method === 'POST' && preg_match('#^/api/auth/logout/?$#', $path)) {
-    setcookie('refreshToken', '', ['expires' => time() - 3600, 'path' => '/']);
+    setcookie('refreshToken', '', [
+        'expires' => time() - 3600,
+        'path' => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+        'secure' => false
+    ]);
     echo json_encode(['success' => true, 'message' => 'Logged out successfully.']);
     exit;
 }

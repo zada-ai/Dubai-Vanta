@@ -19,6 +19,7 @@ import {
   RiCloseCircleLine,
   RiUploadCloud2Line,
   RiRefreshLine,
+  RiUser3Line,
   RiStore2Line,
   RiImageAddLine,
   RiLayoutTop2Line,
@@ -276,6 +277,12 @@ const Admin = () => {
 
   // Product Section & Badge Filter & Edit State
   const [productBadgeFilter, setProductBadgeFilter] = useState('all'); // 'all' | 'featured' | 'bestsellers' | 'newarrivals'
+  const [productPage, setProductPage] = useState(1);
+  const productsPerPage = 25;
+
+  useEffect(() => {
+    setProductPage(1);
+  }, [productSearch, productBadgeFilter]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUploadingEditImg, setIsUploadingEditImg] = useState(false);
@@ -1066,9 +1073,6 @@ const Admin = () => {
   const newArrivalCount = (productsList || []).filter((p) => p.isNewArrival).length;
 
   // Filtered products with badge & SKU/UUID search + pagination
-  const [productPage, setProductPage] = useState(1);
-  const productsPerPage = 25;
-
   const filteredProducts = (productsList || []).filter((p) => {
     const term = productSearch.toLowerCase();
     const matchesSearch =
@@ -1083,10 +1087,6 @@ const Admin = () => {
     if (productBadgeFilter === 'newarrivals') return !!p.isNewArrival;
     return true;
   });
-
-  useEffect(() => {
-    setProductPage(1);
-  }, [productSearch, productBadgeFilter]);
 
   const totalProductPages = Math.max(1, Math.ceil(filteredProducts.length / productsPerPage));
   const safeProductPage = Math.min(productPage, totalProductPages);
