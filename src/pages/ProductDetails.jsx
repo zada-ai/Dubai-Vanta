@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { products as initialProducts } from '../data/mockData';
@@ -19,7 +19,9 @@ import {
   RiShieldCheckLine,
   RiExchangeLine,
   RiArrowRightLine,
-  RiHandCoinLine
+  RiHandCoinLine,
+  RiArrowLeftSLine,
+  RiArrowRightSLine
 } from 'react-icons/ri';
 
 const ProductDetails = () => {
@@ -61,12 +63,95 @@ const ProductView = ({ id, product, products }) => {
     return ['#000000', '#FFFFFF', '#2563EB', '#16A34A', '#DC2626'];
   }, [product.colors]);
 
+  const colorImages = useMemo(() => {
+    if (!product.colorImages) return {};
+    if (typeof product.colorImages === 'string') {
+      try {
+        const parsed = JSON.parse(product.colorImages);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+    return typeof product.colorImages === 'object' ? product.colorImages : {};
+  }, [product.colorImages]);
+
+  const productImages = useMemo(() => {
+    const base = [];
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      product.images.forEach((img) => {
+        if (img && !base.includes(img)) base.push(img);
+      });
+    } else if (typeof product.image === 'string' && product.image.trim()) {
+      const raw = product.image.trim();
+      if (raw.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) parsed.forEach((img) => img && !base.includes(img) && base.push(img));
+        } catch {}
+      } else if (raw.includes('|')) {
+        raw.split('|').map((s) => s.trim()).filter(Boolean).forEach((img) => !base.includes(img) && base.push(img));
+      } else {
+        base.push(raw);
+      }
+    }
+    // Include any optional color-linked images in gallery if not already present
+    Object.values(colorImages).forEach((img) => {
+      if (img && typeof img === 'string' && img.trim() && !base.includes(img.trim())) {
+        base.push(img.trim());
+      }
+    });
+    return base;
+  }, [product.images, product.image, colorImages]);
+
   // Gallery, options and review states
   const [activeImgIdx, setActiveImgIdx] = useState(0);
   const [selectedColor, setSelectedColor] = useState(availableColors[0] || '#000000');
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || '');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
+  const swipeStartX = useRef(null);
+
+  const handlePrevImage = (e) => {
+    if (e) e.stopPropagation();
+    if (productImages.length <= 1) return;
+    setActiveImgIdx((prev) => (prev - 1 + productImages.length) % productImages.length);
+  };
+
+  const handleNextImage = (e) => {
+    if (e) e.stopPropagation();
+    if (productImages.length <= 1) return;
+    setActiveImgIdx((prev) => (prev + 1) % productImages.length);
+  };
+
+  const handleSwipeStart = (clientX) => {
+    if (productImages.length <= 1) return;
+    swipeStartX.current = clientX;
+  };
+
+  const handleSwipeEnd = (clientX) => {
+    if (swipeStartX.current === null || productImages.length <= 1) return;
+    const diff = swipeStartX.current - clientX;
+    if (Math.abs(diff) > 35) {
+      if (diff > 0) {
+        setActiveImgIdx((prev) => (prev + 1) % productImages.length);
+      } else {
+        setActiveImgIdx((prev) => (prev - 1 + productImages.length) % productImages.length);
+      }
+    }
+    swipeStartX.current = null;
+  };
+
+  const handleSelectColor = (color) => {
+    setSelectedColor(color);
+    const linkedImg = colorImages[color];
+    if (linkedImg) {
+      const idx = productImages.indexOf(linkedImg);
+      if (idx !== -1) {
+        setActiveImgIdx(idx);
+      }
+    }
+  };
   
   // Custom reviews state (defaults to 10-12 verified UAE reviews)
   const [customReviews, setCustomReviews] = useState(() => {
@@ -351,13 +436,56 @@ const ProductView = ({ id, product, products }) => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mt-2">
         {/* Left Column: Image Gallery (5 cols) */}
         <div className="lg:col-span-5 flex flex-col gap-3 sm:gap-4 w-full">
-          <div className="w-full max-w-[270px] sm:max-w-md lg:max-w-none mx-auto aspect-square overflow-hidden bg-slate-100 dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200/50 dark:border-slate-800/80 shadow-2xs">
-            {product.images && product.images[activeImgIdx] ? (
-              <img
-                src={product.images[activeImgIdx]}
-                alt={product.altText || product.name}
-                className="w-full h-full object-cover object-center transition-all duration-300"
-              />
+          <div
+            className="group relative w-full max-w-[270px] sm:max-w-md lg:max-w-none mx-auto aspect-square overflow-hidden bg-slate-100 dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200/50 dark:border-slate-800/80 shadow-2xs select-none touch-pan-y cursor-grab active:cursor-grabbing"
+            onTouchStart={(e) => handleSwipeStart(e.touches[0].clientX)}
+            onTouchEnd={(e) => handleSwipeEnd(e.changedTouches[0].clientX)}
+            onMouseDown={(e) => handleSwipeStart(e.clientX)}
+            onMouseUp={(e) => handleSwipeEnd(e.clientX)}
+            onMouseLeave={() => { swipeStartX.current = null; }}
+          >
+            {productImages.length > 0 ? (
+              <>
+                <div
+                  className="flex w-full h-full transition-transform duration-300 ease-out will-change-transform"
+                  style={{ transform: `translateX(-${activeImgIdx * 100}%)` }}
+                >
+                  {productImages.map((imgSrc, idx) => (
+                    <img
+                      key={idx}
+                      src={imgSrc}
+                      alt={idx === 0 ? (product.altText || product.name) : `${product.name} - ${idx + 1}`}
+                      draggable={false}
+                      className="w-full h-full object-cover object-center shrink-0 pointer-events-none"
+                    />
+                  ))}
+                </div>
+
+                {/* Left / Right Swipe Arrow Controls */}
+                {productImages.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handlePrevImage}
+                      aria-label="Previous image"
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/85 dark:bg-slate-900/85 backdrop-blur-xs text-slate-800 dark:text-slate-100 shadow-md flex items-center justify-center opacity-90 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-105 transition-all cursor-pointer z-10"
+                    >
+                      <RiArrowLeftSLine className="w-5 h-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextImage}
+                      aria-label="Next image"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/85 dark:bg-slate-900/85 backdrop-blur-xs text-slate-800 dark:text-slate-100 shadow-md flex items-center justify-center opacity-90 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-105 transition-all cursor-pointer z-10"
+                    >
+                      <RiArrowRightSLine className="w-5 h-5" />
+                    </button>
+                    <div className="absolute bottom-2.5 right-3 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-xs text-white text-[10px] font-bold z-10">
+                      {activeImgIdx + 1} / {productImages.length}
+                    </div>
+                  </>
+                )}
+              </>
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center p-8 text-slate-400">
                 <RiShoppingBag3Line className="w-16 h-16 mb-2 opacity-30 text-slate-500" />
@@ -366,9 +494,9 @@ const ProductView = ({ id, product, products }) => {
             )}
           </div>
           {/* Thumbnails */}
-          {product.images.length > 1 && (
+          {productImages.length > 1 && (
             <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
-              {product.images.map((img, idx) => (
+              {productImages.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveImgIdx(idx)}
@@ -463,7 +591,7 @@ const ProductView = ({ id, product, products }) => {
                     <button
                       key={color}
                       type="button"
-                      onClick={() => setSelectedColor(color)}
+                      onClick={() => handleSelectColor(color)}
                       className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full cursor-pointer transition-all flex items-center justify-center relative ${
                         isSelected
                           ? 'ring-2 ring-emerald-500 ring-offset-2 scale-110 shadow-md'

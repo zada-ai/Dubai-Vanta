@@ -1405,7 +1405,10 @@ export const AppProvider = ({ children }) => {
   };
 
   const addProduct = async (newProduct) => {
-    const rawImage = newProduct.image || (newProduct.images && newProduct.images[0]) || '';
+    const rawImages = Array.isArray(newProduct.images) && newProduct.images.length > 0
+      ? newProduct.images.filter(Boolean)
+      : (newProduct.image ? [newProduct.image] : []);
+    const rawImage = rawImages[0] || '';
     const generatedId = newProduct.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('vnt-' + Date.now()));
     const catCode = (newProduct.category || 'GEN').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4) || 'GEN';
     const generatedSku = (newProduct.sku && newProduct.sku.trim())
@@ -1422,7 +1425,8 @@ export const AppProvider = ({ children }) => {
       isBestSeller: !!newProduct.isBestSeller,
       isNewArrival: typeof newProduct.isNewArrival === 'boolean' ? newProduct.isNewArrival : true,
       image: rawImage,
-      images: rawImage ? [rawImage] : []
+      images: rawImages,
+      colorImages: newProduct.colorImages && typeof newProduct.colorImages === 'object' ? newProduct.colorImages : {}
     };
     setProductsList((prev) => {
       const next = [productWithId, ...prev];

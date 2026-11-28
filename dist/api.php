@@ -651,6 +651,13 @@ if ($method === 'GET' && preg_match('#^/api/products/?$#', $path)) {
                 $dec = json_decode($r['colors'], true);
                 $colors = is_array($dec) ? $dec : array_filter(array_map('trim', explode(',', $r['colors'])));
             }
+            $colorImages = new stdClass();
+            if (!empty($r['color_images'])) {
+                $decCi = json_decode($r['color_images'], true);
+                if (is_array($decCi) && !empty($decCi)) {
+                    $colorImages = $decCi;
+                }
+            }
             $images = [];
             if (!empty($r['image'])) {
                 $dec = json_decode($r['image'], true);
@@ -677,6 +684,7 @@ if ($method === 'GET' && preg_match('#^/api/products/?$#', $path)) {
                 'discountPrice' => $r['discount_price'] !== null ? (float)$r['discount_price'] : null,
                 'stock' => (int)($r['stock'] ?? 10),
                 'colors' => $colors,
+                'colorImages' => $colorImages,
                 'images' => $images,
                 'image' => $mainImg,
                 'altText' => $r['alt_text'] ?? $r['name'],
@@ -845,6 +853,19 @@ if ($method === 'GET' && preg_match('#^/api/products/([^/]+)$#', $path, $matches
                 }
             } catch (Throwable $e) {}
 
+            $colors = [];
+            if (!empty($r['colors'])) {
+                $dec = json_decode($r['colors'], true);
+                $colors = is_array($dec) ? $dec : array_filter(array_map('trim', explode(',', $r['colors'])));
+            }
+            $colorImages = new stdClass();
+            if (!empty($r['color_images'])) {
+                $decCi = json_decode($r['color_images'], true);
+                if (is_array($decCi) && !empty($decCi)) {
+                    $colorImages = $decCi;
+                }
+            }
+
             $product = [
                 'id' => (string)$r['id'],
                 'sku' => !empty($r['sku']) ? $r['sku'] : 'VNT-GEN-' . substr((string)$r['id'], 0, 4),
@@ -854,6 +875,8 @@ if ($method === 'GET' && preg_match('#^/api/products/([^/]+)$#', $path, $matches
                 'price' => (float)$r['price'],
                 'discountPrice' => $r['discount_price'] !== null ? (float)$r['discount_price'] : null,
                 'stock' => (int)($r['stock'] ?? 10),
+                'colors' => $colors,
+                'colorImages' => $colorImages,
                 'images' => $images,
                 'image' => !empty($images) ? $images[0] : '',
                 'altText' => $r['alt_text'] ?? $r['name'],
@@ -874,6 +897,103 @@ if ($method === 'GET' && preg_match('#^/api/products/([^/]+)$#', $path, $matches
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Product not found']);
         }
+        exit;
+    } catch (Exception $e) {
+        server_error($e);
+    }
+}
+
+// 2.5. POST /api/products (Create Product in PHP PDO)
+if ($method === 'POST' && preg_match('#^/api/products/?$#', $path)) {
+    if (!is_admin_user(current_user($pdo))) deny(403, 'You do not have permission to do this.');
+    $body = json_decode($input, true) ?: [];
+    if (empty($body['name']) || !isset($body['price'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Product name and price are required']);
+        exit;
+    }
+    try {
+        try { $pdo->exec("ALTER TABLE products ADD COLUMN color_images LONGTEXT NULL"); } catch (Throwable $e) {}
+        $id = !empty($body['id']) ? (string)$body['id'] : generate_uuid_v4();
+        $catCode = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $body['category'] ?? 'GEN'), 0, 4)) ?: 'GEN';
+        $sku = !empty($body['sku']) ? strtoupper(trim($body['sku'])) : ('VNT-' . $catCode . '-' . rand(1000, 9999));
+        $imagesArr = (!empty($body['images']) && is_array($body['images'])) ? array_values(array_filter($body['images'])) : (!empty($body['image']) ? [trim($body['image'])] : []);
+        $imageVal = count($imagesArr) > 1 ? json_encode($imagesArr) : ($imagesArr[0] ?? '');
+        $colorsVal = isset($body['colors']) ? (is_array($body['colors']) ? json_encode($body['colors']) : (string)$body['colors']) : '[]';
+        $colorImagesVal = isset($body['colorImages']) ? (is_string($body['colorImages']) ? $body['colorImages'] : json_encode($body['colorImages'])) : '{}';
+
+        $stmt = $pdo->prepare("INSERT INTO products (id, sku, name, brand, category, price, discount_price, stock, colors, color_images, image, alt_text, description, is_featured, is_bestseller, is_new) VALUES (:id, :sku, :name, :brand, :category, :price, :discount_price, :stock, :colors, :color_images, :image, :alt_text, :description, :is_featured, :is_bestseller, :is_new)");
+        $stmt->execute([
+            ':id' => $id,
+            ':sku' => $sku,
+            ':name' => $body['name'],
+            ':brand' => $body['brand'] ?? 'VANTA DUBAI',
+            ':category' => $body['category'] ?? 'electronics',
+            ':price' => (float)$body['price'],
+            ':discount_price' => isset($body['discountPrice']) && $body['discountPrice'] !== '' ? (float)$body['discountPrice'] : null,
+            ':stock' => isset($body['stock']) ? (int)$body['stock'] : 10,
+            ':colors' => $colorsVal,
+            ':color_images' => $colorImagesVal,
+            ':image' => $imageVal,
+            ':alt_text' => $body['altText'] ?? $body['name'],
+            ':description' => $body['description'] ?? '',
+            ':is_featured' => !empty($body['isFeatured']) ? 1 : 0,
+            ':is_bestseller' => !empty($body['isBestSeller']) ? 1 : 0,
+            ':is_new' => isset($body['isNewArrival']) ? (!empty($body['isNewArrival']) ? 1 : 0) : 1
+        ]);
+        echo json_encode(['success' => true, 'id' => $id, 'sku' => $sku]);
+        exit;
+    } catch (Exception $e) {
+        server_error($e);
+    }
+}
+
+// 2.6. PUT /api/products/:id (Update Product in PHP PDO)
+if (($method === 'PUT' || $method === 'PATCH') && preg_match('#^/api/products/([^/]+)/?$#', $path, $matches)) {
+    if (!is_admin_user(current_user($pdo))) deny(403, 'You do not have permission to do this.');
+    $prodId = urldecode($matches[1]);
+    $body = json_decode($input, true) ?: [];
+    try {
+        try { $pdo->exec("ALTER TABLE products ADD COLUMN color_images LONGTEXT NULL"); } catch (Throwable $e) {}
+        $imagesArr = (!empty($body['images']) && is_array($body['images'])) ? array_values(array_filter($body['images'])) : null;
+        $imageVal = $imagesArr !== null ? (count($imagesArr) > 1 ? json_encode($imagesArr) : ($imagesArr[0] ?? '')) : ($body['image'] ?? null);
+        $colorsVal = isset($body['colors']) ? (is_array($body['colors']) ? json_encode($body['colors']) : (string)$body['colors']) : null;
+        $colorImagesVal = isset($body['colorImages']) ? (is_string($body['colorImages']) ? $body['colorImages'] : json_encode($body['colorImages'])) : null;
+
+        $stmt = $pdo->prepare("UPDATE products SET
+            sku = COALESCE(:sku, sku),
+            name = COALESCE(:name, name),
+            brand = COALESCE(:brand, brand),
+            category = COALESCE(:category, category),
+            price = COALESCE(:price, price),
+            discount_price = COALESCE(:discount_price, discount_price),
+            stock = COALESCE(:stock, stock),
+            colors = COALESCE(:colors, colors),
+            color_images = COALESCE(:color_images, color_images),
+            image = COALESCE(:image, image),
+            description = COALESCE(:description, description),
+            is_featured = COALESCE(:is_featured, is_featured),
+            is_bestseller = COALESCE(:is_bestseller, is_bestseller),
+            is_new = COALESCE(:is_new, is_new)
+            WHERE id = :id");
+        $stmt->execute([
+            ':sku' => !empty($body['sku']) ? strtoupper(trim($body['sku'])) : null,
+            ':name' => $body['name'] ?? null,
+            ':brand' => $body['brand'] ?? null,
+            ':category' => $body['category'] ?? null,
+            ':price' => isset($body['price']) ? (float)$body['price'] : null,
+            ':discount_price' => isset($body['discountPrice']) ? (float)$body['discountPrice'] : null,
+            ':stock' => isset($body['stock']) ? (int)$body['stock'] : null,
+            ':colors' => $colorsVal,
+            ':color_images' => $colorImagesVal,
+            ':image' => $imageVal,
+            ':description' => $body['description'] ?? null,
+            ':is_featured' => isset($body['isFeatured']) ? (!empty($body['isFeatured']) ? 1 : 0) : null,
+            ':is_bestseller' => isset($body['isBestSeller']) ? (!empty($body['isBestSeller']) ? 1 : 0) : null,
+            ':is_new' => isset($body['isNewArrival']) ? (!empty($body['isNewArrival']) ? 1 : 0) : null,
+            ':id' => $prodId
+        ]);
+        echo json_encode(['success' => true, 'message' => 'Product updated']);
         exit;
     } catch (Exception $e) {
         server_error($e);

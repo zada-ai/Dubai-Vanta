@@ -851,12 +851,18 @@ const Admin = () => {
     discountPrice: '',
     stock: 50,
     colors: ['#000000', '#FFFFFF', '#2563EB', '#16A34A', '#DC2626'],
+    colorImages: {},
     image: '',
+    images: [],
     description: '',
     isFeatured: false,
     isBestSeller: false,
     isNewArrival: true
   });
+  const [addGalleryUrlInput, setAddGalleryUrlInput] = useState('');
+  const [editGalleryUrlInput, setEditGalleryUrlInput] = useState('');
+  const [linkColorsAdd, setLinkColorsAdd] = useState(false);
+  const [linkColorsEdit, setLinkColorsEdit] = useState(false);
 
   const handleAddImgUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -869,7 +875,11 @@ const Admin = () => {
     try {
       const url = await uploadProductImage(file);
       if (url) {
-        setNewProd((prev) => ({ ...prev, image: url }));
+        setNewProd((prev) => {
+          const existing = Array.isArray(prev.images) ? prev.images.filter(Boolean) : [];
+          const nextImages = existing.includes(url) ? existing : [...existing, url];
+          return { ...prev, image: prev.image || url, images: nextImages };
+        });
       }
     } catch (err) {
       triggerToast('Upload failed: ' + err.message, 'error');
@@ -890,7 +900,11 @@ const Admin = () => {
     try {
       const url = await uploadProductImage(file);
       if (url && editingProduct) {
-        setEditingProduct((prev) => ({ ...prev, image: url }));
+        setEditingProduct((prev) => {
+          const existing = Array.isArray(prev.images) ? prev.images.filter(Boolean) : [];
+          const nextImages = existing.includes(url) ? existing : [...existing, url];
+          return { ...prev, image: prev.image || url, images: nextImages };
+        });
       }
     } catch (err) {
       triggerToast('Upload failed: ' + err.message, 'error');
@@ -914,12 +928,30 @@ const Admin = () => {
       }
     }
 
+    let prodColorImages = {};
+    if (prod.colorImages && typeof prod.colorImages === 'object' && !Array.isArray(prod.colorImages)) {
+      prodColorImages = { ...prod.colorImages };
+    } else if (typeof prod.colorImages === 'string' && prod.colorImages.trim()) {
+      try {
+        const parsed = JSON.parse(prod.colorImages);
+        if (parsed && typeof parsed === 'object') prodColorImages = parsed;
+      } catch {}
+    }
+
+    const prodImages = Array.isArray(prod.images) && prod.images.length > 0
+      ? prod.images.filter(Boolean)
+      : (prod.image ? [prod.image] : []);
+
+    setLinkColorsEdit(Object.keys(prodColorImages).length > 0);
+    setEditGalleryUrlInput('');
     setEditingProduct({
       ...prod,
       sku: prod.sku || '',
       stock: prod.stock !== undefined ? prod.stock : 20,
       colors: prodColors,
-      image: prod.image || (prod.images && prod.images[0]) || '',
+      colorImages: prodColorImages,
+      image: prod.image || prodImages[0] || '',
+      images: prodImages,
       isFeatured: !!prod.isFeatured,
       isBestSeller: !!prod.isBestSeller,
       isNewArrival: !!prod.isNewArrival
@@ -932,6 +964,22 @@ const Admin = () => {
     if (!editingProduct) return;
     const priceNum = parseFloat(editingProduct.price);
     const discountNum = editingProduct.discountPrice ? parseFloat(editingProduct.discountPrice) : priceNum;
+    const rawColorImages = linkColorsEdit && editingProduct.colorImages ? editingProduct.colorImages : {};
+    const cleanColorImages = {};
+    Object.entries(rawColorImages).forEach(([c, url]) => {
+      if (url && typeof url === 'string' && url.trim() && (editingProduct.colors || []).includes(c)) {
+        cleanColorImages[c] = url.trim();
+      }
+    });
+
+    const mergedImages = [];
+    if (editingProduct.image && editingProduct.image.trim()) mergedImages.push(editingProduct.image.trim());
+    (editingProduct.images || []).forEach((img) => {
+      if (img && img.trim() && !mergedImages.includes(img.trim())) mergedImages.push(img.trim());
+    });
+    Object.values(cleanColorImages).forEach((img) => {
+      if (img && !mergedImages.includes(img)) mergedImages.push(img);
+    });
 
     updateProduct(editingProduct.id, {
       name: editingProduct.name,
@@ -942,9 +990,10 @@ const Admin = () => {
       discountPrice: discountNum,
       stock: parseInt(editingProduct.stock) >= 0 ? parseInt(editingProduct.stock) : 0,
       colors: Array.isArray(editingProduct.colors) ? editingProduct.colors : ['#000000', '#FFFFFF'],
+      colorImages: cleanColorImages,
       description: editingProduct.description || '',
-      image: editingProduct.image || '',
-      images: editingProduct.image ? [editingProduct.image] : editingProduct.images || [],
+      image: mergedImages[0] || '',
+      images: mergedImages,
       isFeatured: !!editingProduct.isFeatured,
       isBestSeller: !!editingProduct.isBestSeller,
       isNewArrival: !!editingProduct.isNewArrival
@@ -1040,6 +1089,23 @@ const Admin = () => {
     const priceNum = parseFloat(newProd.price);
     const discountNum = newProd.discountPrice ? parseFloat(newProd.discountPrice) : priceNum;
 
+    const rawColorImages = linkColorsAdd && newProd.colorImages ? newProd.colorImages : {};
+    const cleanColorImages = {};
+    Object.entries(rawColorImages).forEach(([c, url]) => {
+      if (url && typeof url === 'string' && url.trim() && (newProd.colors || []).includes(c)) {
+        cleanColorImages[c] = url.trim();
+      }
+    });
+
+    const mergedImages = [];
+    if (newProd.image && newProd.image.trim()) mergedImages.push(newProd.image.trim());
+    (newProd.images || []).forEach((img) => {
+      if (img && img.trim() && !mergedImages.includes(img.trim())) mergedImages.push(img.trim());
+    });
+    Object.values(cleanColorImages).forEach((img) => {
+      if (img && !mergedImages.includes(img)) mergedImages.push(img);
+    });
+
     addProduct({
       name: newProd.name,
       sku: newProd.sku ? newProd.sku.trim().toUpperCase() : undefined,
@@ -1049,15 +1115,18 @@ const Admin = () => {
       discountPrice: discountNum,
       stock: parseInt(newProd.stock) >= 0 ? parseInt(newProd.stock) : 50,
       description: newProd.description || 'Premium quality product curated for Vanta Dubai customers.',
-      image: newProd.image || '',
-      images: (newProd.image && newProd.image.trim()) ? [newProd.image.trim()] : [],
+      image: mergedImages[0] || '',
+      images: mergedImages,
       colors: (newProd.colors && newProd.colors.length > 0) ? newProd.colors : ['#000000', '#FFFFFF'],
+      colorImages: cleanColorImages,
       sizes: ['Standard'],
       isFeatured: !!newProd.isFeatured,
       isBestSeller: !!newProd.isBestSeller,
       isNewArrival: !!newProd.isNewArrival
     });
 
+    setLinkColorsAdd(false);
+    setAddGalleryUrlInput('');
     setNewProd({
       name: '',
       sku: '',
@@ -1067,7 +1136,9 @@ const Admin = () => {
       discountPrice: '',
       stock: 50,
       colors: ['#000000', '#FFFFFF', '#2563EB', '#16A34A', '#DC2626'],
+      colorImages: {},
       image: '',
+      images: [],
       description: '',
       isFeatured: false,
       isBestSeller: false,
@@ -4975,12 +5046,68 @@ const Admin = () => {
                       alt="Preview"
                       className="w-12 h-12 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
                     />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-[11px] text-slate-500 truncate">{newProd.image}</p>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">✓ Image Ready</span>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">✓ Primary Image</span>
                     </div>
                   </div>
                 )}
+
+                {/* Additional Gallery Images Manager */}
+                <div className="mt-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Gallery Images ({(newProd.images || []).length}) — Hover/Swipe par show hongi
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      value={addGalleryUrlInput}
+                      onChange={(e) => setAddGalleryUrlInput(e.target.value)}
+                      placeholder="Extra gallery image URL paste karein..."
+                      className="flex-1 px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = addGalleryUrlInput.trim();
+                        if (!url) return;
+                        setNewProd((prev) => {
+                          const existing = Array.isArray(prev.images) ? prev.images.filter(Boolean) : [];
+                          const next = existing.includes(url) ? existing : [...existing, url];
+                          return { ...prev, image: prev.image || url, images: next };
+                        });
+                        setAddGalleryUrlInput('');
+                      }}
+                      className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold rounded-lg hover:opacity-90 cursor-pointer shrink-0"
+                    >
+                      + Add Image
+                    </button>
+                  </div>
+                  {newProd.images && newProd.images.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                      {newProd.images.map((imgUrl, i) => (
+                        <div key={i} className="relative group w-12 h-12 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white">
+                          <img src={imgUrl} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNewProd((prev) => {
+                                const next = (prev.images || []).filter((_, idx) => idx !== i);
+                                return { ...prev, images: next, image: prev.image === imgUrl ? (next[0] || '') : prev.image };
+                              });
+                            }}
+                            className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                            title="Remove image"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Product Available Colors Manager */}
@@ -5059,33 +5186,100 @@ const Admin = () => {
 
                 {/* Currently Selected Swatches Display */}
                 {newProd.colors && newProd.colors.length > 0 && (
-                  <div className="flex items-center gap-2 flex-wrap pt-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">Selected:</span>
-                    {newProd.colors.map((c, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs"
-                      >
+                  <div className="space-y-2.5 pt-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Selected:</span>
+                      {newProd.colors.map((c, idx) => (
                         <span
-                          className="w-3 h-3 rounded-full border border-black/10 inline-block"
-                          style={{ backgroundColor: c }}
-                        />
-                        <span>{c}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setNewProd({
-                              ...newProd,
-                              colors: (newProd.colors || []).filter((_, i) => i !== idx)
-                            });
-                          }}
-                          className="text-slate-400 hover:text-rose-500 font-bold ml-0.5 cursor-pointer"
-                          title="Remove color"
+                          key={idx}
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs"
                         >
-                          ×
-                        </button>
-                      </span>
-                    ))}
+                          <span
+                            className="w-3 h-3 rounded-full border border-black/10 inline-block"
+                            style={{ backgroundColor: c }}
+                          />
+                          <span>{c}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextColorImages = { ...(newProd.colorImages || {}) };
+                              delete nextColorImages[c];
+                              setNewProd({
+                                ...newProd,
+                                colors: (newProd.colors || []).filter((_, i) => i !== idx),
+                                colorImages: nextColorImages
+                              });
+                            }}
+                            className="text-slate-400 hover:text-rose-500 font-bold ml-0.5 cursor-pointer"
+                            title="Remove color"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Optional Color-to-Image Linking */}
+                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={linkColorsAdd}
+                          onChange={(e) => setLinkColorsAdd(e.target.checked)}
+                          className="w-3.5 h-3.5 rounded accent-[#A83E68]"
+                        />
+                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                          Link specific image to each color (Optional)
+                        </span>
+                      </label>
+
+                      {linkColorsAdd && (
+                        <div className="mt-2 space-y-2">
+                          {newProd.colors.map((c) => {
+                            const linkedUrl = (newProd.colorImages || {})[c] || '';
+                            const allGalleryOpts = Array.from(new Set([newProd.image, ...(newProd.images || [])].filter(Boolean)));
+                            return (
+                              <div key={c} className="flex items-center gap-2 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                <span className="w-4 h-4 rounded-full border border-black/15 shrink-0" style={{ backgroundColor: c }} title={c} />
+                                <span className="text-[11px] font-mono font-bold w-16 truncate shrink-0">{c}</span>
+                                {allGalleryOpts.length > 0 && (
+                                  <select
+                                    value={allGalleryOpts.includes(linkedUrl) ? linkedUrl : ''}
+                                    onChange={(e) => {
+                                      setNewProd((prev) => ({
+                                        ...prev,
+                                        colorImages: { ...(prev.colorImages || {}), [c]: e.target.value }
+                                      }));
+                                    }}
+                                    className="px-2 py-1 text-[11px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-200 max-w-[130px] cursor-pointer"
+                                  >
+                                    <option value="">-- Gallery --</option>
+                                    {allGalleryOpts.map((url, idx) => (
+                                      <option key={idx} value={url}>Image #{idx + 1}</option>
+                                    ))}
+                                  </select>
+                                )}
+                                <input
+                                  type="url"
+                                  value={linkedUrl}
+                                  onChange={(e) => {
+                                    setNewProd((prev) => ({
+                                      ...prev,
+                                      colorImages: { ...(prev.colorImages || {}), [c]: e.target.value }
+                                    }));
+                                  }}
+                                  placeholder="Or paste image URL (Optional)"
+                                  className="flex-1 min-w-0 px-2.5 py-1 text-[11px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+                                />
+                                {linkedUrl && (
+                                  <img src={linkedUrl} alt={c} className="w-7 h-7 rounded object-cover border border-slate-200 shrink-0" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -5361,12 +5555,68 @@ const Admin = () => {
                       alt="Preview"
                       className="w-12 h-12 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
                     />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-[11px] text-slate-500 truncate">{editingProduct.image}</p>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">✓ Active Image</span>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">✓ Active Primary Image</span>
                     </div>
                   </div>
                 )}
+
+                {/* Additional Gallery Images Manager */}
+                <div className="mt-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Gallery Images ({(editingProduct.images || []).length}) — Hover/Swipe par show hongi
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      value={editGalleryUrlInput}
+                      onChange={(e) => setEditGalleryUrlInput(e.target.value)}
+                      placeholder="Extra gallery image URL paste karein..."
+                      className="flex-1 px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = editGalleryUrlInput.trim();
+                        if (!url) return;
+                        setEditingProduct((prev) => {
+                          const existing = Array.isArray(prev.images) ? prev.images.filter(Boolean) : [];
+                          const next = existing.includes(url) ? existing : [...existing, url];
+                          return { ...prev, image: prev.image || url, images: next };
+                        });
+                        setEditGalleryUrlInput('');
+                      }}
+                      className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold rounded-lg hover:opacity-90 cursor-pointer shrink-0"
+                    >
+                      + Add Image
+                    </button>
+                  </div>
+                  {editingProduct.images && editingProduct.images.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                      {editingProduct.images.map((imgUrl, i) => (
+                        <div key={i} className="relative group w-12 h-12 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white">
+                          <img src={imgUrl} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingProduct((prev) => {
+                                const next = (prev.images || []).filter((_, idx) => idx !== i);
+                                return { ...prev, images: next, image: prev.image === imgUrl ? (next[0] || '') : prev.image };
+                              });
+                            }}
+                            className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                            title="Remove image"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Product Available Colors Manager */}
@@ -5445,33 +5695,100 @@ const Admin = () => {
 
                 {/* Currently Selected Swatches Display */}
                 {editingProduct.colors && editingProduct.colors.length > 0 && (
-                  <div className="flex items-center gap-2 flex-wrap pt-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">Selected:</span>
-                    {editingProduct.colors.map((c, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs"
-                      >
+                  <div className="space-y-2.5 pt-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Selected:</span>
+                      {editingProduct.colors.map((c, idx) => (
                         <span
-                          className="w-3 h-3 rounded-full border border-black/10 inline-block"
-                          style={{ backgroundColor: c }}
-                        />
-                        <span>{c}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingProduct({
-                              ...editingProduct,
-                              colors: (editingProduct.colors || []).filter((_, i) => i !== idx)
-                            });
-                          }}
-                          className="text-slate-400 hover:text-rose-500 font-bold ml-0.5 cursor-pointer"
-                          title="Remove color"
+                          key={idx}
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs"
                         >
-                          ×
-                        </button>
-                      </span>
-                    ))}
+                          <span
+                            className="w-3 h-3 rounded-full border border-black/10 inline-block"
+                            style={{ backgroundColor: c }}
+                          />
+                          <span>{c}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextColorImages = { ...(editingProduct.colorImages || {}) };
+                              delete nextColorImages[c];
+                              setEditingProduct({
+                                ...editingProduct,
+                                colors: (editingProduct.colors || []).filter((_, i) => i !== idx),
+                                colorImages: nextColorImages
+                              });
+                            }}
+                            className="text-slate-400 hover:text-rose-500 font-bold ml-0.5 cursor-pointer"
+                            title="Remove color"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Optional Color-to-Image Linking */}
+                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={linkColorsEdit}
+                          onChange={(e) => setLinkColorsEdit(e.target.checked)}
+                          className="w-3.5 h-3.5 rounded accent-[#A83E68]"
+                        />
+                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                          Link specific image to each color (Optional)
+                        </span>
+                      </label>
+
+                      {linkColorsEdit && (
+                        <div className="mt-2 space-y-2">
+                          {editingProduct.colors.map((c) => {
+                            const linkedUrl = (editingProduct.colorImages || {})[c] || '';
+                            const allGalleryOpts = Array.from(new Set([editingProduct.image, ...(editingProduct.images || [])].filter(Boolean)));
+                            return (
+                              <div key={c} className="flex items-center gap-2 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                <span className="w-4 h-4 rounded-full border border-black/15 shrink-0" style={{ backgroundColor: c }} title={c} />
+                                <span className="text-[11px] font-mono font-bold w-16 truncate shrink-0">{c}</span>
+                                {allGalleryOpts.length > 0 && (
+                                  <select
+                                    value={allGalleryOpts.includes(linkedUrl) ? linkedUrl : ''}
+                                    onChange={(e) => {
+                                      setEditingProduct((prev) => ({
+                                        ...prev,
+                                        colorImages: { ...(prev.colorImages || {}), [c]: e.target.value }
+                                      }));
+                                    }}
+                                    className="px-2 py-1 text-[11px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-200 max-w-[130px] cursor-pointer"
+                                  >
+                                    <option value="">-- Gallery --</option>
+                                    {allGalleryOpts.map((url, idx) => (
+                                      <option key={idx} value={url}>Image #{idx + 1}</option>
+                                    ))}
+                                  </select>
+                                )}
+                                <input
+                                  type="url"
+                                  value={linkedUrl}
+                                  onChange={(e) => {
+                                    setEditingProduct((prev) => ({
+                                      ...prev,
+                                      colorImages: { ...(prev.colorImages || {}), [c]: e.target.value }
+                                    }));
+                                  }}
+                                  placeholder="Or paste image URL (Optional)"
+                                  className="flex-1 min-w-0 px-2.5 py-1 text-[11px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+                                />
+                                {linkedUrl && (
+                                  <img src={linkedUrl} alt={c} className="w-7 h-7 rounded object-cover border border-slate-200 shrink-0" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

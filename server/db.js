@@ -198,6 +198,11 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    // Ensure color_images column exists on products table
+    try {
+      await mysqlPool.query('ALTER TABLE products ADD COLUMN color_images LONGTEXT NULL');
+    } catch (_) {}
+
     // Seed default blogs if table is empty
     const [bRows] = await mysqlPool.query('SELECT COUNT(*) as count FROM blogs');
     if (bRows[0].count === 0) {
@@ -414,6 +419,14 @@ export async function getAllProducts() {
       } catch (_) {}
       return String(r.colors).split(',').map((c) => c.trim()).filter(Boolean);
     })(),
+    colorImages: (() => {
+      if (!r.color_images) return {};
+      try {
+        const parsed = JSON.parse(r.color_images);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+      } catch (_) {}
+      return {};
+    })(),
     images: (() => {
       if (!r.image) return [];
       try {
@@ -459,6 +472,7 @@ export async function createProduct(prod) {
   const discountPrice = prod.discountPrice ? Number(prod.discountPrice) : null;
   const stock = prod.stock !== undefined ? Number(prod.stock) : 10;
   const colorsStr = prod.colors ? (Array.isArray(prod.colors) ? JSON.stringify(prod.colors) : String(prod.colors)) : '[]';
+  const colorImagesStr = prod.colorImages ? (typeof prod.colorImages === 'string' ? prod.colorImages : JSON.stringify(prod.colorImages)) : '{}';
   const image = prod.images && Array.isArray(prod.images) && prod.images.length > 0
     ? (prod.images.length === 1 ? prod.images[0] : JSON.stringify(prod.images))
     : (prod.image || '');
@@ -467,8 +481,8 @@ export async function createProduct(prod) {
 
   if (isMysql) {
     await mysqlPool.query(`
-      INSERT INTO products (id, sku, name, brand, category, price, discount_price, stock, colors, image, alt_text, description, is_featured, is_bestseller, is_new)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO products (id, sku, name, brand, category, price, discount_price, stock, colors, color_images, image, alt_text, description, is_featured, is_bestseller, is_new)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       id,
       sku,
@@ -479,6 +493,7 @@ export async function createProduct(prod) {
       discountPrice,
       stock,
       colorsStr,
+      colorImagesStr,
       image,
       altText,
       description,
@@ -486,7 +501,7 @@ export async function createProduct(prod) {
       isBestSeller,
       isNewArrival
     ]);
-    return { id, sku, ...prod, colors: Array.isArray(prod.colors) ? prod.colors : [] };
+    return { id, sku, ...prod, colors: Array.isArray(prod.colors) ? prod.colors : [], colorImages: prod.colorImages || {} };
   }
 
   const stmt = sqliteDb.prepare(`
@@ -516,6 +531,9 @@ export async function updateProductInDb(id, prod) {
   const colorsStr = prod.colors !== undefined
     ? (Array.isArray(prod.colors) ? JSON.stringify(prod.colors) : String(prod.colors))
     : null;
+  const colorImagesStr = prod.colorImages !== undefined
+    ? (typeof prod.colorImages === 'string' ? prod.colorImages : JSON.stringify(prod.colorImages || {}))
+    : null;
 
   if (isMysql) {
     await mysqlPool.query(`
@@ -528,6 +546,7 @@ export async function updateProductInDb(id, prod) {
         discount_price = COALESCE(?, discount_price),
         stock = COALESCE(?, stock),
         colors = COALESCE(?, colors),
+        color_images = COALESCE(?, color_images),
         image = COALESCE(?, image),
         alt_text = COALESCE(?, alt_text),
         description = COALESCE(?, description),
@@ -544,6 +563,7 @@ export async function updateProductInDb(id, prod) {
       prod.discountPrice !== undefined ? Number(prod.discountPrice) : null,
       prod.stock !== undefined ? Number(prod.stock) : null,
       colorsStr,
+      colorImagesStr,
       prod.images && Array.isArray(prod.images) && prod.images.length > 0
         ? (prod.images.length === 1 ? prod.images[0] : JSON.stringify(prod.images))
         : (prod.image !== undefined ? (prod.image || '') : null),
