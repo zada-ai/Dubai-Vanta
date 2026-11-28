@@ -893,10 +893,22 @@ export async function deleteSettingKey(key) {
  */
 export async function getAllCategories() {
   if (isMysql) {
-    const [rows] = await mysqlPool.query("SELECT id, name, icon, image, count, description, created_at FROM categories WHERE count > 0 AND id NOT IN ('groceries', 'sneakers', 'gaming-vr') ORDER BY name ASC");
-    return rows;
+    const [rows] = await mysqlPool.query(`
+      SELECT c.id, c.name, c.icon, c.image,
+             COALESCE(p.cnt, 0) AS count,
+             c.description, c.created_at
+      FROM categories c
+      LEFT JOIN (
+        SELECT LOWER(category) AS cat_id, COUNT(*) AS cnt
+        FROM products
+        GROUP BY LOWER(category)
+      ) p ON LOWER(c.id) = p.cat_id
+      WHERE c.id NOT IN ('groceries', 'sneakers', 'gaming-vr')
+      ORDER BY c.name ASC
+    `);
+    return rows.map((r) => ({ ...r, count: Number(r.count || 0) }));
   }
-  return sqliteDb.prepare("SELECT id, name, icon, image, count, description, created_at FROM categories WHERE count > 0 AND id NOT IN ('groceries', 'sneakers', 'gaming-vr') ORDER BY name ASC").all();
+  return sqliteDb.prepare("SELECT id, name, icon, image, count, description, created_at FROM categories WHERE id NOT IN ('groceries', 'sneakers', 'gaming-vr') ORDER BY name ASC").all();
 }
 
 export async function createCategoryInDb({ id, name, icon = 'RiShoppingBagLine', image = '', description = '', count = 0 }) {

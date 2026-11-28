@@ -1001,13 +1001,94 @@ if (($method === 'PUT' || $method === 'PATCH') && preg_match('#^/api/products/([
 }
 
 
-// 3. GET /api/categories
+// 3. GET /api/categories (With dynamic live product counts from products table)
 if ($method === 'GET' && preg_match('#^/api/categories/?$#', $path)) {
-    header('Cache-Control: public, max-age=600, stale-while-revalidate=1200');
+    header('Cache-Control: public, max-age=180, stale-while-revalidate=300');
     try {
-        $stmt = $pdo->query("SELECT id, name, icon, image, count, description FROM categories WHERE count > 0 AND id NOT IN ('groceries', 'sneakers', 'gaming-vr') ORDER BY name ASC");
+        $stmt = $pdo->query("
+            SELECT c.id, c.name, c.icon, c.image,
+                   COALESCE(p.cnt, 0) AS count,
+                   c.description
+            FROM categories c
+            LEFT JOIN (
+                SELECT LOWER(category) AS cat_id, COUNT(*) AS cnt
+                FROM products
+                GROUP BY LOWER(category)
+            ) p ON LOWER(c.id) = p.cat_id
+            WHERE c.id NOT IN ('groceries', 'sneakers', 'gaming-vr')
+            ORDER BY c.name ASC
+        ");
         $categories = $stmt->fetchAll();
+        foreach ($categories as &$cat) {
+            $cat['count'] = (int)$cat['count'];
+        }
+        unset($cat);
         echo json_encode(['success' => true, 'count' => count($categories), 'categories' => $categories]);
+        exit;
+    } catch (Exception $e) {
+        server_error($e);
+    }
+}
+
+// 3.1. POST /api/categories (Create or update category in PHP PDO)
+if ($method === 'POST' && preg_match('#^/api/categories/?$#', $path)) {
+    if (!is_admin_user(current_user($pdo))) deny(403, 'Admin privileges required.');
+    $body = json_decode($input, true) ?: [];
+    $name = trim($body['name'] ?? '');
+    if (empty($name)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Category name is required.']);
+        exit;
+    }
+    $catId = !empty($body['id']) ? trim($body['id']) : strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $name), '-'));
+    $icon = $body['icon'] ?? 'RiShoppingBagLine';
+    $image = $body['image'] ?? '';
+    $description = $body['description'] ?? ($name . ' collection.');
+    $count = isset($body['count']) ? (int)$body['count'] : 0;
+
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO categories (id, name, icon, image, count, description)
+            VALUES (:id, :name, :icon, :image, :count, :description)
+            ON DUPLICATE KEY UPDATE
+                name = VALUES(name),
+                icon = VALUES(icon),
+                image = VALUES(image),
+                description = VALUES(description)
+        ");
+        $stmt->execute([
+            ':id' => $catId,
+            ':name' => $name,
+            ':icon' => $icon,
+            ':image' => $image,
+            ':count' => $count,
+            ':description' => $description
+        ]);
+        echo json_encode([
+            'success' => true,
+            'category' => [
+                'id' => $catId,
+                'name' => $name,
+                'icon' => $icon,
+                'image' => $image,
+                'count' => $count,
+                'description' => $description
+            ]
+        ]);
+        exit;
+    } catch (Exception $e) {
+        server_error($e);
+    }
+}
+
+// 3.2. DELETE /api/categories/:id
+if ($method === 'DELETE' && preg_match('#^/api/categories/([^/]+)/?$#', $path, $matches)) {
+    if (!is_admin_user(current_user($pdo))) deny(403, 'Admin privileges required.');
+    $catId = urldecode($matches[1]);
+    try {
+        $stmt = $pdo->prepare('DELETE FROM categories WHERE id = :id');
+        $stmt->execute([':id' => $catId]);
+        echo json_encode(['success' => true, 'message' => 'Category deleted successfully.']);
         exit;
     } catch (Exception $e) {
         server_error($e);
