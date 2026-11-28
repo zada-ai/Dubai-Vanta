@@ -4226,7 +4226,7 @@ const Admin = () => {
                             )}
                             <div>
                               <span className="font-bold text-slate-900 dark:text-white block">{u.name}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">User #{u.id}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">UID: {u.uid || u.id}</span>
                             </div>
                           </div>
                         </td>
@@ -4396,7 +4396,11 @@ const Admin = () => {
                         </td>
                         <td className="py-3 px-4 max-w-xs">
                           <p className="font-bold text-slate-900 dark:text-white line-clamp-1">{blog.title}</p>
-                          <p className="text-[11px] font-mono text-slate-400 truncate">/{blog.slug || blog.id}</p>
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400">
+                            <span className="truncate">/{blog.slug || blog.id}</span>
+                            <span>•</span>
+                            <span className="shrink-0 bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-[9px]">UID: {String(blog.id).slice(0, 8)}...</span>
+                          </div>
                         </td>
                         <td className="py-3 px-3 whitespace-nowrap">
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">

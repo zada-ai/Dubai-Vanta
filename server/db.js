@@ -960,7 +960,7 @@ export async function createBlog({
   read_time = '5 min read',
   is_published = 1
 }) {
-  const blogId = id || 'blog_' + crypto.randomUUID();
+  const blogId = id || crypto.randomUUID();
   const cleanSlug = (slug || title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || 'article-' + Date.now();
   const pubVal = is_published ? 1 : 0;
 

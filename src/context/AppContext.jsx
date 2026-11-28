@@ -218,8 +218,11 @@ export const AppProvider = ({ children }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed && parsed.avatar && parsed.avatar.includes('photo-1534528741775-53994a69daeb')) {
-          parsed.avatar = null;
+        if (parsed) {
+          if (!parsed.uid && parsed.id) parsed.uid = String(parsed.id);
+          if (parsed.avatar && parsed.avatar.includes('photo-1534528741775-53994a69daeb')) {
+            parsed.avatar = null;
+          }
           localStorage.setItem('user', JSON.stringify(parsed));
         }
         return parsed;
@@ -1786,6 +1789,7 @@ export const AppProvider = ({ children }) => {
         }
         const superAdminUser = {
           id: 1,
+          uid: '1',
           name: 'Super Administrator',
           email: 'superadmin@gmail.com',
           role: 'superadmin',
@@ -1817,6 +1821,7 @@ export const AppProvider = ({ children }) => {
         }
         const adminUser = {
           id: 2,
+          uid: '2',
           name: 'Store Administrator',
           email: 'admin@aerostore.com',
           role: 'admin',
@@ -1890,8 +1895,10 @@ export const AppProvider = ({ children }) => {
       // 2. Offline / Local fallback: Save user to registeredUsers
       const isSuper = normalizedEmail === 'superadmin@gmail.com';
       const isAdmin = isSuper || normalizedEmail.includes('admin');
+      const userUid = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('usr_' + Date.now());
       const newUser = {
-        id: 'usr_' + Date.now(),
+        id: userUid,
+        uid: userUid,
         name: fullName,
         email: normalizedEmail,
         password: password,

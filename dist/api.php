@@ -535,7 +535,11 @@ function current_user($pdo) {
 
     $stmt = $pdo->prepare('SELECT id, email, role FROM users WHERE id = :id LIMIT 1');
     $stmt->execute([':id' => $payload['id']]);
-    return $stmt->fetch() ?: null;
+    $u = $stmt->fetch();
+    if ($u) {
+        $u['uid'] = (string)$u['id'];
+    }
+    return $u ?: null;
 }
 
 function is_admin_user($user) {
@@ -544,6 +548,22 @@ function is_admin_user($user) {
 
 function can_manage_blogs($user) {
     return $user && in_array($user['role'] ?? '', ['admin', 'supermanager', 'superadmin', 'seo', 'editor'], true);
+}
+
+// RFC 4122 Compliant UUID v4 Generator
+function generate_uuid_v4() {
+    $data = random_bytes(16);
+    $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // set version to 0100 (v4)
+    $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // set bits 6-7 to 10
+    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+}
+
+// Universal unique ID helper
+function uid($len = 36) {
+    if ($len === 36) {
+        return generate_uuid_v4();
+    }
+    return bin2hex(random_bytes((int)ceil($len / 2)));
 }
 
 function deny($code, $message) {
@@ -1023,9 +1043,9 @@ if ($method === 'POST' && preg_match('#^/api/blogs/?$#', $path)) {
     $chk = $pdo->prepare("SELECT id FROM blogs WHERE slug = :s LIMIT 1");
     $chk->execute([':s' => $slug]);
     if ($chk->fetch()) {
-        $slug .= '-' . substr(md5(uniqid()), 0, 4);
+        $slug .= '-' . substr(bin2hex(random_bytes(2)), 0, 4);
     }
-    $id = 'blog_' . substr(md5(uniqid() . microtime()), 0, 16);
+    $id = generate_uuid_v4();
     $excerpt = $body['excerpt'] ?? '';
     $content = $body['content'] ?? '';
     $image = $body['image'] ?? '';
@@ -1388,6 +1408,7 @@ if ($method === 'POST' && preg_match('#^/api/auth/login/?$#', $path)) {
             'accessToken' => $accessToken,
             'user' => [
                 'id' => (int)$user['id'],
+                'uid' => (string)$user['id'],
                 'name' => $user['name'],
                 'email' => $user['email'],
                 'role' => $user['role'],
@@ -1479,6 +1500,7 @@ if ($method === 'POST' && preg_match('#^/api/auth/google/?$#', $path)) {
             'accessToken' => $accessToken,
             'user' => [
                 'id' => (int)$user['id'],
+                'uid' => (string)$user['id'],
                 'name' => $user['name'],
                 'email' => $user['email'],
                 'role' => $user['role'],
@@ -1554,6 +1576,7 @@ if ($method === 'POST' && preg_match('#^/api/auth/refresh/?$#', $path)) {
             'accessToken' => $newAccessToken,
             'user' => [
                 'id' => (int)$user['id'],
+                'uid' => (string)$user['id'],
                 'name' => $user['name'],
                 'email' => $user['email'],
                 'role' => $user['role'],
