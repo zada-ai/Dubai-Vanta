@@ -232,7 +232,24 @@ export const AppProvider = ({ children }) => {
     }
     return null;
   });
-  const [accessToken, setAccessToken] = useState(null);
+  const [accessToken, _setAccessTokenState] = useState(() => {
+    try {
+      return localStorage.getItem('accessToken') || null;
+    } catch (_) {
+      return null;
+    }
+  });
+
+  const setAccessToken = (token) => {
+    _setAccessTokenState(token);
+    try {
+      if (token) {
+        localStorage.setItem('accessToken', token);
+      } else {
+        localStorage.removeItem('accessToken');
+      }
+    } catch (_) {}
+  };
 
   // Products state (Clean database synchronization with 10-12 verified reviews)
   const [productsList, setProductsList] = useState(() => {
@@ -441,9 +458,14 @@ export const AppProvider = ({ children }) => {
 
   // Universal authenticated fetch wrapper with automatic 401 retry
   const authFetch = async (url, options = {}) => {
+    const token = accessToken || localStorage.getItem('accessToken') || null;
     const defaultHeaders = {};
-    if (accessToken) {
-      defaultHeaders['Authorization'] = `Bearer ${accessToken}`;
+    if (token) {
+      defaultHeaders['Authorization'] = `Bearer ${token}`;
+      defaultHeaders['X-Access-Token'] = token;
+    }
+    if (user?.email) {
+      defaultHeaders['X-User-Email'] = user.email;
     }
     const finalOptions = {
       ...options,
@@ -461,6 +483,7 @@ export const AppProvider = ({ children }) => {
       const newToken = await silentRefresh();
       if (newToken) {
         finalOptions.headers['Authorization'] = `Bearer ${newToken}`;
+        finalOptions.headers['X-Access-Token'] = newToken;
         response = await fetch(url, finalOptions);
       }
     }

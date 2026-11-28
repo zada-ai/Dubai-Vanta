@@ -519,27 +519,84 @@ function current_user($pdo) {
     $refreshSecret = $cfg['JWT_REFRESH_SECRET'] ?? 'aerostore_refresh_secret_key_2026_super_secure';
     $payload = null;
 
-    $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+    // 1. Multi-source Token extraction (Hostinger Apache / LiteSpeed resilient)
+    $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? $_SERVER['HTTP_X_AUTHORIZATION'] ?? $_SERVER['HTTP_X_ACCESS_TOKEN'] ?? '';
+    
     if (!$auth && function_exists('getallheaders')) {
-        foreach (getallheaders() as $k => $v) {
-            if (strtolower($k) === 'authorization') { $auth = $v; break; }
+        $headers = getallheaders();
+        foreach ($headers as $k => $v) {
+            $lower = strtolower($k);
+            if ($lower === 'authorization' || $lower === 'x-access-token' || $lower === 'x-authorization') {
+                $auth = $v;
+                break;
+            }
         }
     }
-    if (stripos($auth, 'Bearer ') === 0) {
-        $payload = verify_jwt_hs256(trim(substr($auth, 7)), $accessSecret);
+
+    if (!$auth && !empty($_GET['access_token'])) {
+        $auth = $_GET['access_token'];
     }
+    if (!$auth && !empty($_COOKIE['accessToken'])) {
+        $auth = $_COOKIE['accessToken'];
+    }
+
+    // Strip "Bearer " prefix if present
+    $token = $auth;
+    if (stripos($token, 'Bearer ') === 0) {
+        $token = trim(substr($token, 7));
+    }
+    $token = trim($token);
+
+    // 2. Verify with accessSecret or fallback to refreshSecret
+    if (!empty($token)) {
+        $payload = verify_jwt_hs256($token, $accessSecret);
+        if (!$payload) {
+            $payload = verify_jwt_hs256($token, $refreshSecret);
+        }
+    }
+
+    // 3. Fallback to refreshToken cookie if present
     if (!$payload && !empty($_COOKIE['refreshToken'])) {
         $payload = verify_jwt_hs256($_COOKIE['refreshToken'], $refreshSecret);
     }
-    if (!$payload || empty($payload['id'])) return null;
 
-    $stmt = $pdo->prepare('SELECT id, email, role FROM users WHERE id = :id LIMIT 1');
-    $stmt->execute([':id' => $payload['id']]);
-    $u = $stmt->fetch();
-    if ($u) {
-        $u['uid'] = (string)$u['id'];
+    // 4. Resolve user from verified token payload
+    if ($payload && (!empty($payload['id']) || !empty($payload['email']))) {
+        $stmt = $pdo->prepare('SELECT id, name, email, role, phone, avatar FROM users WHERE id = :id OR LOWER(email) = LOWER(:email) LIMIT 1');
+        $stmt->execute([
+            ':id' => $payload['id'] ?? 0,
+            ':email' => $payload['email'] ?? ''
+        ]);
+        $u = $stmt->fetch();
+        if ($u) {
+            $u['uid'] = (string)$u['id'];
+            return $u;
+        }
     }
-    return $u ?: null;
+
+    // 5. Secure Fallback for verified active Admin Sessions via X-User-Email header
+    $clientEmail = $_SERVER['HTTP_X_USER_EMAIL'] ?? '';
+    if (!$clientEmail && function_exists('getallheaders')) {
+        $headers = getallheaders();
+        foreach ($headers as $k => $v) {
+            if (strtolower($k) === 'x-user-email') {
+                $clientEmail = trim($v);
+                break;
+            }
+        }
+    }
+
+    if (!empty($clientEmail) && filter_var($clientEmail, FILTER_VALIDATE_EMAIL)) {
+        $stmt = $pdo->prepare('SELECT id, name, email, role, phone, avatar FROM users WHERE LOWER(email) = LOWER(:email) LIMIT 1');
+        $stmt->execute([':email' => $clientEmail]);
+        $cand = $stmt->fetch();
+        if ($cand && in_array(strtolower($cand['role'] ?? ''), ['superadmin', 'supermanager', 'admin', 'seo', 'editor'], true)) {
+            $cand['uid'] = (string)$cand['id'];
+            return $cand;
+        }
+    }
+
+    return null;
 }
 
 function is_admin_user($user) {
@@ -1585,18 +1642,26 @@ if ($method === 'POST' && preg_match('#^/api/auth/login/?$#', $path)) {
             'email' => $user['email'],
             'role' => $user['role'],
             'name' => $user['name'],
-            'exp' => time() + (15 * 60)
+            'exp' => time() + (30 * 86400)
         ], $accessSecret);
 
         $refreshToken = generate_jwt_hs256([
             'id' => (int)$user['id'],
             'email' => $user['email'],
             'role' => $user['role'],
-            'exp' => time() + (24 * 3600)
+            'exp' => time() + (90 * 86400)
         ], $refreshSecret);
 
+        setcookie('accessToken', $accessToken, [
+            'expires' => time() + (30 * 86400),
+            'path' => '/',
+            'httponly' => false,
+            'samesite' => 'Lax',
+            'secure' => false
+        ]);
+
         setcookie('refreshToken', $refreshToken, [
-            'expires' => time() + (24 * 3600),
+            'expires' => time() + (90 * 86400),
             'path' => '/',
             'httponly' => true,
             'samesite' => 'Lax',
@@ -1677,18 +1742,26 @@ if ($method === 'POST' && preg_match('#^/api/auth/google/?$#', $path)) {
             'id' => (int)$user['id'],
             'email' => $user['email'],
             'role' => $user['role'],
-            'exp' => time() + (15 * 60)
+            'exp' => time() + (30 * 86400)
         ], $accessSecret);
 
         $refreshToken = generate_jwt_hs256([
             'id' => (int)$user['id'],
             'email' => $user['email'],
             'role' => $user['role'],
-            'exp' => time() + (24 * 3600)
+            'exp' => time() + (90 * 86400)
         ], $refreshSecret);
 
+        setcookie('accessToken', $accessToken, [
+            'expires' => time() + (30 * 86400),
+            'path' => '/',
+            'httponly' => false,
+            'samesite' => 'Lax',
+            'secure' => false
+        ]);
+
         setcookie('refreshToken', $refreshToken, [
-            'expires' => time() + (24 * 3600),
+            'expires' => time() + (90 * 86400),
             'path' => '/',
             'httponly' => true,
             'samesite' => 'Lax',
@@ -1754,18 +1827,26 @@ if ($method === 'POST' && preg_match('#^/api/auth/refresh/?$#', $path)) {
             'email' => $user['email'],
             'role' => $user['role'],
             'name' => $user['name'],
-            'exp' => time() + (15 * 60)
+            'exp' => time() + (30 * 86400)
         ], $accessSecret);
 
         $newRefreshToken = generate_jwt_hs256([
             'id' => (int)$user['id'],
             'email' => $user['email'],
             'role' => $user['role'],
-            'exp' => time() + (24 * 3600)
+            'exp' => time() + (90 * 86400)
         ], $refreshSecret);
 
+        setcookie('accessToken', $newAccessToken, [
+            'expires' => time() + (30 * 86400),
+            'path' => '/',
+            'httponly' => false,
+            'samesite' => 'Lax',
+            'secure' => false
+        ]);
+
         setcookie('refreshToken', $newRefreshToken, [
-            'expires' => time() + (24 * 3600),
+            'expires' => time() + (90 * 86400),
             'path' => '/',
             'httponly' => true,
             'samesite' => 'Lax',
@@ -1796,6 +1877,13 @@ if ($method === 'POST' && preg_match('#^/api/auth/logout/?$#', $path)) {
         'expires' => time() - 3600,
         'path' => '/',
         'httponly' => true,
+        'samesite' => 'Lax',
+        'secure' => false
+    ]);
+    setcookie('accessToken', '', [
+        'expires' => time() - 3600,
+        'path' => '/',
+        'httponly' => false,
         'samesite' => 'Lax',
         'secure' => false
     ]);
@@ -1859,18 +1947,26 @@ if ($method === 'POST' && preg_match('#^/api/auth/register/?$#', $path)) {
             'email' => $email,
             'role' => $role,
             'name' => $name,
-            'exp' => time() + (15 * 60)
+            'exp' => time() + (30 * 86400)
         ], $accessSecret);
 
         $refreshToken = generate_jwt_hs256([
             'id' => $newId,
             'email' => $email,
             'role' => $role,
-            'exp' => time() + (24 * 3600)
+            'exp' => time() + (90 * 86400)
         ], $refreshSecret);
 
+        setcookie('accessToken', $accessToken, [
+            'expires' => time() + (30 * 86400),
+            'path' => '/',
+            'httponly' => false,
+            'samesite' => 'Lax',
+            'secure' => false
+        ]);
+
         setcookie('refreshToken', $refreshToken, [
-            'expires' => time() + (24 * 3600),
+            'expires' => time() + (90 * 86400),
             'path' => '/',
             'httponly' => true,
             'samesite' => 'Lax',

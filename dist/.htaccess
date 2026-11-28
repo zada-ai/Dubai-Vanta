@@ -92,6 +92,10 @@ Options -Indexes
   RewriteEngine On
   RewriteBase /
 
+  # Forward Authorization Header to PHP on Apache / LiteSpeed (Hostinger production)
+  RewriteCond %{HTTP:Authorization} .
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
   # 0. SECURITY: block files that must never be downloadable from the web
   #    - hidden files/folders (.env, .git, .tmp, .htaccess ...), except .well-known
   RewriteRule (^|/)\.(?!well-known(/|$)) - [F,L]

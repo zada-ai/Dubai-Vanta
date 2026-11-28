@@ -4357,7 +4357,23 @@ const Admin = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                  {dbUsers.map((u) => {
+                  {isLoadingUsers ? (
+                    <tr>
+                      <td colSpan="6" className="py-12 text-center text-slate-400">
+                        <div className="flex items-center justify-center gap-2">
+                          <RiRefreshLine className="w-5 h-5 animate-spin text-purple-600" />
+                          <span>Loading users from database...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : dbUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="py-12 text-center text-slate-400">
+                        No registered users found. Click &quot;Refresh Users&quot; to load from database.
+                      </td>
+                    </tr>
+                  ) : (
+                    dbUsers.map((u) => {
                     const isProtectedSuperAdmin = u.role === 'superadmin';
                     const cannotModify = user?.role === 'supermanager' && isProtectedSuperAdmin;
                     return (
@@ -4439,7 +4455,8 @@ const Admin = () => {
                         </td>
                       </tr>
                     );
-                  })}
+                  })
+                )}
                 </tbody>
               </table>
             </div>
