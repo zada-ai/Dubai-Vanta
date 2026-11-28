@@ -515,8 +515,8 @@ function send_order_notification_emails($orderId, $custName, $custEmail, $custPh
 
 function current_user($pdo) {
     $cfg = env_config();
-    $accessSecret = $cfg['JWT_ACCESS_SECRET'] ?? '';
-    $refreshSecret = $cfg['JWT_REFRESH_SECRET'] ?? '';
+    $accessSecret = $cfg['JWT_ACCESS_SECRET'] ?? 'aerostore_access_secret_key_2026_secure';
+    $refreshSecret = $cfg['JWT_REFRESH_SECRET'] ?? 'aerostore_refresh_secret_key_2026_super_secure';
     $payload = null;
 
     $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
@@ -1726,6 +1726,163 @@ if ($method === 'GET' && preg_match('#^/api/auth/me/?$#', $path)) {
     }
     echo json_encode(['success' => true, 'user' => $authUser]);
     exit;
+}
+
+// 7.4.1. POST /api/auth/register (Save registered customers to MySQL)
+if ($method === 'POST' && preg_match('#^/api/auth/register/?$#', $path)) {
+    $inputData = json_decode($input, true) ?: $_POST;
+    $name = trim($inputData['name'] ?? ($inputData['fullName'] ?? 'Customer'));
+    $email = trim(strtolower($inputData['email'] ?? ''));
+    $password = $inputData['password'] ?? '';
+    $phone = trim($inputData['phone'] ?? '');
+
+    if (empty($email) || empty($password)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Email and password are required.']);
+        exit;
+    }
+
+    try {
+        $chk = $pdo->prepare('SELECT id FROM users WHERE LOWER(email) = :email LIMIT 1');
+        $chk->execute([':email' => $email]);
+        if ($chk->fetch()) {
+            http_response_code(409);
+            echo json_encode(['success' => false, 'message' => 'An account with this email already exists.']);
+            exit;
+        }
+
+        $role = ($email === 'superadmin@gmail.com') ? 'superadmin' : 'customer';
+        $hash = password_hash($password, PASSWORD_BCRYPT);
+        $ins = $pdo->prepare('INSERT INTO users (name, email, password, role, phone) VALUES (:name, :email, :password, :role, :phone)');
+        $ins->execute([
+            ':name' => $name ?: 'Customer',
+            ':email' => $email,
+            ':password' => $hash,
+            ':role' => $role,
+            ':phone' => $phone
+        ]);
+        $newId = (int)$pdo->lastInsertId();
+
+        $cfg = env_config();
+        $accessSecret = $cfg['JWT_ACCESS_SECRET'] ?? 'aerostore_access_secret_key_2026_secure';
+        $refreshSecret = $cfg['JWT_REFRESH_SECRET'] ?? 'aerostore_refresh_secret_key_2026_super_secure';
+
+        $accessToken = generate_jwt_hs256([
+            'id' => $newId,
+            'email' => $email,
+            'role' => $role,
+            'name' => $name,
+            'exp' => time() + (15 * 60)
+        ], $accessSecret);
+
+        $refreshToken = generate_jwt_hs256([
+            'id' => $newId,
+            'email' => $email,
+            'role' => $role,
+            'exp' => time() + (24 * 3600)
+        ], $refreshSecret);
+
+        setcookie('refreshToken', $refreshToken, [
+            'expires' => time() + (24 * 3600),
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+            'secure' => false
+        ]);
+
+        http_response_code(201);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Account created successfully!',
+            'accessToken' => $accessToken,
+            'user' => [
+                'id' => $newId,
+                'uid' => (string)$newId,
+                'name' => $name,
+                'email' => $email,
+                'role' => $role,
+                'phone' => $phone,
+                'avatar' => null
+            ]
+        ]);
+        exit;
+    } catch (Exception $e) {
+        server_error($e);
+    }
+}
+
+// 7.4.2. GET /api/auth/users (List all registered users & roles for Admin Panel)
+if ($method === 'GET' && preg_match('#^/api/auth/users/?$#', $path)) {
+    $authUser = current_user($pdo);
+    if (!is_admin_user($authUser)) deny(403, 'Admin privileges required to view users.');
+    try {
+        $stmt = $pdo->query("SELECT id, name, email, role, phone, avatar, created_at FROM users ORDER BY created_at DESC, id DESC");
+        $rows = $stmt->fetchAll();
+        $users = array_map(function($u) {
+            return [
+                'id' => (int)$u['id'],
+                'uid' => (string)$u['id'],
+                'name' => $u['name'],
+                'email' => $u['email'],
+                'role' => $u['role'] ?? 'customer',
+                'phone' => $u['phone'] ?? '',
+                'avatar' => $u['avatar'] ?? null,
+                'created_at' => $u['created_at'] ?? null
+            ];
+        }, $rows);
+        echo json_encode(['success' => true, 'count' => count($users), 'users' => $users]);
+        exit;
+    } catch (Exception $e) {
+        server_error($e);
+    }
+}
+
+// 7.4.3. PUT /api/auth/users/:id/role (Update User Role)
+if (($method === 'PUT' || $method === 'PATCH') && preg_match('#^/api/auth/users/([^/]+)/role/?$#', $path, $matches)) {
+    $authUser = current_user($pdo);
+    if (!$authUser || !in_array($authUser['role'] ?? '', ['superadmin', 'supermanager', 'admin'], true)) {
+        deny(403, 'Super Admin or Admin privileges required.');
+    }
+    $targetId = urldecode($matches[1]);
+    $body = json_decode($input, true) ?: [];
+    $newRole = trim($body['role'] ?? 'customer');
+    $allowedRoles = ['superadmin', 'supermanager', 'admin', 'seo', 'editor', 'customer'];
+    if (!in_array($newRole, $allowedRoles, true)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid role selected.']);
+        exit;
+    }
+    try {
+        $stmt = $pdo->prepare('UPDATE users SET role = :role WHERE id = :id');
+        $stmt->execute([':role' => $newRole, ':id' => $targetId]);
+        echo json_encode(['success' => true, 'message' => "User role updated to {$newRole}"]);
+        exit;
+    } catch (Exception $e) {
+        server_error($e);
+    }
+}
+
+// 7.4.4. DELETE /api/auth/users/:id (Remove User)
+if ($method === 'DELETE' && preg_match('#^/api/auth/users/([^/]+)/?$#', $path, $matches)) {
+    $authUser = current_user($pdo);
+    if (!$authUser || !in_array($authUser['role'] ?? '', ['superadmin', 'supermanager', 'admin'], true)) {
+        deny(403, 'Super Admin or Admin privileges required.');
+    }
+    $targetId = urldecode($matches[1]);
+    try {
+        $stmt = $pdo->prepare('SELECT role FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute([':id' => $targetId]);
+        $target = $stmt->fetch();
+        if ($target && ($target['role'] ?? '') === 'superadmin' && ($authUser['role'] ?? '') !== 'superadmin') {
+            deny(403, 'Only Super Admin can remove a Super Admin.');
+        }
+        $del = $pdo->prepare('DELETE FROM users WHERE id = :id');
+        $del->execute([':id' => $targetId]);
+        echo json_encode(['success' => true, 'message' => 'User removed successfully.']);
+        exit;
+    } catch (Exception $e) {
+        server_error($e);
+    }
 }
 
 // 7.5. GET /api/test-email (Instant SMTP Diagnostics)

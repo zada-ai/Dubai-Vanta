@@ -367,7 +367,7 @@ const Admin = () => {
   const fetchUsers = async () => {
     setIsLoadingUsers(true);
     try {
-      const res = await fetch('/api/auth/users');
+      const res = await (authFetch ? authFetch('/api/auth/users') : fetch('/api/auth/users', { credentials: 'include' }));
       const data = await res.json();
       if (data.success && Array.isArray(data.users)) {
         setDbUsers(data.users);
@@ -386,11 +386,16 @@ const Admin = () => {
 
   const handleChangeRole = async (userId, newRole) => {
     try {
-      const res = await fetch(`/api/auth/users/${userId}/role`, {
+      const res = await (authFetch ? authFetch(`/api/auth/users/${userId}/role`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole })
-      });
+      }) : fetch(`/api/auth/users/${userId}/role`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+      }));
       const data = await res.json();
       if (data.success) {
         triggerToast(`User role updated to ${newRole}!`, 'success');
@@ -412,9 +417,12 @@ const Admin = () => {
       return;
     }
     try {
-      const res = await fetch(`/api/auth/users/${userId}`, {
+      const res = await (authFetch ? authFetch(`/api/auth/users/${userId}`, {
         method: 'DELETE'
-      });
+      }) : fetch(`/api/auth/users/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      }));
       const data = await res.json();
       if (data.success) {
         triggerToast(`User "${userName}" removed successfully!`, 'success');
@@ -1057,7 +1065,10 @@ const Admin = () => {
   const bestSellerCount = (productsList || []).filter((p) => p.isBestSeller).length;
   const newArrivalCount = (productsList || []).filter((p) => p.isNewArrival).length;
 
-  // Filtered products with badge & SKU/UUID search
+  // Filtered products with badge & SKU/UUID search + pagination
+  const [productPage, setProductPage] = useState(1);
+  const productsPerPage = 25;
+
   const filteredProducts = (productsList || []).filter((p) => {
     const term = productSearch.toLowerCase();
     const matchesSearch =
@@ -1072,6 +1083,17 @@ const Admin = () => {
     if (productBadgeFilter === 'newarrivals') return !!p.isNewArrival;
     return true;
   });
+
+  useEffect(() => {
+    setProductPage(1);
+  }, [productSearch, productBadgeFilter]);
+
+  const totalProductPages = Math.max(1, Math.ceil(filteredProducts.length / productsPerPage));
+  const safeProductPage = Math.min(productPage, totalProductPages);
+  const paginatedProducts = filteredProducts.slice(
+    (safeProductPage - 1) * productsPerPage,
+    safeProductPage * productsPerPage
+  );
 
   // Filtered orders
   const filteredOrders =
@@ -3627,14 +3649,14 @@ const Admin = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
-                  {filteredProducts.length === 0 ? (
+                  {paginatedProducts.length === 0 ? (
                     <tr>
                       <td colSpan="6" className="py-8 text-center text-slate-400 text-sm">
                         No products found matching your filter or search.
                       </td>
                     </tr>
                   ) : (
-                    filteredProducts.map((p) => (
+                    paginatedProducts.map((p) => (
                       <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
@@ -3790,6 +3812,68 @@ const Admin = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Products Pagination Controls */}
+            {filteredProducts.length > productsPerPage && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 text-xs">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">
+                  Showing{' '}
+                  <strong className="text-slate-800 dark:text-slate-200">
+                    {(safeProductPage - 1) * productsPerPage + 1}–{Math.min(safeProductPage * productsPerPage, filteredProducts.length)}
+                  </strong>{' '}
+                  of <strong className="text-slate-800 dark:text-slate-200">{filteredProducts.length}</strong> products
+                </span>
+
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    disabled={safeProductPage <= 1}
+                    onClick={() => setProductPage((p) => Math.max(1, p - 1))}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  >
+                    Prev
+                  </button>
+
+                  {Array.from({ length: totalProductPages }, (_, i) => i + 1)
+                    .filter((pageNum) => {
+                      if (totalProductPages <= 7) return true;
+                      if (pageNum === 1 || pageNum === totalProductPages) return true;
+                      return Math.abs(pageNum - safeProductPage) <= 1;
+                    })
+                    .map((pageNum, idx, arr) => {
+                      const prevNum = arr[idx - 1];
+                      const showEllipsis = prevNum && pageNum - prevNum > 1;
+                      return (
+                        <React.Fragment key={pageNum}>
+                          {showEllipsis && (
+                            <span className="px-1.5 text-slate-400 font-bold">...</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setProductPage(pageNum)}
+                            className={`w-8 h-8 rounded-xl font-bold transition cursor-pointer ${
+                              pageNum === safeProductPage
+                                ? 'bg-[#35152F] text-white shadow-xs'
+                                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        </React.Fragment>
+                      );
+                    })}
+
+                  <button
+                    type="button"
+                    disabled={safeProductPage >= totalProductPages}
+                    onClick={() => setProductPage((p) => Math.min(totalProductPages, p + 1))}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
