@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import FeatureIcon, { PRESET_ICONS } from '../components/FeatureIcon';
 import {
@@ -70,6 +70,7 @@ export const PRESET_PRODUCT_COLORS = [
 ];
 
 const Admin = () => {
+  const location = useLocation();
   const { 
     user, 
     login, 
@@ -904,37 +905,33 @@ const Admin = () => {
 
   // Access check
   if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
+    const redirectTarget = location?.pathname ? encodeURIComponent(location.pathname) : '%2Fadmin';
     return (
       <div className="min-h-[70vh] flex items-center justify-center py-12 px-4">
         <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-8 shadow-xl text-center">
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-5">
+          <div className="w-16 h-16 rounded-2xl bg-[#D9A441]/10 text-[#D9A441] flex items-center justify-center mx-auto mb-5">
             <RiShieldCheckLine className="w-8 h-8" />
           </div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2">
             Admin Access Required
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-            Yeh page sirf Administrator aur Super Admin ke liye hai.
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+            This area is restricted to authorized administrators. Please sign in with your administrative credentials to continue.
           </p>
 
           <div className="space-y-3">
-            <button
-              onClick={() => login('superadmin@gmail.com', 'password123')}
-              className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl transition cursor-pointer text-sm shadow-sm"
-            >
-              ⚡ 1-Click Super Admin Login (superadmin@gmail.com)
-            </button>
-            <button
-              onClick={() => login('admin@aerostore.com', 'admin123')}
-              className="w-full py-2.5 px-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-2xl hover:opacity-90 transition cursor-pointer text-sm shadow-sm"
-            >
-              1-Click Admin Login (Demo)
-            </button>
             <Link
-              to="/login?redirect=/admin"
-              className="block w-full py-2.5 px-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition text-sm"
+              to={`/login?redirect=${redirectTarget}`}
+              className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-5 bg-[#35152F] hover:bg-[#A83E68] text-[#D9A441] font-bold rounded-2xl transition-all shadow-md text-sm cursor-pointer"
             >
-              Regular Login Page
+              Sign In to Admin Dashboard
+              <RiArrowRightLine className="w-4 h-4" />
+            </Link>
+            <Link
+              to="/"
+              className="block w-full py-2.5 px-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition text-sm text-center"
+            >
+              Back to Store
             </Link>
           </div>
         </div>
