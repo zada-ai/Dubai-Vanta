@@ -183,7 +183,9 @@ const Admin = () => {
 
   const routeParams = useParams();
   const [searchParams] = useSearchParams();
-  const initialTab = routeParams.tab || searchParams.get('tab') || 'overview';
+  const isSeoUser = user?.role === 'seo' || user?.role === 'editor';
+  const requestedTab = routeParams.tab || searchParams.get('tab');
+  const initialTab = requestedTab || (isSeoUser ? 'blogs' : 'overview');
   const [activeTab, setActiveTabState] = useState(initialTab);
 
   const setActiveTab = (tabName) => {
@@ -434,6 +436,10 @@ const Admin = () => {
   const [editingBlog, setEditingBlog] = useState(null);
   const [isUploadingBlogImg, setIsUploadingBlogImg] = useState(false);
   const blogImgInputRef = useRef(null);
+  const [inArticleImgUrl, setInArticleImgUrl] = useState('');
+  const [inArticleImgAlt, setInArticleImgAlt] = useState('');
+  const [isUploadingArticleImg, setIsUploadingArticleImg] = useState(false);
+  const articleImgInputRef = useRef(null);
   const [blogFilterCategory, setBlogFilterCategory] = useState('all');
   const [blogSearchQuery, setBlogSearchQuery] = useState('');
 
@@ -535,6 +541,50 @@ const Admin = () => {
     }
   };
 
+  const handleArticleImgUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      triggerToast('File size must be under 8MB', 'warning');
+      return;
+    }
+    setIsUploadingArticleImg(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await (authFetch ? authFetch('/api/upload', { method: 'POST', body: formData }) : fetch('/api/upload', { method: 'POST', body: formData }));
+      const data = await res.json();
+      if (data.success && (data.imageUrl || data.url)) {
+        const url = data.imageUrl || data.url;
+        setInArticleImgUrl(url);
+        triggerToast('Image uploaded! Click "Insert into Article" to embed it.', 'success');
+      } else {
+        triggerToast(data.message || 'Image upload failed', 'error');
+      }
+    } catch (err) {
+      triggerToast('Error: ' + err.message, 'error');
+    } finally {
+      setIsUploadingArticleImg(false);
+      if (articleImgInputRef.current) articleImgInputRef.current.value = '';
+    }
+  };
+
+  const handleInsertImageIntoContent = () => {
+    if (!inArticleImgUrl.trim()) {
+      triggerToast('Please upload an image or enter an image URL first', 'warning');
+      return;
+    }
+    const alt = inArticleImgAlt.trim() || 'Dubai Vanta article illustration';
+    const mdSnippet = `\n\n![${alt}](${inArticleImgUrl.trim()})\n\n`;
+    setBlogForm((prev) => ({
+      ...prev,
+      content: (prev.content || '') + mdSnippet
+    }));
+    triggerToast('Image embedded into article body!', 'success');
+    setInArticleImgUrl('');
+    setInArticleImgAlt('');
+  };
+
   const handleSaveBlogSubmit = async (e) => {
     e.preventDefault();
     if (!blogForm.title.trim()) {
@@ -544,8 +594,8 @@ const Admin = () => {
 
     if (blogForm.content) {
       const words = blogForm.content.trim().split(/\s+/).filter(Boolean);
-      if (words.length > 1500) {
-        triggerToast(`Article content cannot exceed 1500 words. (Currently ${words.length} words)`, 'error');
+      if (words.length > 5000) {
+        triggerToast(`Article content cannot exceed 5000 words. (Currently ${words.length} words)`, 'error');
         return;
       }
     }
@@ -903,9 +953,17 @@ const Admin = () => {
     setEditingProduct(null);
   };
 
-  // Access check
-  if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
-    const redirectTarget = location?.pathname ? encodeURIComponent(location.pathname) : '%2Fadmin';
+  // Access check: Administrator, Super Admin, Super Manager, SEO & Editorial Specialists
+  const isAuthorizedAdmin = user && (
+    user.role === 'admin' ||
+    user.role === 'superadmin' ||
+    user.role === 'supermanager' ||
+    user.role === 'seo' ||
+    user.role === 'editor'
+  );
+
+  if (!user || !isAuthorizedAdmin) {
+    const redirectTarget = location?.pathname ? encodeURIComponent(location.pathname + (location.search || '')) : '%2Fadmin';
     return (
       <div className="min-h-[70vh] flex items-center justify-center py-12 px-4">
         <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-8 shadow-xl text-center">
@@ -1264,137 +1322,164 @@ const Admin = () => {
 
       {/* Tab Switcher */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'overview'
-              ? 'bg-[#35152F] text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <RiDashboardLine className="w-4 h-4" /> Overview
-        </button>
-        <button
-          onClick={() => setActiveTab('orders')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer border ${
-            activeTab === 'orders'
-              ? 'bg-[#35152F] text-[#D9A441] border-[#D9A441] shadow-md'
-              : 'border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
-          }`}
-        >
-          <RiFileList3Line className="w-4 h-4 text-[#D9A441]" /> Customer Orders ({totalOrdersCount})
-        </button>
-        <button
-          onClick={() => setActiveTab('products')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'products'
-              ? 'bg-[#35152F] text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <RiShoppingBag3Line className="w-4 h-4" /> Products ({totalProductsCount})
-        </button>
-        <button
-          onClick={() => setActiveTab('categories')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'categories'
-              ? 'bg-[#35152F] text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <RiGridFill className="w-4 h-4 text-emerald-500" /> Categories ({categories?.length || 0})
-        </button>
-        <button
-          onClick={() => setActiveTab('hero')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'hero'
-              ? 'bg-[#35152F] text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <RiLayoutTop2Line className="w-4 h-4" /> Hero Section ({heroSlides?.length || 0})
-        </button>
-        <button
-          onClick={() => setActiveTab('features')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'features'
-              ? 'bg-[#35152F] text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <RiShieldCheckLine className="w-4 h-4" /> Features Bar ({features?.length || 4})
-        </button>
-        <button
-          onClick={() => setActiveTab('promo')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'promo'
-              ? 'bg-[#35152F] text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <RiPriceTag3Line className="w-4 h-4 text-violet-500" /> Promo Banner
-        </button>
-        <button
-          onClick={() => setActiveTab('seo')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'seo'
-              ? 'bg-[#35152F] text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <RiGlobalLine className="w-4 h-4" /> SEO & Meta Tags
-        </button>
-        <button
-          onClick={() => setActiveTab('social')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'social'
-              ? 'bg-primary-600 text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <RiShareLine className="w-4 h-4 text-sky-500" /> Social Links ({adminSocials.filter(s => s.enabled !== false).length})
-        </button>
-        <button
-          onClick={() => setActiveTab('categories')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'categories'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <RiGridFill className="w-4 h-4 text-emerald-500" /> Categories ({categories?.length || 0})
-        </button>
-        <button
-          onClick={() => setActiveTab('blogs')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'blogs'
-              ? 'bg-amber-600 text-white shadow-xs'
-              : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30'
-          }`}
-        >
-          <RiFileTextLine className="w-4 h-4" /> Blogs & Journal ({blogsList.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('messages')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-            activeTab === 'messages'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <RiMailLine className="w-4 h-4 text-sky-500" /> Contact & Inquiries ({contactMessages?.length || 0})
-        </button>
-        {(user?.role === 'superadmin' || user?.role === 'supermanager') && (
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
-              activeTab === 'users'
-                ? 'bg-purple-600 text-white shadow-xs'
-                : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30'
-            }`}
-          >
-            <RiShieldCheckLine className="w-4 h-4" /> Users & Roles ({dbUsers.length})
-          </button>
+        {isSeoUser ? (
+          <>
+            <button
+              onClick={() => setActiveTab('blogs')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'blogs'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30'
+              }`}
+            >
+              <RiFileTextLine className="w-4 h-4" /> Blogs & Journal ({blogsList.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('seo')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'seo'
+                  ? 'bg-[#35152F] text-[#D9A441] shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <RiGlobalLine className="w-4 h-4" /> SEO & Meta Tags
+            </button>
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'overview'
+                  ? 'bg-[#35152F] text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <RiDashboardLine className="w-4 h-4" /> Overview
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'overview'
+                  ? 'bg-[#35152F] text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <RiDashboardLine className="w-4 h-4" /> Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer border ${
+                activeTab === 'orders'
+                  ? 'bg-[#35152F] text-[#D9A441] border-[#D9A441] shadow-md'
+                  : 'border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
+              }`}
+            >
+              <RiFileList3Line className="w-4 h-4 text-[#D9A441]" /> Customer Orders ({totalOrdersCount})
+            </button>
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'products'
+                  ? 'bg-[#35152F] text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <RiShoppingBag3Line className="w-4 h-4" /> Products ({totalProductsCount})
+            </button>
+            <button
+              onClick={() => setActiveTab('categories')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'categories'
+                  ? 'bg-[#35152F] text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <RiGridFill className="w-4 h-4 text-emerald-500" /> Categories ({categories?.length || 0})
+            </button>
+            <button
+              onClick={() => setActiveTab('hero')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'hero'
+                  ? 'bg-[#35152F] text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <RiLayoutTop2Line className="w-4 h-4" /> Hero Section ({heroSlides?.length || 0})
+            </button>
+            <button
+              onClick={() => setActiveTab('features')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'features'
+                  ? 'bg-[#35152F] text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <RiShieldCheckLine className="w-4 h-4" /> Features Bar ({features?.length || 4})
+            </button>
+            <button
+              onClick={() => setActiveTab('promo')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'promo'
+                  ? 'bg-[#35152F] text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <RiPriceTag3Line className="w-4 h-4 text-violet-500" /> Promo Banner
+            </button>
+            <button
+              onClick={() => setActiveTab('seo')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'seo'
+                  ? 'bg-[#35152F] text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <RiGlobalLine className="w-4 h-4" /> SEO & Meta Tags
+            </button>
+            <button
+              onClick={() => setActiveTab('social')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'social'
+                  ? 'bg-primary-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <RiShareLine className="w-4 h-4 text-sky-500" /> Social Links ({adminSocials.filter(s => s.enabled !== false).length})
+            </button>
+            <button
+              onClick={() => setActiveTab('blogs')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'blogs'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30'
+              }`}
+            >
+              <RiFileTextLine className="w-4 h-4" /> Blogs & Journal ({blogsList.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                activeTab === 'messages'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <RiMailLine className="w-4 h-4 text-sky-500" /> Contact & Inquiries ({contactMessages?.length || 0})
+            </button>
+            {(user?.role === 'superadmin' || user?.role === 'supermanager') && (
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+                  activeTab === 'users'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30'
+                }`}
+              >
+                <RiShieldCheckLine className="w-4 h-4" /> Users & Roles ({dbUsers.length})
+              </button>
+            )}
+          </>
         )}
       </div>
 
@@ -4159,9 +4244,13 @@ const Admin = () => {
                               ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20'
                               : u.role === 'admin'
                               ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                              : u.role === 'seo'
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                              : u.role === 'editor'
+                              ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20'
                               : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                           }`}>
-                            {u.role === 'superadmin' ? '⚡ Super Admin' : u.role === 'supermanager' ? '🛡️ Super Manager' : u.role === 'admin' ? '👑 Admin' : '👤 Customer'}
+                            {u.role === 'superadmin' ? '⚡ Super Admin' : u.role === 'supermanager' ? '🛡️ Super Manager' : u.role === 'admin' ? '👑 Admin' : u.role === 'seo' ? '🔍 SEO & Content' : u.role === 'editor' ? '✍️ Editor' : '👤 Customer'}
                           </span>
                         </td>
                         <td className="py-3.5 px-4">
@@ -4174,6 +4263,8 @@ const Admin = () => {
                             <option value="superadmin">⚡ Super Admin</option>
                             <option value="supermanager">🛡️ Super Manager</option>
                             <option value="admin">👑 Admin</option>
+                            <option value="seo">🔍 SEO & Content Manager</option>
+                            <option value="editor">✍️ Editorial Writer</option>
                             <option value="customer">👤 Customer</option>
                           </select>
                         </td>
@@ -4528,7 +4619,7 @@ const Admin = () => {
               <div>
                 {(() => {
                   const wordsCount = blogForm.content?.trim() ? blogForm.content.trim().split(/\s+/).filter(Boolean).length : 0;
-                  const isOverLimit = wordsCount > 1500;
+                  const isOverLimit = wordsCount > 5000;
                   return (
                     <>
                       <div className="flex items-center justify-between mb-1">
@@ -4539,14 +4630,14 @@ const Admin = () => {
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                             isOverLimit
                               ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-300 dark:border-rose-800 animate-pulse'
-                              : wordsCount > 1300
+                              : wordsCount > 4000
                               ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
                               : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
                           }`}>
-                            {wordsCount} / 1500 words
+                            {wordsCount} / 5000 words
                           </span>
                         </div>
-                        <span className="text-[10px] text-slate-400 font-mono">Use ### for headings, - for bullets</span>
+                        <span className="text-[10px] text-slate-400 font-mono">Use ### for headings, - for bullets, ![alt](url) for images</span>
                       </div>
                       <textarea
                         rows="9"
@@ -4556,7 +4647,7 @@ const Admin = () => {
                           const val = e.target.value;
                           setBlogForm({ ...blogForm, content: val });
                         }}
-                        placeholder="Write full article here (maximum 1500 words). Use paragraphs, ### Subheadings, and - bullet points..."
+                        placeholder="Write full article here (up to 5000 words). Use paragraphs, ### Subheadings, - bullet points, and embed images using the assistant below..."
                         className={`w-full px-3.5 py-2.5 text-sm font-sans rounded-xl border ${
                           isOverLimit
                             ? 'border-rose-500 focus:ring-rose-500 bg-rose-50/10'
@@ -4565,20 +4656,88 @@ const Admin = () => {
                       />
                       {isOverLimit && (
                         <div className="flex items-center justify-between mt-1 text-xs text-rose-600 dark:text-rose-400 font-semibold">
-                          <span>⚠️ Limit exceeded by {wordsCount - 1500} words! Maximum 1500 words allowed.</span>
+                          <span>⚠️ Limit exceeded by {wordsCount - 5000} words! Maximum 5000 words allowed.</span>
                           <button
                             type="button"
                             onClick={() => {
                               const words = blogForm.content.trim().split(/\s+/).filter(Boolean);
-                              setBlogForm({ ...blogForm, content: words.slice(0, 1500).join(' ') });
-                              triggerToast('Trimmed to 1500 words.', 'info');
+                              setBlogForm({ ...blogForm, content: words.slice(0, 5000).join(' ') });
+                              triggerToast('Trimmed to 5000 words.', 'info');
                             }}
                             className="underline font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700 cursor-pointer"
                           >
-                            Trim to 1500 words
+                            Trim to 5000 words
                           </button>
                         </div>
                       )}
+
+                      {/* In-Article Images Assistant */}
+                      <div className="mt-3 p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-500/20">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                            <RiImageAddLine className="w-4 h-4 text-amber-600" /> Insert Images Into Article Content
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            Places image anywhere in your story
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                          <div className="sm:col-span-5">
+                            <input
+                              type="text"
+                              value={inArticleImgUrl}
+                              onChange={(e) => setInArticleImgUrl(e.target.value)}
+                              placeholder="Image URL or upload from computer..."
+                              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-mono"
+                            />
+                          </div>
+                          <div className="sm:col-span-4">
+                            <input
+                              type="text"
+                              value={inArticleImgAlt}
+                              onChange={(e) => setInArticleImgAlt(e.target.value)}
+                              placeholder="Caption / Description (Optional)"
+                              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                            />
+                          </div>
+                          <div className="sm:col-span-3 flex items-center gap-1.5">
+                            <input
+                              ref={articleImgInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={handleArticleImgUpload}
+                              className="hidden"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => articleImgInputRef.current?.click()}
+                              disabled={isUploadingArticleImg}
+                              className="px-2.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition flex items-center gap-1 cursor-pointer shrink-0"
+                              title="Upload from computer"
+                            >
+                              <RiUploadCloud2Line className={`w-3.5 h-3.5 ${isUploadingArticleImg ? 'animate-bounce' : ''}`} />
+                              {isUploadingArticleImg ? '...' : 'Upload'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleInsertImageIntoContent}
+                              className="flex-1 px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1 shadow-xs"
+                            >
+                              <RiAddLine className="w-3.5 h-3.5" /> + Insert
+                            </button>
+                          </div>
+                        </div>
+                        {inArticleImgUrl && (
+                          <div className="mt-2 flex items-center gap-3">
+                            <div className="w-16 h-12 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 shrink-0">
+                              <img src={inArticleImgUrl} alt="Preview" className="w-full h-full object-cover" />
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
+                              Ready to embed: {inArticleImgUrl}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </>
                   );
                 })()}
@@ -4623,9 +4782,9 @@ const Admin = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={Boolean(blogForm.content && blogForm.content.trim().split(/\s+/).filter(Boolean).length > 1500)}
+                  disabled={Boolean(blogForm.content && blogForm.content.trim().split(/\s+/).filter(Boolean).length > 5000)}
                   className={`px-6 py-2.5 text-xs font-bold rounded-xl text-white shadow-md transition cursor-pointer ${
-                    blogForm.content && blogForm.content.trim().split(/\s+/).filter(Boolean).length > 1500
+                    blogForm.content && blogForm.content.trim().split(/\s+/).filter(Boolean).length > 5000
                       ? 'bg-slate-400 cursor-not-allowed opacity-60'
                       : 'bg-amber-600 hover:bg-amber-500'
                   }`}

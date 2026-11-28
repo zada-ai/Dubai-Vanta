@@ -15,7 +15,7 @@ import {
   RiArrowRightLine
 } from 'react-icons/ri';
 import { useApp } from '../context/AppContext';
-import { DEFAULT_BLOGS } from '../data/defaultBlogs';
+import { DEFAULT_BLOGS, getBlogFirstImage } from '../data/defaultBlogs';
 
 const BlogDetails = () => {
   const { id } = useParams();
@@ -154,13 +154,43 @@ const BlogDetails = () => {
     window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(window.location.href)}`, '_blank');
   };
 
-  // Content formatter: splits into paragraphs and formats headers
+  // Content formatter: splits into paragraphs, formats headers and renders inline images
   const renderFormattedContent = (content) => {
     if (!content) return null;
     const blocks = content.split(/\n\s*\n/);
 
     return blocks.map((block, idx) => {
       const trimmed = block.trim();
+      if (!trimmed) return null;
+
+      // Standalone Image: ![alt](url)
+      const imgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
+      if (imgMatch) {
+        const altText = imgMatch[1];
+        let imgUrl = imgMatch[2];
+        let caption = altText;
+        const titleMatch = imgUrl.match(/^([^\s]+)\s+["'](.*)["']$/);
+        if (titleMatch) {
+          imgUrl = titleMatch[1];
+          caption = titleMatch[2];
+        }
+        return (
+          <figure key={idx} className="my-8 rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-md">
+            <img
+              src={imgUrl}
+              alt={altText || blog?.title || 'Article image'}
+              loading="lazy"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              className="w-full max-h-[580px] object-cover"
+            />
+            {caption && (
+              <figcaption className="p-3 text-center text-xs text-slate-500 dark:text-slate-400 font-medium italic border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/70">
+                {caption}
+              </figcaption>
+            )}
+          </figure>
+        );
+      }
 
       // Heading 3: ### Heading
       if (trimmed.startsWith('### ')) {
@@ -200,6 +230,42 @@ const BlogDetails = () => {
           <blockquote key={idx} className="my-6 pl-4 border-l-4 border-primary-500 italic text-slate-600 dark:text-slate-400 text-base sm:text-lg">
             {trimmed.replace(/^>\s+/, '')}
           </blockquote>
+        );
+      }
+
+      // Paragraph with embedded image: text + ![alt](url)
+      if (trimmed.includes('![') && trimmed.includes('](')) {
+        const parts = trimmed.split(/(!\[.*?\]\(.*?\))/g);
+        return (
+          <div key={idx} className="mb-6 space-y-4">
+            {parts.map((part, pIdx) => {
+              const partImgMatch = part.match(/^!\[(.*?)\]\((.*?)\)$/);
+              if (partImgMatch) {
+                return (
+                  <figure key={pIdx} className="my-6 rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-md">
+                    <img
+                      src={partImgMatch[2]}
+                      alt={partImgMatch[1] || 'Article image'}
+                      loading="lazy"
+                      className="w-full max-h-[580px] object-cover"
+                    />
+                    {partImgMatch[1] && (
+                      <figcaption className="p-3 text-center text-xs text-slate-500 dark:text-slate-400 font-medium italic border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/70">
+                        {partImgMatch[1]}
+                      </figcaption>
+                    )}
+                  </figure>
+                );
+              }
+              const pTrimmed = part.trim();
+              if (!pTrimmed) return null;
+              return (
+                <p key={pIdx} className="text-sm sm:text-base lg:text-lg text-slate-700 dark:text-slate-300 leading-relaxed sm:leading-loose font-normal">
+                  {pTrimmed}
+                </p>
+              );
+            })}
+          </div>
         );
       }
 
@@ -338,16 +404,20 @@ const BlogDetails = () => {
           </button>
         </div>
 
-        {/* Cover Image */}
-        {blog.image && (
-          <div className="mb-12 rounded-3xl overflow-hidden bg-slate-900 shadow-xl border border-slate-200/60 dark:border-slate-800">
-            <img
-              src={blog.image}
-              alt={blog.title}
-              className="w-full max-h-[480px] object-cover"
-            />
-          </div>
-        )}
+        {/* Cover Hero Image */}
+        {(() => {
+          const coverImg = getBlogFirstImage(blog);
+          return coverImg ? (
+            <div className="mb-12 rounded-3xl overflow-hidden bg-slate-900 shadow-xl border border-slate-200/60 dark:border-slate-800">
+              <img
+                src={coverImg}
+                alt={blog.title}
+                className="w-full max-h-[520px] object-cover"
+                loading="eager"
+              />
+            </div>
+          ) : null;
+        })()}
 
         {/* Formatted Content Body */}
         <div className="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200">
@@ -410,11 +480,20 @@ const BlogDetails = () => {
                   className="group block rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 hover:shadow-md transition"
                 >
                   <div className="h-32 rounded-xl overflow-hidden bg-slate-900 mb-3">
-                    <img
-                      src={item.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600'}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {(() => {
+                      const relImg = getBlogFirstImage(item);
+                      return relImg ? (
+                        <img
+                          src={relImg}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#35152F] to-[#1a0a18] text-[#D9A441] text-xs font-bold p-2 text-center">
+                          {item.title}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <span className="text-[10px] font-black uppercase text-primary-600 dark:text-primary-400">
                     {item.category}

@@ -1,88 +1,48 @@
-export const DEFAULT_BLOGS = [
-  {
-    id: 'b1-aerosound-acoustics',
-    title: 'The Art of Pure Acoustics: Inside AeroSound Max',
-    slug: 'the-art-of-pure-acoustics-inside-aerosound-max',
-    excerpt: 'Discover how custom 40mm titanium drivers and active acoustic tuning create an immersive spatial listening experience in Dubai’s premier audio flagship.',
-    content: `Sound is not merely frequency; it is emotion sculpted in air. With the AeroSound Max, our acoustic engineers sought to bridge the gap between studio-grade master tapes and personal daily listening.
+/**
+ * Default Blogs Data & Image Extraction Utilities
+ * Initialized as empty so only authentic editorial / SEO blogs published from Admin are rendered.
+ */
+export const DEFAULT_BLOGS = [];
 
-### Precision Engineering Meets Acoustic Artistry
-At the heart of AeroSound Max lies a pair of custom-developed 40mm titanium-diaphragm transducers. Unlike traditional dynamic drivers that suffer from high-frequency modal distortion, titanium maintains structural rigidity across intense excursions, yielding virtually zero harmonic distortion even at peak volumes.
+/**
+ * Intelligent helper to extract the primary/featured image for blog cards & thumbnails:
+ * 1. Checks blog.image (first URL if multiple are comma/newline separated)
+ * 2. Scans blog.content for markdown image: ![alt](url)
+ * 3. Scans blog.content for HTML <img> tag: <img src="url" />
+ * 4. Scans blog.excerpt for images
+ */
+export function getBlogFirstImage(blog) {
+  if (!blog) return null;
 
-### Neural Noise Cancellation
-Our proprietary Hybrid Active Noise Cancellation utilizes six outward-facing beamforming microphones and dual internal feedback sensors. Sampling ambient acoustic conditions over 380,000 times per second, the digital signal processor creates anti-noise waveforms that dissolve bustling city avenues, flight cabins, and open office reverberations.
-
-### Crafted for Enduring Elegance
-Sculpted with anodized aircraft-grade aluminum, ventilated memory foam cushions, and supple top-grain leather trim, every curve honors both ergonomic luxury and acoustic isolation. Welcome to the new zenith of sound.`,
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80',
-    category: 'Acoustics',
-    author: 'Sohaib Mehmood',
-    tags: 'AeroSound, Acoustics, High-Fidelity, Dubai, Luxury',
-    read_time: '4 min read',
-    is_published: 1,
-    created_at: '2026-11-20T15:05:02.000Z'
-  },
-  {
-    id: 'b2-modern-minimalist-workspaces',
-    title: 'Modern Minimalist Workspaces: Curating Luxury & Productivity',
-    slug: 'modern-minimalist-workspaces-curating-luxury-and-productivity',
-    excerpt: 'Elevate your daily workflow with purposeful aesthetics, ergonomic hardware, and serene Scandinavian-inspired desk setups.',
-    content: `Clutter is the enemy of clarity. In today’s hyper-connected environment, curating an intentional, tranquil workspace is not a luxury—it is an essential catalyst for peak creative output.
-
-### 1. The Monochromatic Foundation
-Begin by establishing a balanced, muted color palette. Matte black, warm walnut, brushed aluminum, and deep slate harmonize to reduce visual fatigue. Keep desktop surfaces pristine by routing all cables underneath using magnetic channels.
-
-### 2. Tactile Ergonomics & Timeless Materials
-Invest in tactile touchpoints. A full-grain leather desk mat offers wrist support while aging gracefully with an organic patina. Couple this with a mechanical keyboard engineered with dampened linear switches for a satisfying, quiet keystroke rhythm.
-
-### 3. Purposeful Illumination
-Avoid harsh overhead glare. Instead, employ warm 2700K indirect LED backlights paired with an asymmetrical monitor light bar. The balanced luminance contrast protects circadian rhythms during late-night creative sprints.`,
-    image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=1200&auto=format&fit=crop&q=80',
-    category: 'Lifestyle',
-    author: 'Vanta Dubai Editorial',
-    tags: 'Workspace, Luxury, Minimalism, Design, Productivity',
-    read_time: '6 min read',
-    is_published: 1,
-    created_at: '2026-11-20T15:05:02.000Z'
-  },
-  {
-    id: 'b3-anc-demystified',
-    title: 'Active Noise Cancellation Demystified: The Science of Silence',
-    slug: 'active-noise-cancellation-demystified-the-science-of-silence',
-    excerpt: 'An in-depth look at how inverse phase waves, MEMS microphones, and neural noise suppression silence the busiest cityscapes.',
-    content: `Silence is not the absence of sound; it is an active physical countermeasure. To comprehend how ANC works, one must explore destructive wave interference.
-
-### The Physics of Destructive Interference
-Sound travels through air as pressure waves composed of alternating compressions and rarefactions. When an ambient microphone detects a compression crest, an intelligent digital audio processor calculates an exact inverted wave—a rarefaction trough. When the two waves meet at the ear canal, they cancel each other out completely.
-
-### Feedforward vs Feedback Topologies
-Basic noise cancelling systems rely exclusively on feedforward mics placed on the outer earcups. However, ambient wind and varying seal pressure around eyeglasses can degrade efficacy. Dual-topology hybrid systems combine feedforward with feedback microphones placed inside the acoustic cavity to measure what the listener actually hears, continuously fine-tuning cancellation in microsecond intervals.`,
-    image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=1200&auto=format&fit=crop&q=80',
-    category: 'Technology',
-    author: 'Engineering Desk',
-    tags: 'Tech, Noise-Cancellation, Audio-Tech, Innovation',
-    read_time: '5 min read',
-    is_published: 1,
-    created_at: '2026-11-20T15:05:02.000Z'
-  },
-  {
-    id: 'b4-smart-living-2026',
-    title: 'Smart Living in 2026: Seamless Ambient Intelligence',
-    slug: 'smart-living-in-2026-seamless-ambient-intelligence',
-    excerpt: 'How next-generation connected devices, spatial audio zones, and low-latency wireless protocols redefine the contemporary residence.',
-    content: `The modern residence is shifting from reactive smart gadgets to proactive ambient intelligence. In 2026, home automation blends into the background, responding fluidly to presence, circadian rhythm, and individual preference without requiring manual app intervention.
-
-### Spatial Audio Zones Across Rooms
-Gone are the days of manually pairing Bluetooth speakers. Ultra-Wideband (UWB) tracking allows high-resolution audio streams to follow you gracefully from your study to the kitchen, transitioning with seamless room-calibrated equalizers.
-
-### Effortless Energy Optimization
-Intelligent thermal sensors and automated solar louvers work alongside smart HVAC controllers to slash power consumption while maintaining bespoke microclimate comfort throughout Dubai’s hottest summers. Luxury and environmental stewardship now exist in effortless harmony.`,
-    image: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=1200&auto=format&fit=crop&q=80',
-    category: 'Smart Home',
-    author: 'Vanta Dubai Editorial',
-    tags: 'SmartHome, IoT, AudioZones, Connectivity, Future',
-    read_time: '5 min read',
-    is_published: 1,
-    created_at: '2026-11-20T15:05:02.000Z'
+  // 1. Direct cover image property
+  if (blog.image && typeof blog.image === 'string' && blog.image.trim()) {
+    const candidate = blog.image.split(/[\n,]/)[0].trim();
+    if (candidate && !candidate.startsWith('data:image/svg+xml')) {
+      return candidate;
+    }
   }
-];
+
+  // 2. Scan content for markdown image: ![alt](url)
+  if (blog.content && typeof blog.content === 'string') {
+    const mdMatch = blog.content.match(/!\[.*?\]\((https?:\/\/[^\s\)]+|\/uploads\/[^\s\)]+)\)/i);
+    if (mdMatch && mdMatch[1]) {
+      return mdMatch[1];
+    }
+
+    // 3. Scan content for HTML <img> tag
+    const htmlMatch = blog.content.match(/<img[^>]+src=["'](https?:\/\/[^"']+|\/uploads\/[^"']+)["']/i);
+    if (htmlMatch && htmlMatch[1]) {
+      return htmlMatch[1];
+    }
+  }
+
+  // 4. Check excerpt for markdown image
+  if (blog.excerpt && typeof blog.excerpt === 'string') {
+    const mdMatch = blog.excerpt.match(/!\[.*?\]\((https?:\/\/[^\s\)]+|\/uploads\/[^\s\)]+)\)/i);
+    if (mdMatch && mdMatch[1]) {
+      return mdMatch[1];
+    }
+  }
+
+  return null;
+}

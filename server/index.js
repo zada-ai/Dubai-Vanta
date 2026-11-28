@@ -135,7 +135,7 @@ function generateRefreshToken(user) {
 // ==========================================
 // Security helpers: password hashing + role guards
 // ==========================================
-const ADMIN_ROLES = ['admin', 'supermanager', 'superadmin'];
+const ADMIN_ROLES = ['admin', 'supermanager', 'superadmin', 'seo', 'editor'];
 const SUPER_ROLES = ['supermanager', 'superadmin'];
 
 function hashPassword(password) {
@@ -882,7 +882,7 @@ app.get('/api/blogs', async (req, res) => {
 
     if (wantAll) {
       const requester = await getRequesterUser(req);
-      if (requester && ['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
+      if (requester && ['admin', 'superadmin', 'supermanager', 'seo', 'editor'].includes(requester.role)) {
         includeDrafts = true;
       }
     }
@@ -913,7 +913,7 @@ app.get('/api/blogs/:idOrSlug', async (req, res) => {
 
     if (!blog.is_published) {
       const requester = await getRequesterUser(req);
-      if (!requester || !['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
+      if (!requester || !['admin', 'superadmin', 'supermanager', 'seo', 'editor'].includes(requester.role)) {
         return res.status(404).json({ success: false, message: 'Blog article not found' });
       }
     }
@@ -927,7 +927,7 @@ app.get('/api/blogs/:idOrSlug', async (req, res) => {
 app.post('/api/blogs', requireAdmin, async (req, res) => {
   try {
     const requester = await getRequesterUser(req);
-    if (!requester || !['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
+    if (!requester || !['admin', 'superadmin', 'supermanager', 'seo', 'editor'].includes(requester.role)) {
       return res.status(403).json({ success: false, message: 'Unauthorized. Admin access required.' });
     }
 
@@ -938,8 +938,8 @@ app.post('/api/blogs', requireAdmin, async (req, res) => {
 
     if (content) {
       const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
-      if (wordCount > 1500) {
-        return res.status(400).json({ success: false, message: 'Article content cannot exceed 1500 words' });
+      if (wordCount > 5000) {
+        return res.status(400).json({ success: false, message: 'Article content cannot exceed 5000 words' });
       }
     }
 
@@ -968,14 +968,14 @@ app.post('/api/blogs', requireAdmin, async (req, res) => {
 app.put('/api/blogs/:id', requireAdmin, async (req, res) => {
   try {
     const requester = await getRequesterUser(req);
-    if (!requester || !['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
+    if (!requester || !['admin', 'superadmin', 'supermanager', 'seo', 'editor'].includes(requester.role)) {
       return res.status(403).json({ success: false, message: 'Unauthorized. Admin access required.' });
     }
 
     if (req.body.content) {
       const wordCount = req.body.content.trim().split(/\s+/).filter(Boolean).length;
-      if (wordCount > 1500) {
-        return res.status(400).json({ success: false, message: 'Article content cannot exceed 1500 words' });
+      if (wordCount > 5000) {
+        return res.status(400).json({ success: false, message: 'Article content cannot exceed 5000 words' });
       }
     }
 
@@ -996,7 +996,7 @@ app.put('/api/blogs/:id', requireAdmin, async (req, res) => {
 app.delete('/api/blogs/:id', requireAdmin, async (req, res) => {
   try {
     const requester = await getRequesterUser(req);
-    if (!requester || !['admin', 'superadmin', 'supermanager'].includes(requester.role)) {
+    if (!requester || !['admin', 'superadmin', 'supermanager', 'seo', 'editor'].includes(requester.role)) {
       return res.status(403).json({ success: false, message: 'Unauthorized. Admin access required.' });
     }
 

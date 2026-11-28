@@ -12,14 +12,14 @@ import {
   RiSparklingFill
 } from 'react-icons/ri';
 import { useApp } from '../context/AppContext';
-import { DEFAULT_BLOGS } from '../data/defaultBlogs';
+import { DEFAULT_BLOGS, getBlogFirstImage } from '../data/defaultBlogs';
 
 const Blogs = () => {
-  const { darkMode } = useApp();
+  const { darkMode, user } = useApp();
   const [blogs, setBlogs] = useState(() => {
     try {
       const cached = localStorage.getItem('cached_blogs');
-      if (cached) {
+      if (cached && !cached.includes('b1-aerosound') && !cached.includes('AeroSound')) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
@@ -30,6 +30,16 @@ const Blogs = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+
+  // Clear legacy mock blogs from localStorage
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem('cached_blogs');
+      if (cached && (cached.includes('b1-aerosound') || cached.includes('AeroSound'))) {
+        localStorage.removeItem('cached_blogs');
+      }
+    } catch (_) {}
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -51,28 +61,28 @@ const Blogs = () => {
           throw new Error('Invalid JSON');
         }
 
-        if (data.success && isMounted && Array.isArray(data.blogs) && data.blogs.length > 0) {
+        if (data.success && isMounted && Array.isArray(data.blogs)) {
           setBlogs(data.blogs);
           try {
             localStorage.setItem('cached_blogs', JSON.stringify(data.blogs));
           } catch (e) {}
         } else if (isMounted) {
-          setBlogs((prev) => (prev && prev.length > 0 ? prev : DEFAULT_BLOGS));
+          setBlogs([]);
         }
       } catch (err) {
-        console.warn('Live blog fetch notice (using cache/defaults):', err.message);
+        console.warn('Live blog fetch notice:', err.message);
         if (isMounted) {
-          setBlogs((prev) => {
-            if (prev && prev.length > 0) return prev;
-            try {
-              const cached = localStorage.getItem('cached_blogs');
-              if (cached) {
-                const parsed = JSON.parse(cached);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          try {
+            const cached = localStorage.getItem('cached_blogs');
+            if (cached && !cached.includes('b1-aerosound')) {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed)) {
+                setBlogs(parsed);
+                return;
               }
-            } catch (_) {}
-            return DEFAULT_BLOGS;
-          });
+            }
+          } catch (_) {}
+          setBlogs([]);
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -249,12 +259,30 @@ const Blogs = () => {
             >
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
                 <div className="lg:col-span-7 relative h-72 sm:h-96 lg:h-[420px] overflow-hidden bg-slate-900">
-                  <img
-                    src={featuredBlog.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200'}
-                    alt={featuredBlog.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent lg:hidden" />
+                  {(() => {
+                    const heroImg = getBlogFirstImage(featuredBlog);
+                    return (
+                      <>
+                        {heroImg ? (
+                          <img
+                            src={heroImg}
+                            alt={featuredBlog.title}
+                            loading="eager"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                            }}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                          />
+                        ) : null}
+                        <div className={`${heroImg ? 'hidden' : ''} w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#35152F] via-[#240e20] to-[#140612] text-center p-8`}>
+                          <span className="text-[#D9A441] text-xs font-black tracking-widest uppercase mb-2">Dubai Vanta Journal</span>
+                          <h2 className="text-white text-2xl font-bold max-w-md line-clamp-3">{featuredBlog.title}</h2>
+                        </div>
+                      </>
+                    );
+                  })()}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent lg:hidden pointer-events-none" />
                   <div className="absolute top-4 left-4 z-10">
                     <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-900/80 backdrop-blur-md text-white border border-white/20">
                       {featuredBlog.category}
@@ -323,11 +351,29 @@ const Blogs = () => {
                     >
                       {/* Image Thumbnail */}
                       <div className="relative h-52 sm:h-56 overflow-hidden bg-slate-900">
-                        <img
-                          src={blog.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800'}
-                          alt={blog.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                        />
+                        {(() => {
+                          const cardImg = getBlogFirstImage(blog);
+                          return (
+                            <>
+                              {cardImg ? (
+                                <img
+                                  src={cardImg}
+                                  alt={blog.title}
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                                />
+                              ) : null}
+                              <div className={`${cardImg ? 'hidden' : ''} w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#35152F] to-[#1c0a19] text-center p-6`}>
+                                <span className="text-[#D9A441] text-[10px] font-black tracking-widest uppercase mb-1">Dubai Vanta</span>
+                                <h4 className="text-white text-sm font-bold line-clamp-2 px-2">{blog.title}</h4>
+                              </div>
+                            </>
+                          );
+                        })()}
                         <div className="absolute top-3 left-3">
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-950/80 backdrop-blur-md text-white border border-white/20">
                             {blog.category}
@@ -373,25 +419,45 @@ const Blogs = () => {
                 ))}
               </div>
             ) : (
-              <div className="py-20 text-center">
-                <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4 text-slate-400">
+              <div className="py-20 text-center max-w-lg mx-auto">
+                <div className="w-16 h-16 rounded-3xl bg-[#35152F]/10 dark:bg-[#35152F]/30 text-[#D9A441] flex items-center justify-center mx-auto mb-4">
                   <RiBookOpenLine className="w-8 h-8" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-1">No articles found</h3>
-                <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto mb-6">
-                  {searchQuery ? `No articles matched "${searchQuery}". Try different search keywords.` : 'No published articles in this category yet.'}
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                  {searchQuery ? 'No articles matched your search' : 'Journal Articles Coming Soon'}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                  {searchQuery 
+                    ? `No articles found matching "${searchQuery}". Try different keywords.` 
+                    : 'Our editorial team is curating exclusive stories on luxury living, high-end acoustics, and Dubai lifestyle. Stay tuned.'}
                 </p>
-                {(searchQuery || selectedCategory !== 'All') && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSelectedCategory('All');
-                    }}
-                    className="px-4 py-2 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold hover:scale-105 transition"
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  {(searchQuery || selectedCategory !== 'All') && (
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSelectedCategory('All');
+                      }}
+                      className="px-5 py-2.5 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold hover:opacity-90 transition cursor-pointer"
+                    >
+                      Reset Filters
+                    </button>
+                  )}
+                  {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'supermanager' || user?.role === 'seo' || user?.role === 'editor') && (
+                    <Link
+                      to="/admin?tab=blogs"
+                      className="px-5 py-2.5 rounded-2xl bg-[#35152F] hover:bg-[#A83E68] text-[#D9A441] text-xs font-bold transition shadow-sm"
+                    >
+                      + Write First Article
+                    </Link>
+                  )}
+                  <Link
+                    to="/shop"
+                    className="px-5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition"
                   >
-                    Reset Filters
-                  </button>
-                )}
+                    Explore Shop
+                  </Link>
+                </div>
               </div>
             )}
           </div>

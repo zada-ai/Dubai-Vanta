@@ -287,19 +287,21 @@ const Navbar = () => {
             <Link to="/faq" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
               FAQ
             </Link>
-            {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'supermanager') && (
+            {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'supermanager' || user?.role === 'seo' || user?.role === 'editor') && (
               <Link 
-                to="/admin" 
+                to={user?.role === 'seo' || user?.role === 'editor' ? '/admin?tab=blogs' : '/admin'} 
                 className={`px-2.5 sm:px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1.5 text-xs ${
                   user?.role === 'superadmin'
                     ? 'bg-primary-500/20 text-primary-700 dark:text-primary-300 border border-primary-500/30 shadow-xs hover:bg-primary-500/30'
                     : user?.role === 'supermanager'
                     ? 'bg-primary-500/20 text-primary-700 dark:text-primary-300 border border-primary-500/30 shadow-xs hover:bg-primary-500/30'
+                    : user?.role === 'seo' || user?.role === 'editor'
+                    ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-xs hover:bg-amber-500/30'
                     : 'bg-primary-500/15 text-primary-600 dark:text-primary-400 hover:bg-primary-500/25'
                 }`}
               >
                 <RiShieldCheckLine className="w-3.5 h-3.5" />
-                {user?.role === 'superadmin' ? 'Super Admin' : user?.role === 'supermanager' ? 'Super Manager' : 'Admin'}
+                {user?.role === 'superadmin' ? 'Super Admin' : user?.role === 'supermanager' ? 'Super Manager' : user?.role === 'seo' ? 'SEO Studio' : user?.role === 'editor' ? 'Editorial Studio' : 'Admin'}
               </Link>
             )}
           </nav>
@@ -477,41 +479,45 @@ const Navbar = () => {
                       <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
                         <p className="text-xs text-slate-400">Signed in as</p>
                         <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate mt-0.5">{user.name}</p>
-                        {(user.role === 'admin' || user.role === 'superadmin' || user.role === 'supermanager') && (
+                        {(user.role === 'admin' || user.role === 'superadmin' || user.role === 'supermanager' || user.role === 'seo' || user.role === 'editor') && (
                           <span className={`inline-block mt-1 text-[10px] uppercase font-black px-2 py-0.5 rounded-md ${
                             user.role === 'superadmin'
                               ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
                               : user.role === 'supermanager'
                               ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                              : user.role === 'seo' || user.role === 'editor'
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                               : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                           }`}>
-                            {user.role === 'superadmin' ? 'Super Admin' : user.role === 'supermanager' ? 'Super Manager' : 'Administrator'}
+                            {user.role === 'superadmin' ? 'Super Admin' : user.role === 'supermanager' ? 'Super Manager' : user.role === 'seo' ? 'SEO & Content' : user.role === 'editor' ? 'Editorial Writer' : 'Administrator'}
                           </span>
                         )}
                       </div>
-                      {(user.role === 'admin' || user.role === 'superadmin' || user.role === 'supermanager') && (
+                      {(user.role === 'admin' || user.role === 'superadmin' || user.role === 'supermanager' || user.role === 'seo' || user.role === 'editor') && (
                         <>
                           <Link
-                            to="/admin"
+                            to={user.role === 'seo' || user.role === 'editor' ? '/admin?tab=blogs' : '/admin'}
                             onClick={() => setUserDropdownOpen(false)}
                             className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-950/20 hover:bg-primary-50 dark:hover:bg-primary-950/40"
                           >
                             <RiShieldCheckLine className="w-4 h-4" />
-                            Admin Dashboard
+                            {user.role === 'seo' || user.role === 'editor' ? 'Blogs & SEO Studio' : 'Admin Dashboard'}
                           </Link>
-                          <Link
-                            to="/admin/orders"
-                            onClick={() => setUserDropdownOpen(false)}
-                            className="flex items-center justify-between px-4 py-2.5 text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                          >
-                            <span className="flex items-center gap-2.5">
-                              <RiFileList3Line className="w-4 h-4 text-emerald-500" />
-                              Customer Orders
-                            </span>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold">
-                              {orders?.length || 0}
-                            </span>
-                          </Link>
+                          {(user.role === 'admin' || user.role === 'superadmin' || user.role === 'supermanager') && (
+                            <Link
+                              to="/admin/orders"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center justify-between px-4 py-2.5 text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                            >
+                              <span className="flex items-center gap-2.5">
+                                <RiFileList3Line className="w-4 h-4 text-emerald-500" />
+                                Customer Orders
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold">
+                                {orders?.length || 0}
+                              </span>
+                            </Link>
+                          )}
                         </>
                       )}
                       <Link
@@ -712,14 +718,14 @@ const Navbar = () => {
               >
                 FAQ
               </Link>
-              {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'supermanager') && (
+              {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'supermanager' || user?.role === 'seo' || user?.role === 'editor') && (
                 <Link 
-                  to="/admin" 
+                  to={user?.role === 'seo' || user?.role === 'editor' ? '/admin?tab=blogs' : '/admin'} 
                   onClick={() => setMobileMenuOpen(false)}
                   className="px-3 py-2.5 rounded-xl text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/30 flex items-center gap-2 font-bold"
                 >
                   <RiShieldCheckLine className="w-4 h-4" />
-                  {user?.role === 'superadmin' ? 'Super Admin Dashboard' : user?.role === 'supermanager' ? 'Super Manager Dashboard' : 'Admin Panel'}
+                  {user?.role === 'superadmin' ? 'Super Admin Dashboard' : user?.role === 'supermanager' ? 'Super Manager Dashboard' : user?.role === 'seo' ? 'Blogs & SEO Studio' : user?.role === 'editor' ? 'Editorial Studio' : 'Admin Panel'}
                 </Link>
               )}
             </div>

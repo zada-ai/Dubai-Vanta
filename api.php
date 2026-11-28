@@ -264,6 +264,32 @@ try {
     error_log('[api.php] reviews table init/seed notice: ' . $e->getMessage());
 }
 
+// Ensure blogs table exists in MySQL and clean up legacy mock blogs
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS blogs (
+      id VARCHAR(64) PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      slug VARCHAR(191) NOT NULL UNIQUE,
+      excerpt TEXT,
+      content LONGTEXT,
+      image VARCHAR(500),
+      category VARCHAR(100) DEFAULT 'Lifestyle',
+      author VARCHAR(100) DEFAULT 'Vanta Dubai Editorial',
+      tags VARCHAR(255) DEFAULT '',
+      read_time VARCHAR(50) DEFAULT '5 min read',
+      is_published TINYINT(1) DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_slug (slug),
+      INDEX idx_published (is_published)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+    // Clean up old dummy/mock blogs (e.g. b1-aerosound-acoustics, etc.)
+    $pdo->exec("DELETE FROM blogs WHERE id IN ('b1-aerosound-acoustics', 'b2-modern-minimalist-workspaces', 'b3-anc-demystified', 'b4-smart-living-2026') OR slug LIKE '%aerosound%' OR title LIKE '%AeroSound%'");
+} catch (Throwable $e) {
+    error_log('[api.php] blogs table init/cleanup notice: ' . $e->getMessage());
+}
+
 // ---- Auth helpers (mirror the Node backend's JWT check) ----
 function b64url_decode($data) {
     $data = strtr($data, '-_', '+/');
@@ -513,7 +539,11 @@ function current_user($pdo) {
 }
 
 function is_admin_user($user) {
-    return $user && in_array($user['role'] ?? '', ['admin', 'supermanager', 'superadmin'], true);
+    return $user && in_array($user['role'] ?? '', ['admin', 'supermanager', 'superadmin', 'seo', 'editor'], true);
+}
+
+function can_manage_blogs($user) {
+    return $user && in_array($user['role'] ?? '', ['admin', 'supermanager', 'superadmin', 'seo', 'editor'], true);
 }
 
 function deny($code, $message) {
@@ -858,6 +888,248 @@ if ($method === 'GET' && preg_match('#^/api/settings/?$#', $path)) {
         echo json_encode(['success' => true, 'settings' => $settings]);
         exit;
     } catch (Exception $e) {
+        server_error($e);
+    }
+}
+
+// ==========================================
+// 4b. POST /api/upload (Image Upload for Blogs & Store)
+// ==========================================
+if ($method === 'POST' && preg_match('#^/api/upload/?$#', $path)) {
+    $user = current_user($pdo);
+    if (!can_manage_blogs($user)) {
+        deny(403, 'Unauthorized. Admin/SEO access required.');
+    }
+    if (empty($_FILES['image'])) {
+        deny(400, 'No image file uploaded.');
+    }
+    $file = $_FILES['image'];
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        deny(400, 'Image upload failed with error code ' . $file['error']);
+    }
+    $maxSize = 8 * 1024 * 1024; // 8MB
+    if ($file['size'] > $maxSize) {
+        deny(400, 'File size exceeds 8MB limit.');
+    }
+    $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+    if (!in_array($mime, $allowed, true)) {
+        deny(400, 'Invalid file type. Allowed: JPG, PNG, WEBP, GIF, AVIF.');
+    }
+    $ext = [
+        'image/jpeg' => 'jpg',
+        'image/png'  => 'png',
+        'image/webp' => 'webp',
+        'image/gif'  => 'gif',
+        'image/avif' => 'avif'
+    ][$mime] ?? 'jpg';
+
+    $uploadDir = __DIR__ . '/uploads/blogs';
+    if (!is_dir($uploadDir)) {
+        @mkdir($uploadDir, 0755, true);
+    }
+    $filename = 'blog_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+    $targetPath = $uploadDir . '/' . $filename;
+    if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+        deny(500, 'Failed to save uploaded file on server.');
+    }
+    $webUrl = '/uploads/blogs/' . $filename;
+    echo json_encode([
+        'success' => true,
+        'imageUrl' => $webUrl,
+        'url' => $webUrl,
+        'path' => $webUrl,
+        'filename' => $filename,
+        'message' => 'Image uploaded successfully.'
+    ]);
+    exit;
+}
+
+// ==========================================
+// 4c. BLOGS API (Public View + Admin/SEO Full Management)
+// ==========================================
+if ($method === 'GET' && preg_match('#^/api/blogs/?$#', $path)) {
+    try {
+        $wantAll = isset($_GET['all']) && $_GET['all'] === 'true';
+        $user = current_user($pdo);
+        $includeDrafts = $wantAll && can_manage_blogs($user);
+
+        if ($includeDrafts) {
+            $stmt = $pdo->query("SELECT * FROM blogs ORDER BY created_at DESC");
+        } else {
+            $stmt = $pdo->query("SELECT * FROM blogs WHERE is_published = 1 ORDER BY created_at DESC");
+        }
+        $blogs = $stmt->fetchAll();
+        foreach ($blogs as &$b) {
+            $b['is_published'] = (int)($b['is_published'] ?? 1);
+        }
+        header('Cache-Control: public, max-age=60, s-maxage=300');
+        echo json_encode([
+            'success' => true,
+            'count' => count($blogs),
+            'blogs' => $blogs
+        ]);
+        exit;
+    } catch (Throwable $e) {
+        server_error($e);
+    }
+}
+
+if ($method === 'GET' && preg_match('#^/api/blogs/([^/]+)$#', $path, $matches)) {
+    try {
+        $idOrSlug = urldecode($matches[1]);
+        $stmt = $pdo->prepare("SELECT * FROM blogs WHERE id = :id OR slug = :slug LIMIT 1");
+        $stmt->execute([':id' => $idOrSlug, ':slug' => $idOrSlug]);
+        $blog = $stmt->fetch();
+        if (!$blog) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Blog article not found']);
+            exit;
+        }
+        $blog['is_published'] = (int)($blog['is_published'] ?? 1);
+        if (!$blog['is_published']) {
+            $user = current_user($pdo);
+            if (!can_manage_blogs($user)) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Blog article not found']);
+                exit;
+            }
+        }
+        echo json_encode(['success' => true, 'blog' => $blog]);
+        exit;
+    } catch (Throwable $e) {
+        server_error($e);
+    }
+}
+
+if ($method === 'POST' && preg_match('#^/api/blogs/?$#', $path)) {
+    $user = current_user($pdo);
+    if (!can_manage_blogs($user)) {
+        deny(403, 'Unauthorized. SEO/Admin credentials required.');
+    }
+    $body = json_decode($input, true) ?: [];
+    $title = trim($body['title'] ?? '');
+    if (!$title) {
+        deny(400, 'Title is required for blog article');
+    }
+    $slug = trim($body['slug'] ?? '');
+    if (!$slug) {
+        $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $title));
+        $slug = trim($slug, '-');
+        if (!$slug) $slug = 'article-' . time();
+    }
+    $chk = $pdo->prepare("SELECT id FROM blogs WHERE slug = :s LIMIT 1");
+    $chk->execute([':s' => $slug]);
+    if ($chk->fetch()) {
+        $slug .= '-' . substr(md5(uniqid()), 0, 4);
+    }
+    $id = 'blog_' . substr(md5(uniqid() . microtime()), 0, 16);
+    $excerpt = $body['excerpt'] ?? '';
+    $content = $body['content'] ?? '';
+    $image = $body['image'] ?? '';
+    $category = $body['category'] ?? 'Lifestyle';
+    $author = $body['author'] ?? ($user['name'] ?? 'Vanta Dubai Editorial');
+    $tags = $body['tags'] ?? '';
+    $read_time = $body['read_time'] ?? '5 min read';
+    $is_published = isset($body['is_published']) ? (int)$body['is_published'] : 1;
+
+    try {
+        $ins = $pdo->prepare("INSERT INTO blogs (id, title, slug, excerpt, content, image, category, author, tags, read_time, is_published, created_at, updated_at) 
+            VALUES (:id, :title, :slug, :excerpt, :content, :image, :category, :author, :tags, :read_time, :is_published, NOW(), NOW())");
+        $ins->execute([
+            ':id' => $id,
+            ':title' => $title,
+            ':slug' => $slug,
+            ':excerpt' => $excerpt,
+            ':content' => $content,
+            ':image' => $image,
+            ':category' => $category,
+            ':author' => $author,
+            ':tags' => $tags,
+            ':read_time' => $read_time,
+            ':is_published' => $is_published
+        ]);
+
+        $sel = $pdo->prepare("SELECT * FROM blogs WHERE id = :id LIMIT 1");
+        $sel->execute([':id' => $id]);
+        $newBlog = $sel->fetch();
+        if ($newBlog) $newBlog['is_published'] = (int)($newBlog['is_published'] ?? 1);
+        http_response_code(201);
+        echo json_encode(['success' => true, 'blog' => $newBlog]);
+        exit;
+    } catch (Throwable $e) {
+        server_error($e);
+    }
+}
+
+if ($method === 'PUT' && preg_match('#^/api/blogs/([^/]+)$#', $path, $matches)) {
+    $user = current_user($pdo);
+    if (!can_manage_blogs($user)) {
+        deny(403, 'Unauthorized. SEO/Admin credentials required.');
+    }
+    $id = urldecode($matches[1]);
+    $body = json_decode($input, true) ?: [];
+
+    try {
+        $sel = $pdo->prepare("SELECT * FROM blogs WHERE id = :id LIMIT 1");
+        $sel->execute([':id' => $id]);
+        $existing = $sel->fetch();
+        if (!$existing) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Blog article not found']);
+            exit;
+        }
+
+        $title = isset($body['title']) ? trim($body['title']) : $existing['title'];
+        $slug = isset($body['slug']) ? trim($body['slug']) : $existing['slug'];
+        $excerpt = isset($body['excerpt']) ? $body['excerpt'] : $existing['excerpt'];
+        $content = isset($body['content']) ? $body['content'] : $existing['content'];
+        $image = isset($body['image']) ? $body['image'] : $existing['image'];
+        $category = isset($body['category']) ? $body['category'] : $existing['category'];
+        $author = isset($body['author']) ? $body['author'] : $existing['author'];
+        $tags = isset($body['tags']) ? $body['tags'] : $existing['tags'];
+        $read_time = isset($body['read_time']) ? $body['read_time'] : $existing['read_time'];
+        $is_published = isset($body['is_published']) ? (int)$body['is_published'] : (int)$existing['is_published'];
+
+        $upd = $pdo->prepare("UPDATE blogs SET title = :title, slug = :slug, excerpt = :excerpt, content = :content, image = :image, category = :category, author = :author, tags = :tags, read_time = :read_time, is_published = :is_published, updated_at = NOW() WHERE id = :id");
+        $upd->execute([
+            ':title' => $title,
+            ':slug' => $slug,
+            ':excerpt' => $excerpt,
+            ':content' => $content,
+            ':image' => $image,
+            ':category' => $category,
+            ':author' => $author,
+            ':tags' => $tags,
+            ':read_time' => $read_time,
+            ':is_published' => $is_published,
+            ':id' => $id
+        ]);
+
+        $sel->execute([':id' => $id]);
+        $updated = $sel->fetch();
+        if ($updated) $updated['is_published'] = (int)($updated['is_published'] ?? 1);
+        echo json_encode(['success' => true, 'blog' => $updated]);
+        exit;
+    } catch (Throwable $e) {
+        server_error($e);
+    }
+}
+
+if ($method === 'DELETE' && preg_match('#^/api/blogs/([^/]+)$#', $path, $matches)) {
+    $user = current_user($pdo);
+    if (!can_manage_blogs($user)) {
+        deny(403, 'Unauthorized. SEO/Admin credentials required.');
+    }
+    $id = urldecode($matches[1]);
+    try {
+        $del = $pdo->prepare("DELETE FROM blogs WHERE id = :id");
+        $del->execute([':id' => $id]);
+        echo json_encode(['success' => true, 'message' => 'Blog article deleted successfully']);
+        exit;
+    } catch (Throwable $e) {
         server_error($e);
     }
 }
