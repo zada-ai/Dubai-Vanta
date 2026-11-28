@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import RatingComponent from './RatingComponent';
@@ -8,26 +8,141 @@ const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const { addToCart, wishlist, toggleWishlist } = useApp();
 
+  const [activeImgIndex, setActiveImgIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const touchStartX = useRef(null);
+  const didSwipe = useRef(false);
+
+  const productImages = useMemo(() => {
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      return product.images.filter(Boolean);
+    }
+    if (typeof product.image === 'string' && product.image.trim()) {
+      const raw = product.image.trim();
+      if (raw.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed.filter(Boolean);
+        } catch {}
+      }
+      if (raw.includes('|')) {
+        return raw.split('|').map((s) => s.trim()).filter(Boolean);
+      }
+      return [raw];
+    }
+    return [];
+  }, [product.images, product.image]);
+
+  useEffect(() => {
+    if (!isHovered || productImages.length <= 1) return;
+
+    const initialTimer = setTimeout(() => {
+      setActiveImgIndex((prev) => (prev + 1) % productImages.length);
+    }, 450);
+
+    const interval = setInterval(() => {
+      setActiveImgIndex((prev) => (prev + 1) % productImages.length);
+    }, 1400);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(interval);
+    };
+  }, [isHovered, productImages.length]);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setActiveImgIndex(0);
+  };
+
+  const handleTouchStart = (e) => {
+    if (productImages.length <= 1) return;
+    touchStartX.current = e.touches[0].clientX;
+    didSwipe.current = false;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null || productImages.length <= 1) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 30) {
+      didSwipe.current = true;
+      if (diff > 0) {
+        setActiveImgIndex((prev) => (prev + 1) % productImages.length);
+      } else {
+        setActiveImgIndex((prev) => (prev - 1 + productImages.length) % productImages.length);
+      }
+    }
+    touchStartX.current = null;
+  };
+
   const isWishlisted = wishlist.some((item) => item.id === product.id);
   const discountPrice = product.discountPrice;
   const isDiscounted = discountPrice && discountPrice < product.price;
 
   return (
     <div 
-      onClick={() => navigate(`/product/${product.id}`)}
+      onClick={() => {
+        if (didSwipe.current) {
+          didSwipe.current = false;
+          return;
+        }
+        navigate(`/product/${product.id}`);
+      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       className="group relative bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl sm:rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 flex flex-col h-full cursor-pointer"
     >
       {/* Product Image Section */}
-      <div className="relative aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-950">
+      <div
+        className="relative aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-950"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className="block w-full h-full">
-          {product.images && product.images[0] ? (
-            <img
-              src={product.images[0]}
-              alt={product.altText || product.name}
-              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
-              loading="lazy"
-              decoding="async"
-            />
+          {productImages.length > 0 ? (
+            <>
+              <div
+                className="flex w-full h-full transition-transform duration-500 ease-out will-change-transform"
+                style={{ transform: `translateX(-${activeImgIndex * 100}%)` }}
+              >
+                {productImages.map((imgSrc, idx) => (
+                  <img
+                    key={idx}
+                    src={imgSrc}
+                    alt={idx === 0 ? (product.altText || product.name) : `${product.name} - ${idx + 1}`}
+                    className="w-full h-full object-cover object-center shrink-0 group-hover:scale-105 transition-transform duration-500 ease-out"
+                    loading={idx === 0 ? 'lazy' : 'eager'}
+                    decoding="async"
+                  />
+                ))}
+              </div>
+
+              {/* Multi-image Indicator Dots */}
+              {productImages.length > 1 && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 backdrop-blur-xs z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  {productImages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveImgIndex(idx);
+                      }}
+                      aria-label={`View image ${idx + 1}`}
+                      className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                        idx === activeImgIndex
+                          ? 'w-4 bg-[#D9A441]'
+                          : 'w-1.5 bg-white/60 hover:bg-white'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center p-3 bg-slate-100 dark:bg-slate-950 text-slate-400 group-hover:bg-slate-200/60 dark:group-hover:bg-slate-900 transition-colors">
               <RiShoppingBagLine className="w-8 h-8 sm:w-10 sm:h-10 mb-1 opacity-30 text-slate-500" />
